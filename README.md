@@ -14,7 +14,7 @@
 Each lecture has two companion files — a **Markdown source** (the content source of truth) and an **HTML study tool** (interactive, rendered in the browser).
 
 | Lecture | Topic | Study Guide | Study Tool |
-||---------|-------|-------------|------------|--||---------|-------|-------------|------------|||---------|-------|-------------|------------|------||---------|-------|-------------|------------|-----|
+|---------|-------|-------------|------------|
 | 01 | AES & Classical Cryptography | `lecture01-study-guide.md` | `lecture01-study.html` |
 | 02 | Block Ciphers, Stream Ciphers & Key Distribution | `lecture02-study-guide.md` | `lecture02-study.html` |
 | 03 | Public-Key Cryptography & RSA | `lecture03-study-guide.md` | `lecture03-study.html` |
@@ -27,16 +27,6 @@ Each lecture has two companion files — a **Markdown source** (the content sour
 ## Exam Files
 
 All questions are drawn from the **2025 Midterm Exam** and cross-referenced with the *Questions of Doubt* clarifications document. Answers are revealed immediately on selection.
-
-| File | Contents |
-|------||---------|-------|-------------|------------|---|
-| `exams/exam-2025-midterm.html` | **Full 2025 Midterm** — all 60 questions, 60-min timer, final grade |
-| `exams/exam-l01.html` | L01 practice — Q1–Q12 (12 questions) |
-| `exams/exam-l02.html` | L02 practice — Q13–Q29 (17 questions, Q20 disputed) |
-| `exams/exam-l03.html` | L03 practice — Q30–Q38 (9 questions) |
-| `exams/exam-l04.html` | L04 practice — Q39–Q48 (10 questions) |
-| `exams/exam-l05.html` | L05 practice — Q49–Q60 (12 questions, Q52 disputed) |
-| `exams/exam-common.css` | Shared stylesheet for all exam files |
 
 ### Disputed questions
 
@@ -116,7 +106,7 @@ study_security/
 Version numbers follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 
 | Part | When to increment |
-|------||---------|-------|-------------|------------||---------|-------|-------------|------------|-----|
+|------|-------------------|
 | PATCH | Fix typos, fix wrong answers, minor clarifications |
 | MINOR | Add new content, new questions, new lecture coverage |
 | MAJOR | Complete overhaul of structure or scope |
