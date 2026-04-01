@@ -630,8 +630,29 @@
     </div>
   </div>
 
-  <h2>What This Lecture Covers</h2>
-  <p>Lecture 01 established how AES and DES work as individual block ciphers. This lecture asks: how do you use them safely in the real world? The answer involves multiple layers — from fixing DES's weaknesses, to choosing the right encryption mode for multi-block messages, to distributing keys between strangers over a network.</p>
+  <h2>Four Problems That Drive This Entire Lecture</h2>
+  <p>Before diving into algorithms, it helps to see the shape of the whole lecture at once — because every topic below is really an answer to one of four recurring design pressures.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 20px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:3px solid var(--accent);">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:6px;font-size:13px;">PROBLEM 1 — Repeated structure leaks</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">A block cipher is deterministic. The same key + same input = same output, always. Without a strategy, repeated plaintext blocks produce repeated ciphertext blocks — visible to any observer without breaking the cipher.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:3px solid var(--accent2);">
+      <div style="font-weight:700;color:var(--accent2);margin-bottom:6px;font-size:13px;">PROBLEM 2 — Reused keystreams destroy secrecy</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">Any two ciphertexts encrypted with the same keystream can be XOR-ed together, cancelling the key entirely and exposing \(P^{(1)} \oplus P^{(2)}\). With natural-language text, both plaintexts are recoverable. This is the <strong>two-time pad</strong> — one structural failure shared by all keystream modes.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:3px solid var(--accent3);">
+      <div style="font-weight:700;color:var(--accent3);margin-bottom:6px;font-size:13px;">PROBLEM 3 — Stale messages enable replay</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">A cryptographically valid message is just as dangerous re-sent as when first sent. Any protocol that distributes keys or authenticates identities must prove not just <em>what</em> is being said but <em>when</em> — that the message was generated specifically for this session, right now.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:3px solid var(--warning);">
+      <div style="font-weight:700;color:var(--warning);margin-bottom:6px;font-size:13px;">PROBLEM 4 — Pairwise trust doesn't scale</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">For \(n\) users to all share unique keys pairwise requires \(n(n-1)/2\) keys. For 1,000 users: 499,500 keys. Any deployable system needs a way to derive session keys on demand from a much smaller set of persistent secrets.</p>
+    </div>
+  </div>
+
+  <p>With this in mind: block cipher modes answer Problems 1 and 2. RC4 and stream ciphers explore Problem 2 further. Needham-Schroeder solves Problems 3 and 4 in their simplest form. Kerberos applies those solutions under real-world operational constraints. When a design choice seems arbitrary — why does CBC XOR <em>before</em> encryption? why does Kerberos split the KDC in two? — the answer is always one of these four pressures.</p>
 
   <div class="topic-grid">
     <div class="topic-card" onclick="showSection('2des')">
@@ -702,29 +723,27 @@
 <div id="sec-2des" class="section">
   <h1>2DES and the Meet-in-the-Middle Attack</h1>
 
-  <h2>DES Is Too Weak — The Obvious Fix</h2>
-  <p>DES's 56-bit key was its Achilles' heel. By 1998, dedicated hardware could crack it in under 56 hours. The simplest response: apply DES twice with two independent 56-bit keys, so the combined key is 112 bits.</p>
+  <h2>DES Is Too Weak — Two Ways the Obvious Fix Can Fail</h2>
+  <p>DES's 56-bit key was its Achilles' heel. By 1998, dedicated hardware could crack it in under 56 hours. The simplest response: apply DES twice with two independent 56-bit keys.</p>
 
   $$C = E_{K_2}(E_{K_1}(P))$$
   $$P = D_{K_1}(D_{K_2}(C))$$
 
-  <p>The key space is \(2^{56} \times 2^{56} = 2^{112}\). A brute-force attack over \(2^{112}\) is completely out of reach. So is 2DES secure? The answer is a surprising <strong>no</strong> — and the reason reveals an elegant structural vulnerability.</p>
+  <p>The combined key is \(2^{112}\). A brute-force search over \(2^{112}\) is completely out of reach. So is 2DES secure? The answer is <strong>no</strong> — and there are actually two completely separate reasons it could fail. It is worth understanding both, because they are different threats and the fix for one does not address the other.</p>
 
-  <h2>Is DES a Group? (A Prerequisite Question)</h2>
-  <p>Before discussing the attack, consider an even more fundamental question: when you apply DES twice with two keys, do you get something genuinely different from a single DES application? Or could there always be a third key \(K_3\) such that \(E(K_2, E(K_1, P)) = E(K_3, P)\)?</p>
+  <h2>Failure Mode 1 — Is DES a Group?</h2>
+  <p>The most devastating failure would be if applying DES twice always produced the same result as applying it once with some other key — if the set of DES permutations were <strong>closed under composition</strong> (forming a mathematical <em>group</em>). That would mean there always exists a \(K_3\) such that \(E(K_2, E(K_1, P)) = E(K_3, P)\) for all plaintexts. If true, 2DES would be completely pointless — the attacker need only search the \(2^{56}\) single-key space.</p>
 
-  <p>If such a \(K_3\) always existed — if the set of all DES permutations were <strong>closed under composition</strong> (forming a <em>group</em>) — then 2DES would be completely pointless. Double-encrypting would be equivalent to encrypting once with some other key. The attacker would only need to search the \(2^{56}\) space of single-DES keys.</p>
+  <p>This was investigated seriously. The set of all permutations on 64-bit blocks has size \((2^{64})!\) — incomprehensibly larger than \(10^{10^{20}}\). DES generates at most \(2^{56}\) distinct permutations — a tiny speck in that space. The probability that composing two DES permutations lands on another DES permutation is negligibly small. Confirmed: <strong>DES is not a group</strong>. 2DES is genuinely different from 1DES.</p>
 
-  <p>This was investigated seriously. The set of all permutations on 64-bit blocks has size \((2^{64})!\), which is incomprehensibly larger than \(10^{10^{20}}\). The DES-generated permutations number at most \(2^{56} \approx 10^{17}\) — a tiny speck in that vast space. The probability that composing two DES permutations accidentally lands on another DES permutation is negligibly small. It has been mathematically confirmed: <strong>DES is not a group</strong>. 2DES is genuinely stronger than 1DES.</p>
+  <h2>Failure Mode 2 — The Meet-in-the-Middle Attack</h2>
+  <p>Even knowing DES is not a group, 2DES still fails to deliver \(2^{112}\) security. The <strong>meet-in-the-middle attack</strong> reduces the effective security to \(\approx 2^{57}\) — barely more than single DES.</p>
 
-  <h2>The Meet-in-the-Middle Attack</h2>
-  <p>Even though 2DES is not equivalent to 1DES, it still fails to deliver \(2^{112}\) security. The <strong>meet-in-the-middle attack</strong> reduces the effective security to approximately \(2^{57}\).</p>
+  <p>The key insight is geometric: 2DES computation has a natural <em>seam</em>. There must exist an intermediate value \(X\) satisfying both sides simultaneously:</p>
 
-  <p>The key insight is that there exists an intermediate value \(X\) — the output after the first DES and the input to the second DES — that satisfies both:</p>
+  $$X = E_{K_1}(P) \qquad \text{and} \qquad X = D_{K_2}(C)$$
 
-  $$X = E_{K_1}(P) \quad \text{and} \quad X = D_{K_2}(C)$$
-
-  <p>The attacker approaches the problem from both sides simultaneously and looks for a match at this middle value. Assume the attacker has a known plaintext–ciphertext pair \((P, C)\).</p>
+  <p>The attacker does not search the \(2^{112}\) combined space. Instead, they enumerate both halves separately and look for a collision at the shared intermediate state. This is a <strong>time-memory tradeoff</strong>: spending \(2^{56}\) storage to reduce computation from \(2^{112}\) to \(\approx 2^{57}\). It applies to any construction where computation splits cleanly into two independently searchable halves. Assume the attacker has a known plaintext–ciphertext pair \((P, C)\).</p>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:16px 0;">
     <div class="protocol-step">
@@ -760,8 +779,8 @@
   </table></div>
 
   <div class="callout callout-danger">
-    <div class="callout-title">The Bottom Line</div>
-    Doubling the key from 56 to 112 bits added essentially no real security. The effective security of 2DES is \(\approx 2^{57}\) — barely more than single DES at \(2^{56}\). The \(2^{112}\) apparent strength is an illusion created by the double-encryption structure.
+    <div class="callout-title">The Bottom Line — Two-Time Pad of Double Encryption</div>
+    Doubling the key from 56 to 112 bits added roughly <em>1 bit</em> of real security. The effective security of 2DES is \(\approx 2^{57}\) — barely more than single DES. The \(2^{112}\) apparent strength is an illusion created by the searchable seam between the two DES applications. The group question asks whether 2DES is <em>different</em> from 1DES; the MITM attack asks whether it is <em>secure</em>. Both questions must be answered.
   </div>
 
   <div class="quiz-card">
@@ -917,18 +936,23 @@
 <div id="sec-modes-cbc" class="section">
   <h1>Block Cipher Modes — CBC</h1>
 
-  <h2>Cipher Block Chaining</h2>
-  <p>In <strong>CBC mode</strong>, each plaintext block is XORed with the <em>previous</em> ciphertext block before encryption. This creates a dependency chain: each ciphertext block depends on all previous plaintext blocks.</p>
+  <h2>Cipher Block Chaining — Designed From ECB's Failure</h2>
+  <p>CBC's design logic starts directly from ECB's failure. The question is: what is the simplest change you could make to ECB that would ensure identical plaintext blocks always produce different ciphertext blocks?</p>
+
+  <p>You need the <em>input</em> to the block cipher to differ even when the <em>plaintext</em> is identical. The solution is to XOR the plaintext with the previous ciphertext block <strong>before</strong> feeding it to the cipher:</p>
 
   $$C_i = E_K(P_i \oplus C_{i-1})$$
   $$P_i = D_K(C_i) \oplus C_{i-1}$$
 
-  <p>For the first block, there is no previous ciphertext. An <strong>Initialization Vector (IV)</strong> fills this role as \(C_0\):</p>
+  <p>Now the cipher's input for block \(i\) is \(P_i \oplus C_{i-1}\). Even if \(P_3 = P_{17}\), the inputs are \(P_3 \oplus C_2\) and \(P_{17} \oplus C_{16}\), which differ because \(C_2 \neq C_{16}\). The cipher sees different inputs → produces different outputs. ECB's pattern leakage is solved.</p>
 
-  $$C_1 = E_K(P_1 \oplus \text{IV})$$
-  $$P_1 = D_K(C_1) \oplus \text{IV}$$
+  <div class="callout callout-info">
+    <div class="callout-title">Why XOR Before Encryption, Not After?</div>
+    Suppose instead you XORed <em>after</em>: \(C_i = E_K(P_i) \oplus C_{i-1}\). The block cipher still receives the raw plaintext \(P_i\). When \(P_3 = P_{17}\), the cipher outputs are identical — \(E_K(P_3) = E_K(P_{17})\) — and you only mask those equal outputs with different \(C_{i-1}\) values. An attacker can XOR consecutive ciphertexts to recover the chaining differences and extract structural information. XORing <strong>before</strong> is the only arrangement that changes what the cipher <em>sees</em>, not just what it <em>outputs</em>.
+  </div>
 
-  <p>Because each block's encryption depends on all previous ciphertext, identical plaintext blocks at different positions produce different ciphertext blocks (since \(C_{i-1}\) differs). CBC solves ECB's pattern-leakage problem.</p>
+  <p>For the first block there is no previous ciphertext. The <strong>Initialization Vector (IV)</strong> fills this role:</p>
+  $$C_1 = E_K(P_1 \oplus \text{IV}) \qquad P_1 = D_K(C_1) \oplus \text{IV}$$
 
   <h2>The IV: Random, Not Secret</h2>
   <p>The IV must be <strong>random and unpredictable</strong> — this is the critical security requirement. It does not need to be secret; it is routinely sent alongside the ciphertext (the receiver needs it to decrypt the first block). But if the IV is predictable, an attacker who knows the first plaintext block \(P_1\) can check whether \(E_K(P_1 \oplus \text{IV})\) matches \(C_1\), leaking plaintext information.</p>
@@ -1020,9 +1044,9 @@
   <h1>Block Cipher Modes — CFB &amp; OFB</h1>
 
   <h2>CFB — Cipher Feedback Mode</h2>
-  <p>Both CFB and OFB convert a block cipher into a <strong>stream cipher</strong> — they let you encrypt data one segment (e.g., one byte) at a time, without waiting for a full block to accumulate. This is useful when you cannot pad the message to a block boundary, or when data arrives byte-by-byte in real time.</p>
+  <p>CBC requires plaintext to arrive in complete blocks. But what if you need to encrypt data as it arrives — one byte at a time from a keyboard or serial port? You cannot buffer 128 bytes before encrypting. CFB solves this by converting the block cipher into a <strong>stream cipher</strong> that operates on \(s\)-bit segments (typically \(s = 8\), one byte).</p>
 
-  <p>In <strong>CFB mode</strong>, a shift register (initialized with the IV) feeds into the block cipher. The output is used to encrypt one byte (or \(s\) bits) of plaintext. The resulting ciphertext byte is then shifted into the register:</p>
+  <p>The block cipher is not applied to the plaintext directly — it is used to generate a keystream. A shift register (initialized with the IV) is encrypted to produce keystream bytes; those bytes are XORed with plaintext. The resulting <em>ciphertext</em> byte is then fed back into the shift register:</p>
 
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:16px 0;">
     <div class="protocol-step">
@@ -1057,12 +1081,19 @@
 
   $$C_i = P_i \oplus \text{MSB}_s(E_K(\text{shift register}))$$
 
-  <p>Key property: only the <strong>encryption</strong> direction of the block cipher is used, at both sending and receiving ends. No decryption operation is required of the underlying cipher.</p>
+  <p>Only the <strong>encryption</strong> direction of the block cipher is ever used at both ends — no block cipher decryption is needed.</p>
 
-  <p><strong>Error propagation in CFB:</strong> A corrupted \(s\)-bit ciphertext segment enters the shift register and stays there for \(b/s\) steps, contaminating the keystream for those steps. After the corrupted segment has been completely shifted out, the error stops propagating. Errors are local but affect more than one segment (unlike OFB, as we will see).</p>
+  <div class="callout callout-warning">
+    <div class="callout-title">Why Does Ciphertext Feed Back, Not Plaintext?</div>
+    If plaintext fed back into the shift register, the keystream for segment \(i+1\) would depend on \(P_i\) — which an attacker can observe or influence. An attacker who can choose \(P_i\) could predict the register's next state and therefore predict the next keystream segment. Ciphertext feedback makes the keystream derive from the <em>encrypted</em> output that both sender and receiver share, not the plaintext that only the sender knows. This independence from attacker-visible plaintext is the source of the mode's security.
+  </div>
+
+  <p><strong>Error propagation in CFB:</strong> A corrupted ciphertext segment enters the shift register and contaminates the keystream for \(b/s\) subsequent decryptions — until the corrupted segment has completely shifted out. Errors are local but cascade briefly, unlike OFB.</p>
 
   <h2>OFB — Output Feedback Mode</h2>
-  <p><strong>OFB mode</strong> is nearly identical to CFB, with one critical change: instead of feeding back the <em>ciphertext</em> into the shift register, OFB feeds back the <em>output of the block cipher encryption</em> (the keystream itself) — before XOR with the plaintext.</p>
+  <p>CFB achieves byte-at-a-time encryption, but because ciphertext enters the shift register, a corrupted ciphertext byte contaminates the keystream for the next several steps. For satellite links and deep-space telemetry where random bit errors are common, this cascade is unacceptable.</p>
+
+  <p><strong>OFB</strong> asks the natural repair question: what if the shift register were fed by the <em>keystream itself</em> rather than the ciphertext? Then transmission errors could never enter the keystream generation loop.</p>
 
   $$O_i = E_K(O_{i-1}), \quad O_0 = \text{IV}$$
   $$C_i = P_i \oplus O_i \qquad P_i = C_i \oplus O_i$$
@@ -1070,8 +1101,13 @@
   <p>Because the keystream \(O_i\) is generated <em>entirely independently</em> of the plaintext and ciphertext (the feedback loop never sees ciphertext), OFB has a crucial advantage:</p>
 
   <div class="callout callout-tip">
-    <div class="callout-title">OFB vs CFB Error Property</div>
-    In OFB, a corrupted ciphertext bit corrupts <strong>only the corresponding plaintext bit</strong> during decryption. The keystream generation is unaffected (it never sees the ciphertext). This makes OFB preferable over CFB for noisy transmission channels where bit errors are common.
+    <div class="callout-title">OFB vs CFB — Error Isolation</div>
+    In OFB, the keystream sequence \(O_1, O_2, \ldots\) is generated entirely from the key and IV — no ciphertext ever enters this loop. A corrupted ciphertext bit \(C_i\) flips exactly the corresponding plaintext bit \(P_i\), and the \(O\) sequence continues generating correctly. One bit in, one bit wrong, full stop. In CFB, the corrupted byte enters the register and poisons the keystream for \(b/s\) subsequent blocks. OFB is strictly better for noisy channels; CFB is self-synchronizing for dropped segments, which OFB is not.
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">What Breaks If OFB Reuses the Same IV?</div>
+    Both messages are XORed with the identical keystream sequence. \(C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}\) — the <strong>two-time pad</strong>. This is the same structural failure as CTR nonce reuse and RC4 key reuse. The mechanism differs; the consequence is identical. Any keystream cipher fails catastrophically if the keystream is used twice — this is one principle, not three separate vulnerabilities.
   </div>
 
   <div class="table-wrap"><table>
@@ -1177,6 +1213,19 @@
     </div>
   </div>
 
+  <div class="callout callout-info">
+    <div class="callout-title">The Unifying Pattern: "Generate Keystream, XOR"</div>
+    <p style="margin-bottom:8px;">CFB, OFB, CTR, and RC4 are all variations on the same core idea: <strong>generate a pseudorandom keystream, then XOR with plaintext</strong>. The block cipher (or RC4's state machine) is never applied to plaintext directly. They differ only in how the keystream is generated:</p>
+    <ul style="margin:0 0 0 18px;line-height:2.2;font-size:14px;">
+      <li><strong>CFB:</strong> encrypt the shift register (which contains recent ciphertext)</li>
+      <li><strong>OFB:</strong> encrypt recent keystream blocks — no ciphertext ever feeds back</li>
+      <li><strong>CTR:</strong> encrypt counter values — no feedback at all, fully independent</li>
+      <li><strong>RC4:</strong> output from a continuously-evolving permutation state</li>
+    </ul>
+    <p style="margin:8px 0 0;">All four therefore share one vulnerability: <strong>keystream reuse is catastrophic</strong> (the two-time pad). This is one principle, not four. CBC does not share this vulnerability because its block cipher receives XORed plaintext as input — the chaining changes what the cipher sees, not what it outputs.
+    <br><br>Note also that CBC's IV must be <em>unpredictable</em> (to prevent chosen-plaintext attacks), while CTR's nonce must be <em>unique</em> (to prevent keystream reuse). Different failures, different requirements.</p>
+  </div>
+
   <h2>Mode Comparison Summary</h2>
   <div class="table-wrap"><table>
     <thead><tr><th>Mode</th><th>Parallel Enc?</th><th>Parallel Dec?</th><th>Error Propagation</th><th>Needs Padding?</th><th>IV?</th></tr></thead>
@@ -1211,9 +1260,11 @@
   <p>Stream ciphers are naturally suited to <strong>real-time communications</strong> where data arrives byte-by-byte and cannot wait for a block to fill — voice calls, video streams, and satellite communications have historically used stream ciphers. Modern practice often uses AES in CTR or OFB mode to achieve stream-cipher-like behavior with a well-analyzed block-cipher foundation.</p>
 
   <h2>RC4 — Rivest Cipher 4</h2>
-  <p>RC4 (designed 1987, leaked publicly 1994) is one of the most widely deployed stream ciphers in history: SSL/TLS, WEP Wi-Fi security, and many other protocols used it. It is now deprecated due to statistical biases in its keystream, but it remains an important teaching example.</p>
+  <p>RC4 (designed 1987, leaked publicly 1994) is one of the most widely deployed stream ciphers in history: SSL/TLS, WEP, and many other protocols used it. It is now deprecated due to statistical biases. To appreciate its design choices, start from a simpler, obviously weak alternative and ask what RC4 adds at each step.</p>
 
-  <p>RC4 is a <strong>variable-key-length</strong>, <strong>byte-oriented</strong> stream cipher. Its central data structure is a state vector \(S\) — an array of 256 bytes, always forming a permutation of the values 0–255.</p>
+  <p><strong>The naive approach that fails:</strong> Initialize a 256-entry array \(S\) from the key, then walk through it in a fixed pattern — output \(S[0], S[1], \ldots, S[255], S[0], S[1], \ldots\). This fails immediately: the keystream repeats with period 256 bytes. Any message longer than 256 bytes reuses the entire keystream — the two-time pad applied to a single message.</p>
+
+  <p><strong>The fix — continuously evolve the state:</strong> RC4 modifies \(S\) as it uses it, by continuously <em>swapping</em> entries. Each step changes two entries in the permutation, so the state at position 1000 is different from position 0. With \(256!\) possible permutations (\(\approx 10^{507}\) states), the keystream effectively never cycles. RC4's central data structure is a state vector \(S\) — an array of 256 bytes, always forming a <strong>permutation</strong> of values 0–255 (swapping never duplicates or loses values).</p>
 
   <h3>Phase 1: State Initialization</h3>
   <p>Fill \(S\) with values 0 through 255 in order — the identity permutation:</p>
@@ -1227,15 +1278,15 @@
   <p>For example, with a 3-byte key \([k_0, k_1, k_2]\), the vector \(T\) repeats the key pattern 85 full times (and then once more for the final byte): \([k_0, k_1, k_2, k_0, k_1, k_2, \ldots]\).</p>
 
   <h3>Key Scheduling Algorithm (KSA)</h3>
-  <p>The KSA uses \(T\) to produce a key-dependent scrambling of \(S\):</p>
+  <p>The KSA transforms the identity permutation into a key-dependent scrambled one:</p>
 <pre class="code-block" style="white-space:pre;overflow-x:auto">j = 0
 for i = 0 to 255:
     j = (j + S[i] + T[i]) mod 256
     SWAP(S[i], S[j])</pre>
-  <p>After the KSA, \(S\) is a pseudo-random permutation of 0–255 determined by the key. Swapping never destroys or duplicates values, so \(S\) always remains a valid permutation.</p>
+
+  <p>The index \(j\) <em>accumulates</em> across all 256 iterations — it is never reset. This accumulation is the critical design choice. After step \(i\), the value of \(j\) depends on all previous values of \(S\) and all previous key bytes, creating a complex interdependence. If the \(S[i]\) term were removed (so \(j = (j + T[i]) \bmod 256\)), then \(j\) would be determined entirely by the key bytes with no feedback from the evolving permutation. Each swap would become an independent, easily invertible operation, making the key setup far simpler to analyze and reverse.</p>
 
   <h3>Keystream Generation (PRGA)</h3>
-  <p>Once \(S\) is initialized, generate one keystream byte per iteration:</p>
 <pre class="code-block" style="white-space:pre;overflow-x:auto">i, j = 0
 while (true):
     i = (i + 1) mod 256
@@ -1243,14 +1294,19 @@ while (true):
     SWAP(S[i], S[j])
     k = (S[i] + S[j]) mod 256
     output S[k]    ← XOR this with plaintext byte</pre>
-  <p>Each iteration advances both pointers, swaps two elements (continuously evolving the permutation), computes a third index \(k\) from the sum of the two swapped values, and outputs \(S[k]\). This multi-level indirection makes the output hard to predict.</p>
 
-  <h2>RC4 Key Reuse Vulnerability</h2>
-  <p>RC4 shares the fundamental stream cipher weakness: <strong>never reuse a key</strong>. The same key produces the same keystream. If two messages are encrypted with the same keystream:</p>
+  <p>The output byte is \(S[k]\) where \(k = S[i] + S[j] \bmod 256\) — a <em>third</em> position derived from the two just-swapped values. Why not output \(S[i]\) or \(S[j]\) directly? Because \(i\) is a public counter — an observer who knows \(i\) could narrow down the state if \(S[i]\) were output. Using \(k = S[i] + S[j]\) means the observer needs to know \(j\) as well, which depends on hidden accumulated state history. The indirection hides which position of \(S\) was read.</p>
 
-  $$C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}$$
+  <p>If the PRGA removed the swap step and only advanced indices, the permutation would be fixed after initialization. The keystream would then be a fixed walk through one permutation, periodic with period at most \(256^2 = 65536\) — any message over 65536 bytes would reuse the entire keystream.</p>
 
-  <p>From the XOR of the two plaintexts, both can often be recovered when the content is natural-language text. WEP (Wi-Fi Encrypted Protocol) was completely broken partly because its short IV led to keystream reuse across messages.</p>
+  <h2>RC4 Key Reuse — The Two-Time Pad</h2>
+  <p>RC4 shares the same critical vulnerability as CTR, OFB, and every other keystream cipher: <strong>never use the same key twice</strong>. Same key → same keystream. Two messages encrypted with the same keystream:</p>
+
+  $$C^{(1)} \oplus C^{(2)} = (P^{(1)} \oplus \text{KS}) \oplus (P^{(2)} \oplus \text{KS}) = P^{(1)} \oplus P^{(2)}$$
+
+  <p>The key cancels entirely — no cipher analysis needed. This is the <strong>two-time pad</strong>, and it is structurally identical to CTR nonce reuse or OFB IV reuse. The cipher is different; the failure is the same.</p>
+
+  <p>WEP used RC4 with a 24-bit IV prepended to the key: \(\text{RC4}(\text{IV} \| K)\). With only \(2^{24} \approx 16\) million possible IVs, in a busy Wi-Fi network the same IV+key combination reappears within hours, triggering keystream reuse across many packets. Combined with known statistical biases in RC4's early output (some byte positions are predictable with above-chance probability), WEP was completely broken — practical tools recovered the WEP key from captured traffic in minutes.</p>
 
   <div class="quiz-card">
     <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q21</span></div>
@@ -1286,11 +1342,26 @@ while (true):
   <h1>Needham-Schroeder Key Distribution Protocol</h1>
 
   <h2>The Problem: Key Distribution at Scale</h2>
-  <p>Imagine a secure communication system for 1,000 users. The naïve approach — every user physically exchanges a key with every other user — requires \(\binom{1000}{2} = 499{,}500\) key exchanges. As the group changes, all those keys must be updated. This is completely infeasible.</p>
+  <p>For \(n\) users to each share a unique secret key with every other user requires \(n(n-1)/2\) keys. For 1,000 users: 499,500 keys. As users join or leave, all those keys must be regenerated and redistributed. The system is undeployable.</p>
 
-  <p>A more efficient alternative: a <strong>Key Distribution Center (KDC)</strong>. Each user shares exactly one <strong>master key</strong> with the KDC. To communicate with any other user, they ask the KDC to generate a temporary <strong>session key</strong> just for that conversation. But this raises immediate security questions: how does A know a response is really from the KDC? How does B know the request really came from A? How can B be sure the session key is fresh and not a replay from an old session?</p>
+  <p>A <strong>Key Distribution Center (KDC)</strong> solves the scaling problem: each user shares exactly one long-term <strong>master key</strong> with the KDC — \(n\) keys total. To communicate with any other user, you ask the KDC to generate a temporary <strong>session key</strong> for that conversation. But the KDC model immediately creates three new problems:</p>
 
-  <p>The <strong>Needham-Schroeder protocol</strong> (1978) answers all these questions precisely using only symmetric encryption and carefully designed nonces.</p>
+  <ol style="margin:10px 0 16px 20px;line-height:2.4;font-size:14px;">
+    <li>How does Alice know the session key she received actually came from the KDC, not an impersonator?</li>
+    <li>How does Bob know the key was authorized by the KDC specifically for Alice, and not fabricated by Alice herself?</li>
+    <li>How can Bob be sure the key is fresh — not replayed from an old, compromised session?</li>
+  </ol>
+
+  <h2>Building the Protocol from First Principles</h2>
+  <p><strong>The naive approach and its failure.</strong> Suppose the KDC sent \(K_S\) directly to Alice and separately to Bob, each encrypted under their master key. Bob decrypts and gets \(K_S\) — but how does he know this came from the KDC? Alice also knows Bob's key was used to send something; she could have generated \(K_S\) herself and sent it to Bob pretending the KDC authorized it. There is no proof of KDC authorization for Bob.</p>
+
+  <p><strong>The ticket idea.</strong> The fix is to include, in Alice's bundle, a sub-packet that <em>only the KDC could have created</em>: something encrypted under Bob's master key \(K_B\), which Alice does not have. When Bob decrypts this with \(K_B\) and finds a valid session key and Alice's identity inside, he can reason: "Only the KDC knows \(K_B\). This must have come from the KDC." Alice received this sub-packet but cannot read or modify it — she forwards it as an opaque credential. This is the <strong>ticket</strong>: \(E(K_B, [K_S, ID_A])\).</p>
+
+  <p><strong>The freshness problem — the ticket alone is not enough.</strong> The ticket proves KDC authorization but carries no timestamp. An attacker who captured message 3 from an old session could replay it. Bob would receive a valid ticket and believe a fresh session is starting — with a compromised old key. To prove Alice is <em>currently alive and holds \(K_S\)</em>, Bob generates a fresh nonce \(N_2\), encrypts it with \(K_S\), and challenges Alice. Only someone currently holding \(K_S\) can respond correctly.</p>
+
+  <p><strong>Alice's own freshness need — \(N_1\).</strong> Similarly, when Alice receives the KDC's response, she needs to verify it is fresh. She includes a nonce \(N_1\) in her request; the KDC echoes it in the encrypted response. When Alice decrypts and sees \(N_1\), she knows: "This response was generated after my specific request — not a replay."</p>
+
+  <p>These three insights — the ticket, \(N_1\) for request freshness, and \(N_2\) for session freshness — produce the five messages below. Every message is now derivable from the problem it solves.</p>
 
   <h2>Participants and Keys</h2>
   <div class="table-wrap"><table>
@@ -1303,7 +1374,7 @@ while (true):
     </tbody>
   </table></div>
 
-  <h2>Protocol Steps</h2>
+  <h2>Protocol Steps — Each Message Derivable From Its Problem</h2>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:16px 0;">
     <div class="protocol-step">
       <div class="step-num">1</div>
@@ -1345,6 +1416,11 @@ B decrypts the ticket using \(K_B\), obtains \(K_S\) and \(ID_A\). B now has the
 A decrypts \(N_2\), applies the transformation, and sends \(N_2 - 1\) back. B verifies: (1) the sender knows \(K_S\); (2) since \(N_2\) was just generated by B, the response is fresh — no replay. Session established.</div>
       </div>
     </div>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">The Residual Replay Vulnerability (Denning-Sacco, 1981)</div>
+    Messages 4–5 prove <em>liveness</em>: the sender currently holds \(K_S\). They do not prove <em>ticket freshness</em>. An attacker who previously compromised \(K_S\) from an old session <em>does</em> hold it — so they can respond correctly to Bob's \(N_2\) challenge. Bob cannot detect that the ticket was issued years ago. This attack was discovered three years after the protocol was published. The fix — used in Kerberos — is to embed a timestamp in the ticket and reject stale ones on receipt.
   </div>
 
   <h2>What Does Each Step Actually Prove?</h2>
@@ -1427,21 +1503,44 @@ A decrypts \(N_2\), applies the transformation, and sends \(N_2 - 1\) back. B ve
 <div id="sec-kerberos" class="section">
   <h1>Kerberos</h1>
 
-  <h2>Why Needham-Schroeder is Not Enough</h2>
-  <p>The Needham-Schroeder protocol handles the core key distribution problem, but real networks need more. Consider a university: hundreds of students need access to printers, file servers, database servers, and web services. Each service needs to authenticate the student. The student should be able to log in once and access multiple services without re-authenticating every time — <em>single sign-on (SSO)</em>.</p>
+  <h2>Needham-Schroeder Under Operational Pressure</h2>
+  <p>Needham-Schroeder proves the central idea. Under the operational demands of a large real network, it has four concrete problems that make it undeployable as-is:</p>
 
-  <p><strong>Kerberos</strong> (originally designed at MIT in the 1980s) solves these scalability requirements while preserving Needham-Schroeder's security model. The key design change: split the KDC into two distinct servers.</p>
+  <ol style="margin:10px 0 16px 20px;line-height:2.6;font-size:14px;">
+    <li><strong>KDC must be involved in every session.</strong> Every service access requires a round-trip to the KDC.</li>
+    <li><strong>Password-derived key exercised repeatedly.</strong> Every KDC contact uses \(K_\text{Client}\), the most sensitive key in the system.</li>
+    <li><strong>The replay vulnerability.</strong> A compromised old session key allows replaying old tickets through the challenge-response.</li>
+    <li><strong>No single sign-on.</strong> The user must re-authenticate for every individual service.</li>
+  </ol>
+
+  <p>Kerberos (MIT, 1980s) addresses all four with three architectural decisions. Understanding each decision as the solution to a specific problem is what makes Kerberos feel inevitable rather than arbitrary.</p>
+
+  <h2>Design Decision 1: The Ticket-Granting Ticket (Solves Problems 1, 2, and 4)</h2>
+  <p>The expensive, password-involving step is the initial authentication — proving who you are. That only needs to happen once per login. What if the KDC, after authenticating you once, issued a reusable credential that lets you request further credentials — without re-authenticating?</p>
+
+  <p>This is the <strong>Ticket-Granting Ticket (TGT)</strong>. The client authenticates to the <strong>Authentication Server (AS)</strong> using \(K_\text{Client}\) (derived from the password). AS issues a TGT (encrypted under the TGS's key — opaque to the client) and a session key \(K_\text{Client-TGS}\). For all subsequent service access, the client presents the TGT to the <strong>Ticket-Granting Server (TGS)</strong> and uses \(K_\text{Client-TGS}\) — never the password-derived key again. This is <strong>single sign-on</strong>: one password entry, unlimited service access within the TGT's validity period.</p>
+
+  <p>The AS/TGS split also has a direct security benefit: \(K_\text{Client}\) is only ever touched at the AS interaction at login. All subsequent operations use session keys. A compromise of TGS does not expose any client's password-derived key. Combining AS and TGS into one server would make the more-frequently-accessed ticket-granting path also the path that handles password-derived keys — a larger attack surface for the most sensitive credential.</p>
+
+  <h2>Design Decision 2: Timestamps Instead of Nonces (Solves Problem 3)</h2>
+  <p>Needham-Schroeder uses a nonce challenge-response (messages 4–5) to prove freshness. This adds a round-trip and — critically — only proves liveness, not ticket freshness. Kerberos replaces this with <strong>timestamps</strong> embedded in every ticket and every <strong>authenticator</strong>:</p>
+
+  <ul style="margin:8px 0 14px 20px;line-height:2.4;font-size:14px;">
+    <li>The ticket contains an issue time and validity period (e.g., 8 hours).</li>
+    <li>The authenticator — sent alongside the ticket — contains the client's current timestamp, encrypted under the session key.</li>
+    <li>TGS and Service Providers reject authenticators with timestamps more than ±5 minutes old.</li>
+  </ul>
+
+  <p>This eliminates the nonce challenge-response and directly addresses ticket staleness. The price is real: <strong>Kerberos requires synchronized clocks.</strong> If a clock drifts more than 5 minutes, authentication fails. NTP (Network Time Protocol) becomes a security-critical dependency — not just a convenience. An attacker who can manipulate a server's clock can reopen replay windows. Needham-Schroeder avoided this assumption entirely by using nonces. Kerberos trades that freedom for fewer round-trips and stronger replay protection.</p>
 
   <h2>The Two-Server Architecture</h2>
   <div class="table-wrap"><table>
-    <thead><tr><th>Server</th><th>Role</th></tr></thead>
+    <thead><tr><th>Server</th><th>Role</th><th>Keys it touches</th></tr></thead>
     <tbody>
-      <tr><td><strong>Authentication Server (AS)</strong></td><td>Verifies the client's identity (password). Issues a Ticket-Granting Ticket (TGT).</td></tr>
-      <tr><td><strong>Ticket-Granting Server (TGS)</strong></td><td>Issues service-specific tickets. Client must present a valid TGT to reach TGS.</td></tr>
+      <tr><td><strong>Authentication Server (AS)</strong></td><td>Verifies identity at login. Issues TGT.</td><td>\(K_\text{Client}\) (password-derived) — touched only at login</td></tr>
+      <tr><td><strong>Ticket-Granting Server (TGS)</strong></td><td>Issues service-specific tickets on demand.</td><td>\(K_\text{Client-TGS}\) (session key only — never sees password-derived key)</td></tr>
     </tbody>
   </table></div>
-
-  <p>The client authenticates to AS <em>once per login session</em>. The TGT it receives can be reused for multiple requests to TGS — one per service needed. This is the SSO property: authenticate once, access many services.</p>
 
   <h2>Kerberos Keys</h2>
   <div class="table-wrap"><table>
@@ -1609,9 +1708,25 @@ A decrypts \(N_2\), applies the transformation, and sends \(N_2 - 1\) back. B ve
     </div>
   </div>
 
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does Kerberos separate AS from TGS?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The separation is a security principle: AS handles sensitive password-based authentication (directly touching \(K_\text{Client}\), derived from the password), while TGS handles service authorization (only ever seeing \(K_\text{Client-TGS}\), a temporary session key). A compromise of TGS does not expose password-derived keys. Additionally, AS can be made very restricted (contact only at login), while TGS can be more accessible.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ How does Kerberos prevent a stolen TGT from being used indefinitely?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">TGTs have a validity period (e.g., 8 hours). A stolen TGT automatically expires. The shorter the validity period, the smaller the window for misuse. In high-security environments, the period can be set to minutes.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the single sign-on (SSO) property of Kerberos?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The client authenticates to AS once per login session. The TGT it receives can be reused for multiple requests to TGS — one per service. The client does not re-enter a password for each service (printer, file server, etc.); it presents the TGT and gets a fresh service ticket each time.</div></div>
+  <div class="callout callout-danger">
+    <div class="callout-title">What Breaks If Timestamps Are Removed From Authenticators?</div>
+    Any captured authenticator becomes permanently valid — the server cannot distinguish a fresh one from one recorded in a previous session. The TGT's validity period still expires, but within that window any captured authenticator can be replayed indefinitely. Without timestamps, Kerberos degrades to exactly the replay vulnerability that Needham-Schroeder has.
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">What Breaks If K_Client Is Used for Every Service Exchange?</div>
+    \(K_\text{Client}\) (the password-derived key) would be exercised on every network interaction. A single interception — a captured authentication attempt, a timing side-channel — gives the attacker indefinite access to all Kerberos services for that user. The AS/TGS separation confines \(K_\text{Client}\) exposure to one moment at login.
+  </div>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">NS Tickets vs Kerberos TGT — Same Pattern, Generalized</div>
+    The Kerberos TGT is the Needham-Schroeder ticket idea generalized. In NS, \(E(K_B, [K_S, ID_A])\) is an opaque credential: A carries it to B but cannot read it; only B can decrypt it, verifying KDC authorization. The TGT \(E(K_\text{TGS}, [\ldots])\) works identically — the client carries it opaquely to TGS. Kerberos adds a two-level hierarchy (TGT for TGS, service tickets for services) and the SSO reuse property, but the fundamental opaque-credential pattern is unchanged.
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does Kerberos separate AS from TGS? Could one server do both?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">A single server could technically handle both. The separation exists for two reasons. First, scalability and SSO: the client authenticates to AS only once per login, then uses the TGT for all TGS interactions without re-authenticating. Second, security: AS is the only server that ever touches \(K_\text{Client}\) (the password-derived key). TGS only sees session keys. A compromise of TGS cannot expose client passwords. If combined, the more-frequently-accessed ticket-granting path would also handle the most sensitive key.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ How does Kerberos prevent a stolen TGT from being used indefinitely?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">TGTs embed an explicit validity period (e.g., 8 hours). TGS checks the current time against this window on every request and rejects expired TGTs unconditionally. A stolen TGT is therefore useful for at most 8 hours from issuance. Higher-security environments set shorter validity periods — trading convenience for a smaller exposure window.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Kerberos uses timestamps; Needham-Schroeder uses nonces. What is the tradeoff?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Timestamps: eliminate the nonce challenge-response round-trip, directly address ticket staleness, and prevent replay of both tickets and authenticators. Cost: all realm clocks must be synchronized within ±5 minutes — NTP becomes a security dependency. Nonces: no clock synchronization required, but an extra round-trip is needed per session, and ticket staleness is not directly prevented. Kerberos trades clock dependency for fewer messages and stronger replay protection.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the single sign-on (SSO) property of Kerberos?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The client authenticates to AS once per login session and receives a TGT. For each service it needs, the client presents the TGT to TGS and receives a service-specific ticket — using \(K_\text{Client-TGS}\), not the password-derived key. The user never re-enters a password for individual services. AS is contacted only at login; TGS handles all subsequent service authorizations.</div></div>
 
   <div class="section-nav">
     <button class="sec-nav-btn" onclick="showSection('needham')">← Needham-Schroeder</button>
@@ -1658,12 +1773,25 @@ A decrypts \(N_2\), applies the transformation, and sends \(N_2 - 1\) back. B ve
     </tbody>
   </table></div>
 
-  <h2>Quick Knowledge Checks</h2>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does 2DES fail despite a 112-bit combined key?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The meet-in-the-middle attack. Build a table of \(2^{56}\) forward encryptions from \(P\). Search \(2^{56}\) backward decryptions from \(C\). Match at the intermediate value. Total cost ≈ \(2^{57}\). The 112-bit key space is irrelevant because the attacker never searches it directly.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What two properties must a good keystream have?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">1. Statistical randomness: all byte values appear equally often; bytes are uncorrelated. 2. Long period: the sequence should not repeat for an extremely long time. Together these ensure that the keystream gives no information about the key or previous bytes.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the difference between a master key and a session key in Needham-Schroeder?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Master keys (\(K_A\), \(K_B\)) are long-term — shared between each user and the KDC, used for many sessions. Session keys (\(K_S\)) are temporary — generated fresh by the KDC for one specific conversation and discarded afterward. Session keys limit damage if a key is later compromised.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ How does Kerberos achieve single sign-on?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The client authenticates to AS once per login session and receives a TGT. For each service it needs, the client presents the TGT to TGS and gets a service-specific ticket — without re-entering a password. AS is contacted only at login; TGS handles all subsequent service authorizations.</div></div>
-  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Compare: how do Needham-Schroeder and Kerberos prevent replay attacks?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Needham-Schroeder: nonce-challenge (\(N_2\), \(N_2-1\)). B generates a fresh nonce; A must respond with the correct transformation. A replay of an old session cannot answer the new nonce. Kerberos: timestamps in authenticators. TGS and SP reject authenticators whose timestamps are more than ~5 minutes old. Kerberos requires synchronized clocks; Needham-Schroeder does not.</div></div>
+  <h2>Understanding Questions</h2>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does doubling DES's key length fail to double its security? Name the general pattern.</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The computation splits at a natural seam — the intermediate state between the two DES applications. The MITM attack enumerates both halves independently (\(2^{56}\) each) and matches at the collision point, costing \(\approx 2^{57}\) total. This is a <strong>time-memory tradeoff</strong>: \(2^{56}\) storage buys an exponential reduction in computation time. The seam created by sequential double encryption makes the full \(2^{112}\) space impossible to require of an attacker. This pattern applies to any double-encryption construction where the two stages are independently invertible.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does CBC fix ECB's pattern-leakage specifically by XORing before encryption rather than after?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">XORing before changes what the <em>cipher sees</em>: even if \(P_i = P_j\), their cipher inputs \((P_i \oplus C_{i-1})\) and \((P_j \oplus C_{j-1})\) differ because \(C_{i-1} \neq C_{j-1}\). XORing after would leave the cipher receiving the raw plaintext — identical inputs still produce identical outputs — and only mask the results. The masking could be reversed by XOR-ing consecutive ciphertexts. The fix must change the cipher's input, not its output.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ RC4 key reuse is "structurally the same failure" as CTR nonce reuse. Prove it with algebra.</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Both produce the same keystream for the same key/nonce. Given \(C^{(1)} = P^{(1)} \oplus \text{KS}\) and \(C^{(2)} = P^{(2)} \oplus \text{KS}\): \(C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}\). The keystream cancels entirely — no cipher analysis needed. The cipher's internals are irrelevant. This is the two-time pad, and it applies to any keystream cipher. The name changes; the algebra is identical.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Walk through Needham-Schroeder without N₁, then without N₂. What attack does each removal enable?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Without \(N_1\): Alice's request contains no fresh value. An attacker who captured a previous valid KDC response can replay it. Alice decrypts an old, potentially compromised session key, believing it is fresh. Without \(N_2\): Bob accepts the ticket alone. An attacker who captured message 3 from any prior session replays it. Bob extracts the old session key and believes a fresh session is starting. If the attacker also holds the old \(K_S\), they can communicate with Bob while Bob believes he is talking to Alice.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Kerberos uses timestamps; Needham-Schroeder uses nonces. What does each stop, and what does each cost?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Timestamps stop: replay of stale tickets and authenticators (any message outside the clock window is rejected), and ticket staleness is directly addressed. Cost: clocks across the realm must be synchronized within ±5 minutes — NTP is now a security dependency, and clock manipulation reopens replay windows. Nonce challenge-response stops: replay of the ticket by someone who does not currently hold \(K_S\). Does not stop replay by someone who does hold old \(K_S\) (the Denning-Sacco attack). Cost: one extra round-trip per session. Kerberos trades the round-trip and the clock-free assumption for stronger protection.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why is reusing long-term keys acceptable in Kerberos while reusing session keys or nonces is dangerous?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Long-term keys are the persistent trust anchors of the system — they are designed to be reused. Their security comes from secrecy, maintained by careful management. Session keys and nonces are freshness mechanisms — their security depends on being unique and non-repeatable. A reused session key defeats isolation: compromise of one session compromises all sharing that key. A reused nonce defeats the replay protection it was designed to provide. The categories serve fundamentally different security roles, and their requirements derive from those roles.</div></div>
+
+  <h2>"What Breaks If..." — Master List</h2>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:12px;">Use these to test your deepest understanding. Each answer is explained in the corresponding section.</p>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if 3DES uses EEE (not EDE) with K₁ = K₂ = K₃?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Backward compatibility is lost. EEE with equal keys does not reduce to single DES (because DES is not a group: \(E_K(E_K(E_K(P))) \neq E_K(P)\) in general). Legacy DES hardware cannot interoperate with EEE-based 3DES. The EDE arrangement was chosen specifically so that the degenerate same-key case collapses cleanly to exactly single DES.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if CBC XORs with the previous ciphertext AFTER encryption instead of before?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The block cipher still receives raw plaintext. Identical plaintext blocks still produce identical cipher outputs. The post-encryption XOR masks those equal outputs with different chaining values, but an attacker can XOR consecutive ciphertexts to recover those differences. ECB's core problem — identical inputs to the cipher — survives. XOR must happen before to change what the cipher sees.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if CBC uses a fixed IV (always zero) with the same key?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Two messages with identical first plaintext blocks produce identical first ciphertext blocks, leaking that the messages share a common prefix. Against a chosen-plaintext attacker, a predictable IV enables verifying guesses about plaintext content (BEAST attack in TLS 1.0).</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if CFB feeds back plaintext instead of ciphertext?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The keystream for segment \(i+1\) depends on \(P_i\), which an attacker can observe. An attacker who can choose or predict \(P_i\) can predict the register contents and therefore the next keystream segment, compromising confidentiality of all subsequent bytes.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if OFB or CTR reuse their IV/nonce for two messages?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Both messages are XORed with the identical keystream. \(C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}\) — the two-time pad. Both plaintexts are recoverable via crib-dragging without breaking the cipher. This is one structural failure shared by all keystream modes, not two separate issues.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if RC4's KSA removes S[i] from the j update?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">\(j\) is determined entirely by key bytes with no feedback from the evolving permutation. The 256 swaps become independent, each computable from one key byte alone. The key setup provides far weaker obfuscation — easier to analyze and invert.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if RC4's PRGA stops swapping?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The permutation is fixed after initialization. The keystream becomes a fixed walk through one permutation, periodic with period at most \(256^2 = 65536\). Any message over 65536 bytes reuses the entire keystream — the two-time pad inflicted on a single message.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if Needham-Schroeder omits the challenge-response (messages 4–5)?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">An attacker who captured message 3 (the ticket) from any old session can replay it. Bob extracts the old session key and believes a fresh session is starting. With the old \(K_S\), the attacker can communicate with Bob while Bob believes he is talking to Alice. There is no liveness proof.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What breaks if Kerberos removes timestamps from authenticators?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Captured authenticators can be replayed indefinitely. The server cannot distinguish a fresh one from one recorded in a previous session. Kerberos degrades to the same replay vulnerability as Needham-Schroeder without the nonce challenge-response.</div></div>
 
   <h2>Comprehensive Review Questions</h2>
 

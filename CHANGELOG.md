@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## 0.1.1
+
+### Changed
+
+#### Lecture 02 — pedagogy and alignment with peer review (`lecture02-feedback.md`)
+- **`lectures/lecture02-study-guide.md`** — Major rewrite of explanatory prose (exam Q&A and structure preserved):
+  - Opening framed as **four recurring design pressures** (repeated structure, keystream reuse, replay, scale) that unify the whole lecture.
+  - **2DES / MITM** — Two distinct failure modes (DES-as-group vs. meet-in-the-middle); attack explained via the **searchable seam** at the intermediate state and named as a **time–memory tradeoff**.
+  - **Block modes** — CBC justified as “XOR before encryption” (what the cipher sees); CFB/OFB motivated by byte-at-a-time use, ciphertext vs. keystream feedback, and noisy channels; explicit **keystream-then-XOR** unifier for CFB, OFB, CTR, and RC4 (**two-time pad**); contrast of **CBC IV unpredictability** vs. **CTR nonce uniqueness**.
+  - **RC4** — Contrasted with a naive failing design; rationale for KSA **j** accumulation and PRGA output indirection; “what breaks if” for KSA/PRGA variants.
+  - **Needham-Schroeder** — Built from broken simpler attempts (ticket, N₁, N₂); **Denning–Sacco** residual replay called out in the main narrative.
+  - **Kerberos** — Presented as **NS under operational pressure** (four problems → three design decisions: TGT/SSO, timestamps vs. nonces and clock sync tradeoff, AS/TGS separation); NS ticket vs. TGT pattern connected.
+  - **Exam prep** — Understanding-oriented review questions; **“What breaks if…”** master list.
+- **`lectures/lecture02-study.html`** — Content-only updates (no full rewrite): overview four-problems grid; 2DES framing and time–memory tradeoff; CBC “XOR before” callout; CFB ciphertext-feedback rationale; OFB two-time-pad callout; CTR keystream-unifier callout; RC4 weak-alternative and KSA/PRGA rationale; NS ticket/freshness narrative and residual-replay callout; Kerberos evolutionary narrative, timestamp tradeoffs, “what breaks if” callouts, NS↔TGT connection; exam-prep understanding questions and “What breaks if” list.
+
+---
+
 ## [0.1.0] — 2026-03-31
 
 Initial release. Complete study hub for CSE 464 Computer System Security.
@@ -35,7 +52,7 @@ Initial release. Complete study hub for CSE 464 Computer System Security.
 
 #### Site Infrastructure
 - `index.html` — Landing page with lecture cards, exam section, scroll progress bar
-- Version badge (`v0.1.0`) in nav bar and footer
+- Version badge (`v0.1.1`) in nav bar and footer
 - `README.md` — Repository documentation
 - `CHANGELOG.md` — This file
 - `.gitignore`
