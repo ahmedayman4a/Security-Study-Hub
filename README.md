@@ -3,6 +3,8 @@
 > **Interactive study guides and practice exams** for the CS464 Computer System Security course at Alexandria University.
 > Deployed as a static site on GitHub Pages — no build step required.
 
+**Live site:** [https://ahmedayman4a.github.io/Security-Study-Hub/](https://ahmedayman4a.github.io/Security-Study-Hub/)
+
 [![Version](https://img.shields.io/badge/version-v0.1.0-a78bfa?style=flat-square)](CHANGELOG.md)
 [![Lectures](https://img.shields.io/badge/lectures-6-6c8aff?style=flat-square)](#lectures)
 [![Exam Questions](https://img.shields.io/badge/exam%20questions-60-34d399?style=flat-square)](#exam-files)
@@ -87,6 +89,8 @@ study_security/
 3. Set **Source** to `Deploy from a branch`, branch `main`, folder `/ (root)`.
 4. After a minute, the site is live at `https://<username>.github.io/<repo-name>/`.
 5. The entry point is `index.html` — share that URL.
+
+This repository’s deployment: [https://ahmedayman4a.github.io/Security-Study-Hub/](https://ahmedayman4a.github.io/Security-Study-Hub/).
 
 > **No build step needed.** All HTML files are self-contained (KaTeX loaded from CDN).
 
