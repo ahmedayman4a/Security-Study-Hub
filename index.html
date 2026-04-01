@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="version" content="v0.1.0">
+<title>CSE 464 — Computer System Security | Study Hub</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3247;
+    --accent: #6c8aff;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warning: #f59e0b;
+    --danger: #f87171;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── TOP NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .nav-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+  .nav-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .version-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 48px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    opacity: 0.4;
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+  .hero-title {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a78bfa 60%, #6c8aff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 580px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .meta-item strong { color: var(--text-muted); }
+  .meta-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent3);
+    flex-shrink: 0;
+  }
+
+  /* ── EXAM BANNER ── */
+  .exam-banner {
+    max-width: 1200px;
+    margin: 0 auto 48px;
+    padding: 0 48px;
+  }
+  .exam-banner-inner {
+    background: linear-gradient(135deg, #1a1d27 0%, #1e1a40 100%);
+    border: 1px solid #3d3680;
+    border-radius: 16px;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .exam-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .exam-icon {
+    font-size: 32px;
+  }
+  .exam-banner-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .exam-banner-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .exam-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .exam-tag {
+    background: rgba(167,139,250,0.12);
+    border: 1px solid rgba(167,139,250,0.25);
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── GRID ── */
+  .section-header {
+    max-width: 1200px;
+    margin: 0 auto 24px;
+    padding: 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .section-count {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .lectures-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 48px 80px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── LECTURE CARD ── */
+  .lecture-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .lecture-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(108,138,255,0.12);
+  }
+  .lecture-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .lecture-card:hover::before { opacity: 1; }
+
+  .card-l1::before { background: linear-gradient(90deg, #6c8aff, #a78bfa); }
+  .card-l2::before { background: linear-gradient(90deg, #34d399, #6c8aff); }
+  .card-l3::before { background: linear-gradient(90deg, #a78bfa, #f87171); }
+  .card-l4::before { background: linear-gradient(90deg, #f59e0b, #a78bfa); }
+  .card-l5::before { background: linear-gradient(90deg, #34d399, #a78bfa); }
+  .card-l6::before { background: linear-gradient(90deg, #6c8aff, #34d399); }
+
+  .card-header {
+    padding: 24px 24px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .card-icon {
+    font-size: 36px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .lecture-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .card-body {
+    padding: 0 24px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .topic-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  .exam-coverage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(108,138,255,0.07);
+    border: 1px solid rgba(108,138,255,0.15);
+    border-radius: 8px;
+  }
+  .exam-coverage-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .exam-coverage-qs {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .no-exam {
+    background: rgba(100,116,139,0.07);
+    border-color: rgba(100,116,139,0.15);
+  }
+  .no-exam .exam-coverage-label { color: var(--text-dim); }
+
+  .card-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .open-btn:hover { background: #7c9aff; }
+  .open-btn svg { width: 14px; height: 14px; }
+
+  .md-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .md-link:hover { color: var(--accent2); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer p {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .kbd {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: monospace;
+  }
+
+  /* ── SCROLL PROGRESS ── */
+  #scroll-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    z-index: 999;
+    transition: width 0.1s;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .hero-title { font-size: 34px; }
+    .exam-banner { padding: 0 20px; }
+    .section-header { padding: 0 20px; }
+    .lectures-grid { padding: 0 20px 60px; grid-template-columns: 1fr; }
+    footer { padding: 24px 20px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scroll-bar"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">
+    <span class="nav-badge">CSE 464</span>
+    <span class="nav-title">Computer System Security</span>
+  </a>
+  <div class="nav-links">
+    <a href="#lectures">Lectures</a>
+    <a href="#exams">Exams</a>
+    <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+    <span class="version-badge">v0.1.0</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">
+    <span>📚</span> Alexandria University · Faculty of Engineering
+  </div>
+  <h1 class="hero-title">Security<br>Study Hub</h1>
+  <p class="hero-subtitle">
+    Complete interactive study guides for all lectures — built from lecture slides, assignments, and midterm exams. Prose-first explanations, worked examples, and embedded practice.
+  </p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <div class="meta-dot"></div>
+      <span>6 Lectures</span>
+    </div>
+    <div class="meta-item">
+      <div class="meta-dot" style="background:var(--accent);"></div>
+      <span>60 Midterm Questions</span>
+    </div>
+    <div class="meta-item">
+      <div class="meta-dot" style="background:var(--accent2);"></div>
+      <span>Prof. Dr. Sahar M. Ghanem · Fall 2025</span>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM BANNER -->
+<div class="exam-banner">
+  <div class="exam-banner-inner">
+    <div class="exam-banner-left">
+      <div class="exam-icon">🎯</div>
+      <div>
+        <div class="exam-banner-title">2025 Midterm — Fully Integrated</div>
+        <div class="exam-banner-desc">All 60 exam questions embedded in the relevant lecture section, with answers and explanations including disputed/corrected questions.</div>
+      </div>
+    </div>
+    <div class="exam-tags">
+      <span class="exam-tag">Q1–Q12 → L01</span>
+      <span class="exam-tag">Q13–Q29 → L02</span>
+      <span class="exam-tag">Q30–Q38 → L03</span>
+      <span class="exam-tag">Q39–Q48 → L04</span>
+      <span class="exam-tag">Q49–Q60 → L05</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION LABEL -->
+<div class="section-header" id="lectures">
+  <span class="section-title">All Lectures</span>
+  <span class="section-count">6 modules</span>
+</div>
+
+<!-- LECTURES GRID -->
+<div class="lectures-grid">
+
+  <!-- L01 -->
+  <div class="lecture-card card-l1">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 01</div>
+        <div class="card-title">AES &amp; Classical Cryptography</div>
+      </div>
+      <div class="card-icon">🔐</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">From Caesar ciphers to the modern AES standard — classical ciphers, Feistel structure, DES, and full AES internals including GF(2⁸) arithmetic and key schedule.</p>
+      <div class="topic-chips">
+        <span class="chip">Classical Ciphers</span>
+        <span class="chip">Vigenère</span>
+        <span class="chip">Feistel</span>
+        <span class="chip">DES</span>
+        <span class="chip">AES</span>
+        <span class="chip">SubBytes</span>
+        <span class="chip">MixColumns</span>
+        <span class="chip">Key Schedule</span>
+        <span class="chip">GF(2⁸)</span>
+      </div>
+      <div class="exam-coverage">
+        <span class="exam-coverage-label">📋 Exam</span>
+        <span class="exam-coverage-qs">Q1–Q12 · 12 midterm questions</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture01-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture01-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+  <!-- L02 -->
+  <div class="lecture-card card-l2">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 02</div>
+        <div class="card-title">Block Ciphers, Stream Ciphers &amp; Key Distribution</div>
+      </div>
+      <div class="card-icon">🔗</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Multiple DES, meet-in-the-middle attacks, all five block cipher modes, RC4 stream cipher, and key distribution protocols — Needham-Schroeder and Kerberos.</p>
+      <div class="topic-chips">
+        <span class="chip">2DES / 3DES</span>
+        <span class="chip">MITM Attack</span>
+        <span class="chip">ECB / CBC</span>
+        <span class="chip">CFB / OFB / CTR</span>
+        <span class="chip">RC4</span>
+        <span class="chip">Needham-Schroeder</span>
+        <span class="chip">Kerberos</span>
+        <span class="chip">TGT / TGS</span>
+      </div>
+      <div class="exam-coverage">
+        <span class="exam-coverage-label">📋 Exam</span>
+        <span class="exam-coverage-qs">Q13–Q29 · 17 midterm questions</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture02-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture02-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+  <!-- L03 -->
+  <div class="lecture-card card-l3">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 03</div>
+        <div class="card-title">Public-Key Cryptography &amp; RSA</div>
+      </div>
+      <div class="card-icon">🔑</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">From Euler's theorem to modular exponentiation — RSA key generation, encryption/decryption, CRT speedup, and security analysis including factoring challenges and low-entropy attacks.</p>
+      <div class="topic-chips">
+        <span class="chip">Euler's Theorem</span>
+        <span class="chip">RSA Key Gen</span>
+        <span class="chip">Modular Exponentiation</span>
+        <span class="chip">CRT Speedup</span>
+        <span class="chip">Common Modulus Attack</span>
+        <span class="chip">Low Entropy</span>
+        <span class="chip">PFS</span>
+      </div>
+      <div class="exam-coverage">
+        <span class="exam-coverage-label">📋 Exam</span>
+        <span class="exam-coverage-qs">Q30–Q38 · 9 midterm questions</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture03-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture03-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+  <!-- L04 -->
+  <div class="lecture-card card-l4">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 04</div>
+        <div class="card-title">More Public-Key Cryptography</div>
+      </div>
+      <div class="card-icon">📜</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Certificates, PKI hierarchy, Diffie-Hellman key exchange, ElGamal encryption and digital signatures, discrete logarithm problem, DHE and perfect forward secrecy.</p>
+      <div class="topic-chips">
+        <span class="chip">Certificates / CA</span>
+        <span class="chip">X.509 / PKI</span>
+        <span class="chip">Diffie-Hellman</span>
+        <span class="chip">ℤ*p Group</span>
+        <span class="chip">ElGamal Encryption</span>
+        <span class="chip">ElGamal DSS</span>
+        <span class="chip">Discrete Log</span>
+        <span class="chip">DHE / PFS</span>
+      </div>
+      <div class="exam-coverage">
+        <span class="exam-coverage-label">📋 Exam</span>
+        <span class="exam-coverage-qs">Q39–Q48 · 10 midterm questions</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture04-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture04-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+  <!-- L05 -->
+  <div class="lecture-card card-l5">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 05</div>
+        <div class="card-title">Cryptographically Secure Hashing</div>
+      </div>
+      <div class="card-icon">🔢</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Hash function properties, birthday attacks, Merkle-Damgård construction, the SHA family, message authentication codes, and HMAC — including disputed exam questions Q52 and Q54.</p>
+      <div class="topic-chips">
+        <span class="chip">Pre-image Resistance</span>
+        <span class="chip">Collision Resistance</span>
+        <span class="chip">Birthday Attack</span>
+        <span class="chip">Merkle-Damgård</span>
+        <span class="chip">SHA-1 / SHA-2</span>
+        <span class="chip">MAC Schemes</span>
+        <span class="chip">HMAC</span>
+      </div>
+      <div class="exam-coverage">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="exam-coverage-label">📋 Exam</span>
+            <span class="exam-coverage-qs">Q49–Q60 · 12 midterm questions</span>
+          </div>
+          <span style="font-size:10px;font-weight:700;color:var(--warning);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);padding:2px 8px;border-radius:10px;white-space:nowrap;">⚠️ Q52 DISPUTED</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture05-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture05-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+  <!-- L06 -->
+  <div class="lecture-card card-l6">
+    <div class="card-header">
+      <div>
+        <div class="lecture-num">Lecture 06</div>
+        <div class="card-title">Secure Random Number Generation</div>
+      </div>
+      <div class="card-icon">🎲</div>
+    </div>
+    <div class="card-body">
+      <p class="card-desc">Why randomness underpins all of cryptography — LCG, ANSI X9.31 CSPRNG, Blum Blum Shub, true entropy sources, Shannon entropy, Intel RDRAND, and /dev/random.</p>
+      <div class="topic-chips">
+        <span class="chip">PRNG / TRNG</span>
+        <span class="chip">LCG</span>
+        <span class="chip">ANSI X9.31</span>
+        <span class="chip">Blum Blum Shub</span>
+        <span class="chip">Shannon Entropy</span>
+        <span class="chip">Intel RDRAND</span>
+        <span class="chip">/dev/random</span>
+        <span class="chip">EGD</span>
+      </div>
+      <div class="exam-coverage no-exam">
+        <span class="exam-coverage-label">No Exam Qs</span>
+        <span class="exam-coverage-qs">Foundational — connects to RSA, DH, Kerberos failures</span>
+      </div>
+    </div>
+    <div class="card-footer">
+      <a href="lectures/lecture06-study.html" class="open-btn">
+        Open Study Tool
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </a>
+      <a href="lectures/lecture06-study-guide.md" class="md-link">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6L9 2z"/><path d="M9 2v4h4"/></svg>
+        Markdown Guide
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- EXAMS SECTION HEADER -->
+<div class="section-header" id="exams" style="margin-top:60px;">
+  <span class="section-title">Exams &amp; Practice</span>
+  <span class="section-count">6 files</span>
+</div>
+
+<!-- EXAM BANNER: FULL MIDTERM -->
+<div style="max-width:1200px;margin:0 auto 20px;padding:0 48px;">
+  <div style="background:linear-gradient(135deg,#1a0d3a 0%,#0d1c3a 100%);border:1px solid #3d3680;border-radius:16px;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div style="font-size:40px;">📝</div>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:var(--accent2);margin-bottom:4px;">2025 Midterm — Full Exam</div>
+        <div style="font-size:13px;color:var(--text-muted);">All 60 questions · 60-minute countdown timer · Instant feedback · Grade at the end</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <span style="font-size:11px;font-weight:700;color:var(--warning);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 10px;border-radius:20px;">⚠️ Q20 Disputed</span>
+          <span style="font-size:11px;font-weight:700;color:var(--warning);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 10px;border-radius:20px;">⚠️ Q52 Disputed</span>
+          <span style="font-size:11px;font-weight:700;color:var(--accent3);background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);padding:2px 10px;border-radius:20px;">📝 Q29 Both (b)&amp;(c) valid</span>
+        </div>
+      </div>
+    </div>
+    <a href="exams/exam-2025-midterm.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent2);color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;flex-shrink:0;transition:background .15s;" onmouseover="this.style.background='#b49dfb'" onmouseout="this.style.background='var(--accent2)'">
+      Open Exam
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+    </a>
+  </div>
+</div>
+
+
+<!-- Mock Exams subsection -->
+<div style="max-width:1100px;margin:0 auto;padding:0 24px 48px;">
+  <h3 style="font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin:0 0 20px;">Practice Mock Exams — All 6 Lectures</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    <div style="background:var(--surface);border:1px solid #6c8aff44;border-radius:12px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <span style="font-size:20px;">📝</span>
+        <span style="font-weight:700;font-size:15px;color:var(--text);">Mock Exam A</span>
+        <span style="background:#6c8aff18;color:#6c8aff;border:1px solid #6c8aff33;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">60 Q · All Lectures</span>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px;line-height:1.5;">60 original questions covering all 6 lectures. Full timed format (60 min). Immediate answer feedback with detailed explanations.</p>
+      <a href="exams/mock-exam-a.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">Start Mock Exam A →</a>
+    </div>
+    <div style="background:var(--surface);border:1px solid #a78bfa44;border-radius:12px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <span style="font-size:20px;">📋</span>
+        <span style="font-weight:700;font-size:15px;color:var(--text);">Mock Exam B</span>
+        <span style="background:#a78bfa18;color:#a78bfa;border:1px solid #a78bfa33;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">60 Q · All Lectures</span>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px;line-height:1.5;">60 completely different questions from Exam A, testing different angles on all 6 lectures. Full 60-min timer with scoring.</p>
+      <a href="exams/mock-exam-b.html" style="display:inline-flex;align-items:center;gap:6px;background:#a78bfa;color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">Start Mock Exam B →</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>CSE 464: Computer System Security · Prof. Dr. Sahar M. Ghanem · Alexandria University · Fall 2025</p>
+  <p>Inside each study tool, use <span class="kbd">←</span> <span class="kbd">→</span> to navigate between sections.</p>
+  <p style="margin-top:10px;font-size:11px;letter-spacing:0.04em;">
+    <span style="background:rgba(255,255,255,.04);border:1px solid var(--border);padding:3px 12px;border-radius:20px;">v0.1.0 · March 2026</span>
+  </p>
+</footer>
+
+<script>
+  // Scroll progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    document.getElementById('scroll-bar').style.width = pct + '%';
+  });
+</script>
+
+</body>
+</html>

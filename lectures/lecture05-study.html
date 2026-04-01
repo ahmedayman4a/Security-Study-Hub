@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 464 — Lecture 05: Cryptographically Secure Hashing</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3247;
+    --accent: #6c8aff; --accent2: #a78bfa; --accent3: #34d399;
+    --warning: #f59e0b; --danger: #f87171; --text: #e2e8f0;
+    --text-muted: #94a3b8; --text-dim: #64748b;
+    --tag-bg: #1e3a5f; --tag-text: #93c5fd;
+    --correct-bg: #052e16; --correct-border: #16a34a;
+    --wrong-bg: #2d0000; --wrong-border: #b91c1c;
+    --hint-bg: #1c1a05; --hint-border: #854d0e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
+  #app { display: flex; min-height: 100vh; }
+  #sidebar { width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+  #sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  #sidebar-header p { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 6px 16px 4px; }
+  .nav-item { display: block; padding: 7px 16px; font-size: 13px; color: var(--text-muted); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover, .nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+  .nav-item.active { color: var(--accent); font-weight: 600; }
+  #main { margin-left: 280px; flex: 1; padding: 40px 48px 80px; max-width: 1100px; }
+  #progress-bar { position: fixed; top: 0; left: 280px; right: 0; height: 3px; background: var(--border); z-index: 200; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.3s; }
+  .section { display: none; animation: fadeIn 0.3s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  h1 .tag { font-size: 12px; font-weight: 600; background: var(--tag-bg); color: var(--tag-text); padding: 3px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; }
+  h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; font-weight: 700; color: var(--accent2); margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--accent3); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: #fff; font-weight: 700; }
+  em { color: var(--accent2); font-style: italic; }
+  ul, ol { margin: 0 0 14px 24px; color: var(--text-muted); }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--text); }
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 18px 0; border-left: 4px solid; font-size: 15px; }
+  .callout-info { background: #0c1a3a; border-color: var(--accent); }
+  .callout-tip { background: #0a2a1a; border-color: var(--accent3); }
+  .callout-warning { background: var(--hint-bg); border-color: var(--warning); }
+  .callout-danger { background: var(--wrong-bg); border-color: var(--danger); }
+  .callout-title { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info .callout-title { color: var(--accent); }
+  .callout-tip .callout-title { color: var(--accent3); }
+  .callout-warning .callout-title { color: var(--warning); }
+  .callout-danger .callout-title { color: var(--danger); }
+  code { background: #1e2235; color: #a5f3fc; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  pre { background: #111520; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.8; color: #c4d4f0; margin: 14px 0; white-space: pre; }
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--surface2); color: var(--accent); font-weight: 700; padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  tr:hover td { background: var(--surface2); }
+  .example-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .example-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--accent3); border-bottom: 1px solid var(--border); }
+  .example-badge { background: #064e3b; color: var(--accent3); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .example-body { padding: 18px 20px; }
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .quiz-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .quiz-badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 700; }
+  .badge-exam { background: #1e1a40; color: var(--accent2); }
+  .badge-practice { background: #122a40; color: var(--accent); }
+  .badge-doubt { background: #2a1a00; color: var(--warning); }
+  .badge-invalid { background: #3a0a00; color: var(--danger); }
+  .quiz-question { padding: 16px 20px; font-size: 15px; font-weight: 500; line-height: 1.6; }
+  .options { padding: 0 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .option { padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.15s; display: flex; align-items: flex-start; gap: 10px; background: var(--surface2); }
+  .option:hover { border-color: var(--accent); background: #111830; }
+  .option.correct { background: var(--correct-bg); border-color: var(--correct-border); color: #6ee7b7; }
+  .option.wrong { background: var(--wrong-bg); border-color: var(--wrong-border); color: #fca5a5; }
+  .option.none-correct { background: #1a1400; border-color: var(--warning); color: #fde68a; }
+  .option.disabled { cursor: default; pointer-events: none; }
+  .option-letter { font-weight: 800; font-size: 12px; min-width: 22px; height: 22px; background: var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .explanation { margin: 8px 20px 16px; padding: 14px 16px; background: #0c1225; border: 1px solid var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.6; display: none; }
+  .explanation.show { display: block; }
+  .hero { padding: 40px 0 20px; }
+  .hero-tag { font-size: 12px; font-weight: 700; color: var(--accent3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .hero-title { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+  .hero-subtitle { font-size: 17px; color: var(--text-muted); margin-bottom: 32px; max-width: 620px; }
+  .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+  .topic-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.2s; }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-icon { font-size: 24px; margin-bottom: 10px; }
+  .topic-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .topic-desc { font-size: 12px; color: var(--text-dim); }
+  .kc-card { background: #0c1a3a; border: 1px solid var(--accent); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+  .kc-title { font-size: 12px; font-weight: 800; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .kc-item { margin-bottom: 14px; }
+  .kc-q { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .kc-a { color: var(--text-muted); font-size: 14px; display: none; border-left: 3px solid var(--accent3); padding-left: 12px; margin-top: 6px; }
+  .kc-toggle { font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+  .scheme-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 12px 0; }
+  .scheme-num { display: inline-block; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; margin-bottom: 8px; }
+  .scheme-formula { background: #111520; border-radius: 8px; padding: 12px 16px; margin: 8px 0; font-family: monospace; font-size: 13px; color: #a5f3fc; }
+  .math-block { background: #111520; border-radius: 10px; padding: 20px; margin: 14px 0; }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="app">
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>CSE 464</h2>
+    <p>Lecture 05 — Cryptographically Secure Hashing</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Navigation</div>
+    <div class="nav-item active" onclick="show('sec-overview')">🏠 Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Content</div>
+    <div class="nav-item" onclick="show('sec-hash-intro')">🔢 What Is a Hash Function?</div>
+    <div class="nav-item" onclick="show('sec-properties')">🔐 Security Properties</div>
+    <div class="nav-item" onclick="show('sec-mac-schemes')">📨 Message Authentication Schemes</div>
+    <div class="nav-item" onclick="show('sec-simple-hash')">⚠️ Simple Hashes &amp; Weaknesses</div>
+    <div class="nav-item" onclick="show('sec-birthday')">🎂 Birthday Attack</div>
+    <div class="nav-item" onclick="show('sec-merkle')">🏗️ Merkle-Damgård Construction</div>
+    <div class="nav-item" onclick="show('sec-sha')">📐 SHA Family</div>
+    <div class="nav-item" onclick="show('sec-hmac')">🔑 MAC and HMAC</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Practice</div>
+    <div class="nav-item" onclick="show('sec-exam-prep')">📋 Exam Prep (Q49–Q60)</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- OVERVIEW -->
+<div id="sec-overview" class="section active">
+  <div class="hero">
+    <div class="hero-tag">Lecture 05</div>
+    <h1 class="hero-title">Cryptographically Secure Hashing</h1>
+    <p class="hero-subtitle">From fixed-size fingerprints to birthday attacks — how hash functions provide integrity, authentication, and the foundation of digital signatures.</p>
+  </div>
+  <div class="topic-grid">
+    <div class="topic-card" onclick="show('sec-hash-intro')">
+      <div class="topic-icon">🔢</div>
+      <div class="topic-title">What Is a Hash Function?</div>
+      <div class="topic-desc">Variable input → fixed output; why it matters; SHA examples</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-properties')">
+      <div class="topic-icon">🔐</div>
+      <div class="topic-title">Security Properties</div>
+      <div class="topic-desc">Pre-image, weak collision, strong collision — definitions and relationships</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-mac-schemes')">
+      <div class="topic-icon">📨</div>
+      <div class="topic-title">Authentication Schemes</div>
+      <div class="topic-desc">Six ways to use hashes for message authentication</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-simple-hash')">
+      <div class="topic-icon">⚠️</div>
+      <div class="topic-title">Simple Hashes &amp; Weaknesses</div>
+      <div class="topic-desc">XOR hash attack, ROXR, why length must be included</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-birthday')">
+      <div class="topic-icon">🎂</div>
+      <div class="topic-title">Birthday Attack</div>
+      <div class="topic-desc">Collision probability math, $2^{n/2}$ bound, contract forgery scenario</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-merkle')">
+      <div class="topic-icon">🏗️</div>
+      <div class="topic-title">Merkle-Damgård</div>
+      <div class="topic-desc">The structural foundation of SHA-1, SHA-2, MD5</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-sha')">
+      <div class="topic-icon">📐</div>
+      <div class="topic-title">SHA Family</div>
+      <div class="topic-desc">SHA-1 (broken), SHA-2 (current), SHA-512 internals</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-hmac')">
+      <div class="topic-icon">🔑</div>
+      <div class="topic-title">MAC and HMAC</div>
+      <div class="topic-desc">Why simple MAC fails, HMAC formula, vs digital signatures</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-exam-prep')">
+      <div class="topic-icon">📋</div>
+      <div class="topic-title">Exam Prep Q49–Q60</div>
+      <div class="topic-desc">All midterm questions with full explanations (Q52 disputed)</div>
+    </div>
+  </div>
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ Questions of Doubt Alert</div>
+    <p>Q52 is officially marked as having <strong>no correct answer</strong> among the options given. Q54 is confirmed correct as (c). See the Exam Prep section for full clarifications.</p>
+  </div>
+</div>
+
+<!-- WHAT IS A HASH FUNCTION -->
+<div id="sec-hash-intro" class="section">
+  <h1>What Is a Hash Function? <span class="tag">Part 1</span></h1>
+  <h2>The Core Idea</h2>
+  <p>A <strong>hash function</strong> $h$ takes a variable-length input message $M$ and produces a fixed-length output — the <strong>hashcode</strong>, <strong>message digest</strong>, or <strong>digest</strong>:</p>
+  <div class="math-block">$$h : \{0,1\}^* \to \{0,1\}^n$$</div>
+  <p>For example, SHA-256 accepts messages of essentially any length and always outputs exactly 256 bits. SHA-512 always outputs 512 bits, regardless of whether the input is 1 byte or 1 GB.</p>
+  <p>The key property: <strong>any change to the input — even flipping a single bit — produces a completely different hash</strong>. This avalanche effect is what makes hashes useful as tamper-evident fingerprints.</p>
+  <h2>Why Hash Functions Matter</h2>
+  <ul>
+    <li><strong>File integrity:</strong> "Does this downloaded file match what the server sent?" Compare hashes.</li>
+    <li><strong>Password storage:</strong> Store $h(\text{password})$, not the password. At login, hash the input and compare.</li>
+    <li><strong>Digital signatures:</strong> Hash the document (fast), then sign the hash (small). The signature is binding because changing the document changes its hash.</li>
+    <li><strong>Message authentication:</strong> Prove a message was not tampered with in transit.</li>
+    <li><strong>Blockchain:</strong> Proof-of-work mining, ownership authentication, double-spending prevention.</li>
+  </ul>
+  <div class="callout callout-info">
+    <div class="callout-title">💡 SHA-512 Specifics</div>
+    <p>SHA-512 accepts messages up to $2^{128}$ bits in length and produces a 512-bit digest. It processes input in 1024-bit blocks, uses 80 rounds of processing, and maintains eight 64-bit internal registers.</p>
+  </div>
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What happens if you change one bit in the input to a hash function?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">The hash output changes completely and unpredictably — this is the avalanche effect. A good hash function ensures that any single-bit change in the input changes approximately 50% of the output bits.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why can't you store the raw hash in SSL/TLS certificates and use it as a session key?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Hashing is one-way and keyless — there's no secret. Anyone can compute the same hash. A session key must be secret, not publicly computable. Hash functions are for integrity (detecting changes), not confidentiality.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECURITY PROPERTIES -->
+<div id="sec-properties" class="section">
+  <h1>Security Properties of Hash Functions <span class="tag">Part 2</span></h1>
+  <h2>Property 1: Pre-Image Resistance (One-Way)</h2>
+  <p>Given a hash value $h$, it is computationally infeasible to find any message $M$ such that $\text{hash}(M) = h$. You cannot reverse the hash. This is what makes password hash storage safe — even if an attacker gets the hash database, they cannot easily recover the original passwords.</p>
+  <h2>Property 2: Weak Collision Resistance (Second Pre-Image Resistance)</h2>
+  <p>Given a specific message $M_1$ and its hash $h(M_1)$, it is computationally infeasible to find a <strong>different</strong> message $M_2 \neq M_1$ such that:</p>
+  <div class="math-block">$$h(M_2) = h(M_1)$$</div>
+  <p>This protects against substituting a signed document with a different one that has the same hash. The starting message $M_1$ is <em>fixed</em> — the attacker must work from a specific document.</p>
+  <h2>Property 3: Strong Collision Resistance</h2>
+  <p>It is computationally infeasible to find <strong>any two different messages</strong> $M_1 \neq M_2$ such that $h(M_1) = h(M_2)$. The attacker gets to choose <em>both</em> $M_1$ and $M_2$ freely — no starting point is fixed. This is strictly harder for the attacker to achieve than weak collision.</p>
+  <h2>The Relationship Between Properties</h2>
+  <div class="callout callout-info">
+    <div class="callout-title">📌 Key Implication</div>
+    <p><strong>Strong collision resistance implies weak collision resistance.</strong> If you cannot find any colliding pair (strong), you certainly cannot find one starting from a fixed message $M_1$ (weak). Weak is a special case of strong. Therefore: strong ⊇ weak.</p>
+    <p>Pre-image resistance is independent — a hash can be collision resistant without being pre-image resistant, and vice versa.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Property</th><th>Given</th><th>Goal (attacker)</th><th>Effort</th></tr>
+      <tr><td>Pre-image resistance</td><td>Hash $h$</td><td>Find any $M$ with $\text{hash}(M) = h$</td><td>$\approx 2^n$</td></tr>
+      <tr><td>Weak collision (2nd pre-image)</td><td>Message $M_1$</td><td>Find $M_2 \neq M_1$ with same hash</td><td>$\approx 2^n$</td></tr>
+      <tr><td>Strong collision (birthday)</td><td>Nothing fixed</td><td>Find any pair $M_1 \neq M_2$ same hash</td><td>$\approx 2^{n/2}$</td></tr>
+    </table>
+  </div>
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">A hash has 160-bit output. What is the approximate birthday attack effort?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Birthday attack: $2^{160/2} = 2^{80}$ tries. Pre-image attack: $2^{160}$ tries. The birthday attack is dramatically more efficient — $2^{80}$ is far more feasible than $2^{160}$.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Does strong collision resistance imply pre-image resistance?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">No — these are independent properties. A hash function can be strongly collision resistant (no one can find any two colliding messages) but not pre-image resistant (given a hash, you can find an input). They protect against different types of attacks.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGE AUTHENTICATION SCHEMES -->
+<div id="sec-mac-schemes" class="section">
+  <h1>Message Authentication Schemes <span class="tag">Part 3</span></h1>
+  <h2>Six Standard Schemes</h2>
+  <p>Let $M$ = message, $K$ = shared symmetric key, $PR_A$ = sender A's private key, $h(M)$ = hash of $M$, $S$ = shared secret string.</p>
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ Critical Warning</div>
+    <p>Sending $M \| h(M)$ with no encryption or shared secret provides <strong>zero security</strong>. An attacker modifies $M$ to $M'$, recomputes $h(M')$, and sends $M' \| h(M')$. Always protect the hash.</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 1</div>
+    <p><strong>Authentication + Confidentiality (Symmetric)</strong></p>
+    <div class="scheme-formula">A → B: C = E(K, [M || h(M)])</div>
+    <p>Concatenate message + hash, then encrypt everything. B decrypts, recomputes hash, verifies. ✅ Authentication + Confidentiality</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 2</div>
+    <p><strong>MAC — Authentication Only</strong></p>
+    <div class="scheme-formula">A → B: C = M || E(K, h(M))</div>
+    <p>Message in cleartext; only the hash is encrypted. Only B (with key $K$) can verify. ✅ Authentication only (Message Authentication Code)</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 3</div>
+    <p><strong>Digital Signature — Authentication with Private Key</strong></p>
+    <div class="scheme-formula">A → B: C = M || E(PR_A, h(M))</div>
+    <p>A encrypts hash with its private key. Anyone with $PU_A$ can verify. ✅ Authentication + Non-repudiation</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 4</div>
+    <p><strong>Digital Signature + Symmetric Confidentiality</strong></p>
+    <div class="scheme-formula">A → B: C = E(K, [M || E(PR_A, h(M))])</div>
+    <p>Sign first, then encrypt the whole bundle. ✅ Authentication + Non-repudiation + Confidentiality</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 5</div>
+    <p><strong>Shared Secret — No Encryption Algorithm</strong></p>
+    <div class="scheme-formula">A → B: C = M || h(M || S)</div>
+    <p>$S$ = shared secret. Hash computed over message + secret. No encryption needed. ✅ Authentication (B verifies by computing $h(M||S)$ and comparing)</p>
+  </div>
+  <div class="scheme-card">
+    <div class="scheme-num">Scheme 6</div>
+    <p><strong>Shared Secret + Confidentiality</strong></p>
+    <div class="scheme-formula">A → B: C = E(K, M || h(M || S))</div>
+    <p>Scheme 5 plus symmetric encryption of the whole message. ✅ Authentication + Confidentiality</p>
+  </div>
+</div>
+
+<!-- SIMPLE HASHES AND WEAKNESSES -->
+<div id="sec-simple-hash" class="section">
+  <h1>Simple Hash Functions &amp; Their Weaknesses <span class="tag">Part 4</span></h1>
+  <h2>The XOR Hash</h2>
+  <p>The simplest possible hash: partition the message into $n$-bit blocks $X_1, X_2, \ldots, X_m$ and XOR them all:</p>
+  <div class="math-block">$$\Delta(M) = X_1 \oplus X_2 \oplus \cdots \oplus X_m$$</div>
+  <p>This is trivially broken. An attacker replacing $X_1, \ldots, X_{m-1}$ with any desired $Y_1, \ldots, Y_{m-1}$ simply computes:</p>
+  <div class="math-block">$$Y_m = Y_1 \oplus Y_2 \oplus \cdots \oplus Y_{m-1} \oplus \Delta(M)$$</div>
+  <p>This ensures $Y_1 \oplus \cdots \oplus Y_m = \Delta(M)$ — same hash, completely different content. The attacker has full freedom to replace the entire message.</p>
+
+  <h2>The Rotated-XOR (ROXR) Hash</h2>
+  <p>A slightly better attempt: after processing each block, rotate the partial hash one bit circularly. This adds position-sensitivity but still fails: an attacker can append a gibberish block to a forged message $M_2$ to force the final hash to equal $h(M_1)$.</p>
+
+  <h2>The Fix: Include Message Length</h2>
+  <div class="callout callout-tip">
+    <div class="callout-title">✅ Solution</div>
+    <p>All production hash functions include the message length in what gets hashed (as part of the padding). Changing the length changes the padded input, preventing the "append gibberish to equalize hash" attack. SHA-1 padding includes the 64-bit length field; SHA-512 uses 128 bits for the length field.</p>
+  </div>
+
+  <h2>SHA-1 Padding</h2>
+  <p>Given message $M$ of $L$ bits:</p>
+  <ol>
+    <li>Append a single <code>1</code> bit.</li>
+    <li>Append $K$ zero bits, where $K$ is the smallest non-negative integer satisfying: $(L + 1 + K) \bmod 512 = 448$</li>
+    <li>Append the 64-bit binary representation of $L$.</li>
+  </ol>
+  <p>Result: total length is a multiple of 512 bits. The last 64 bits are the length; 448 is chosen because $448 + 64 = 512$.</p>
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> SHA-1 Padding for L = 1000 bits</div>
+    <div class="example-body">
+      <p>$(1000 + 1 + K) \bmod 512 = 448$</p>
+      <p>$1001 + K \equiv 448 \pmod{512}$</p>
+      <p>$K \equiv 448 - 1001 \equiv -553 \equiv -553 + 2 \times 512 = 471 \pmod{512}$</p>
+      <p>$K = 471$ zero bits.</p>
+      <p>Total: $1000 + 1 + 471 + 64 = 1536 = 3 \times 512$ ✓</p>
+    </div>
+  </div>
+</div>
+
+<!-- BIRTHDAY ATTACK -->
+<div id="sec-birthday" class="section">
+  <h1>Birthday Attack — Collision Probability <span class="tag">Part 5</span></h1>
+  <h2>Weak Collision Probability (Pre-Image)</h2>
+  <p>With $n$-bit hash and $N = 2^n$ possible values: to find any message matching a specific hash $h$ with probability 0.5, need approximately:</p>
+  <div class="math-block">$$k \approx 0.5 \times N = 2^{n-1} \approx 2^n$$</div>
+
+  <h2>Strong Collision — The Birthday Paradox</h2>
+  <p>The birthday paradox: 23 random people have &gt;50% probability of sharing a birthday. Applied to hashing: a pool of $k$ random messages has probability of at least one matching pair:</p>
+  <div class="math-block">$$P(k) = 1 - \frac{N!}{(N-k)! \cdot N^k} \approx 1 - e^{-k(k-1)/(2N)}$$</div>
+  <p>Setting $P(k) = 0.5$ and solving:</p>
+  <div class="math-block">$$k \approx \sqrt{N} = \sqrt{2^n} = 2^{n/2}$$</div>
+  <p>This is the <strong>birthday bound</strong>: finding any strong collision requires only $2^{n/2}$ tries — dramatically fewer than $2^n$ for pre-image attacks.</p>
+
+  <h2>Birthday Attack on Digital Signatures (The Contract Forgery)</h2>
+  <p>The birthday attack can forge digital signatures:</p>
+  <ol>
+    <li>Mr. Creepy creates $k \approx 2^{n/2}$ variations of a legitimate contract $\{c_1, \ldots, c_k\}$ (semantic synonyms, punctuation changes).</li>
+    <li>Creepy creates $k$ variations of a fraudulent contract $\{f_1, \ldots, f_k\}$.</li>
+    <li>With probability ≈ 0.5, there exists $(c_i, f_j)$ such that $h(c_i) = h(f_j)$.</li>
+    <li>Get Mr. BigShot to digitally sign $c_i$ (the legitimate version).</li>
+    <li>Replace the signed contract with $f_j$ (the fraudulent version). The signature still verifies!</li>
+  </ol>
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ Security Implication</div>
+    <p>The birthday bound halves the effective security. A 256-bit hash gives only <strong>128-bit collision security</strong>. SHA-1 (160-bit) offers only $2^{80}$ collision security — considered insufficient. SHA-256 (256-bit) offers $2^{128}$ — the current recommended minimum.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Attack</th><th>Attacker's Goal</th><th>Effort</th></tr>
+      <tr><td>Pre-image</td><td>Find $M$ with given hash $h$</td><td>$\approx 2^n$</td></tr>
+      <tr><td>2nd Pre-image (weak collision)</td><td>Find $M_2$ matching hash of given $M_1$</td><td>$\approx 2^n$</td></tr>
+      <tr><td>Birthday (strong collision)</td><td>Find any pair with same hash</td><td>$\approx 2^{n/2}$</td></tr>
+    </table>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">MD5 produces a 128-bit hash. What is the birthday attack cost to find a collision?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">$2^{128/2} = 2^{64}$ tries. This is feasible for modern hardware — $2^{64}$ operations can be done in hours with GPUs. MD5 is considered completely broken for collision resistance. SHA-256 ($2^{128}$ cost) is the current minimum.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MERKLE-DAMGÅRD -->
+<div id="sec-merkle" class="section">
+  <h1>Merkle-Damgård Construction <span class="tag">Part 6</span></h1>
+  <h2>The Structure</h2>
+  <p>Proposed by Ralph Merkle in 1979, the Merkle-Damgård (MD) construction forms the basis of MD5, SHA-1, SHA-2, and Whirlpool. It processes a padded message block by block:</p>
+  <ol>
+    <li>Pad the message and partition into $L$ blocks of $b$ bits each (final block includes message length).</li>
+    <li>Initialize state: $H_0 = IV$ (a fixed, published constant — the same for every use of the hash function).</li>
+    <li>For each block $i$: $H_i = f(H_{i-1}, B_i)$ where $f$ is the <strong>compression function</strong>.</li>
+    <li>Final output: $H_L$ is the hash digest.</li>
+  </ol>
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Why "Compression"?</div>
+    <p>The compression function $f$ takes a $b$-bit block and an $n$-bit state, producing an $n$-bit output. Since $b > n$, it genuinely compresses. It is NOT file compression — it reduces the combined input size down to just the $n$-bit state.</p>
+  </div>
+  <h2>The IV Is Not Secret</h2>
+  <p>Unlike IVs in CBC or CTR mode, the hash function IV is a <strong>fixed public constant</strong> — the same for every computation of the same hash function. It is published in the hash specification. Its role is to start from a defined, non-trivial state, not to add secrecy.</p>
+  <h2>Security Reduction</h2>
+  <p>If the compression function $f$ is collision resistant, then the overall Merkle-Damgård hash is collision resistant. This is a formal security reduction — cryptographers need only prove the compression function is secure, and the theorem guarantees the full hash is secure. SHA-2 has no known compression function weaknesses as of 2024.</p>
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What is the role of the compression function in Merkle-Damgård?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">It processes one block of the message at a time, taking the current block ($b$ bits) and the current hash state ($n$ bits), and producing an updated hash state ($n$ bits). It is called compression because $b > n$ — more bits go in than come out.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">SHA-3 uses a different structure — what is it?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">The sponge construction (Keccak algorithm). Unlike Merkle-Damgård, it is not vulnerable to length extension attacks. It "absorbs" input and then "squeezes" output, using a large fixed-width permutation function.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SHA FAMILY -->
+<div id="sec-sha" class="section">
+  <h1>The SHA Family <span class="tag">Part 7</span></h1>
+  <h2>SHA-1 (Broken)</h2>
+  <p>SHA-1 produces a <strong>160-bit</strong> hash. Despite being theoretically broken since 2005, it continues to be used in legacy SSL/TLS, SSH, PGP, S/MIME, and IPsec.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Year</th><th>Event</th></tr>
+      <tr><td>2005</td><td>Theoretical break: $2^{69}$ operations to find collision (less than $2^{80}$ brute force)</td></tr>
+      <tr><td>2010</td><td>NIST withdrew SHA-1 approval for U.S. government applications</td></tr>
+      <tr><td>2017</td><td>"SHAttered" — Google produced two real PDF files with identical SHA-1 hashes using GPU clusters</td></tr>
+    </table>
+  </div>
+  <h2>SHA-2 (Current Standard)</h2>
+  <p>SHA-256, SHA-384, and SHA-512 are collectively <strong>SHA-2</strong>. No practical attacks are known as of 2024. NIST recommends SHA-256 as the minimum for new applications.</p>
+
+  <h2>SHA-512 Internals</h2>
+  <ul>
+    <li><strong>Block size:</strong> $b = 1024$ bits per block</li>
+    <li><strong>Padding:</strong> Last 128 bits of the final block encode the message length</li>
+    <li><strong>Message schedule:</strong> Each 1024-bit block (16 × 64-bit words) is expanded to 80 words</li>
+    <li><strong>Rounds:</strong> 80 rounds of compression per block</li>
+    <li><strong>State:</strong> Eight 64-bit registers ($a$ through $h$) — concatenated they form the 512-bit output</li>
+  </ul>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Algorithm</th><th>Output</th><th>Block Size</th><th>Rounds</th><th>Status</th></tr>
+      <tr><td>SHA-1</td><td>160 bits</td><td>512 bits</td><td>80</td><td style="color:var(--danger);">Broken (2017)</td></tr>
+      <tr><td>SHA-256</td><td>256 bits</td><td>512 bits</td><td>64</td><td style="color:var(--accent3);">Secure</td></tr>
+      <tr><td>SHA-384</td><td>384 bits</td><td>1024 bits</td><td>80</td><td style="color:var(--accent3);">Secure</td></tr>
+      <tr><td>SHA-512</td><td>512 bits</td><td>1024 bits</td><td>80</td><td style="color:var(--accent3);">Secure</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- HMAC -->
+<div id="sec-hmac" class="section">
+  <h1>MAC and HMAC <span class="tag">Part 8</span></h1>
+  <h2>Why Simple Hashing Provides No Security</h2>
+  <p>Sending $M \| h(M)$ with no secret provides zero protection. An adversary who sees $\{M, h(M)\}$ replaces $M$ with any $M'$, recomputes $h(M')$, and sends $M' \| h(M')$. The recipient cannot detect the substitution.</p>
+
+  <h2>Why Simple XOR-Based MAC Fails</h2>
+  <p>For $M = X_1 \| X_2 \| \cdots \| X_m$, the XOR-based MAC is $\text{MAC}(K, M) = E(K, X_1 \oplus \cdots \oplus X_m)$.</p>
+  <p>An attacker replaces $X_1, \ldots, X_{m-1}$ with $Y_1, \ldots, Y_{m-1}$ and sets:</p>
+  <div class="math-block">$$Y_m = Y_1 \oplus Y_2 \oplus \cdots \oplus Y_{m-1} \oplus \Delta(M)$$</div>
+  <p>This preserves the XOR, so the MAC is unchanged. The forged message passes verification.</p>
+
+  <h2>HMAC — The Standard Solution</h2>
+  <p>HMAC is used in IPsec, SSL/TLS, and many other protocols. It defends against length extension by hashing the key twice:</p>
+  <div class="math-block">$$\text{HMAC}_K(M) = h\!\left( (K^+ \oplus \text{opad})\ \|\ h\!\left( (K^+ \oplus \text{ipad})\ \|\ M \right) \right)$$</div>
+  <p>Where:</p>
+  <ul>
+    <li>$K^+$: key $K$ zero-padded to length $b$ (hash block size)</li>
+    <li><code>ipad</code>: byte <code>0x36</code> repeated $b/8$ times</li>
+    <li><code>opad</code>: byte <code>0x5C</code> repeated $b/8$ times</li>
+  </ul>
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Why Two Different Pads?</div>
+    <p>The ipad and opad derive two different key variants from $K^+$. The inner hash uses $K^+ \oplus \text{ipad}$ and the outer hash uses $K^+ \oplus \text{opad}$. Two different keys at two different levels prevent length extension: an attacker who extends the inner hash cannot use that to compute the outer HMAC without knowing $K$.</p>
+  </div>
+
+  <h2>HMAC vs. Digital Signature</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Feature</th><th>HMAC</th><th>Digital Signature</th></tr>
+      <tr><td>Key type</td><td>Symmetric (shared secret)</td><td>Asymmetric (private key)</td></tr>
+      <tr><td>Non-repudiation</td><td>No — both parties have the key</td><td>Yes — only signer has private key</td></tr>
+      <tr><td>Verification</td><td>Anyone with shared key</td><td>Anyone with signer's public key</td></tr>
+      <tr><td>Speed</td><td>Fast</td><td>Slower (modular exponentiation)</td></tr>
+      <tr><td>Certificate</td><td>Not needed</td><td>Usually yes</td></tr>
+    </table>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why does HMAC use two hashing levels instead of just $h(K \| M)$?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">$h(K \| M)$ is vulnerable to length extension attacks in Merkle-Damgård hash functions. Given $h(K \| M)$, an attacker can compute $h(K \| M \| \text{padding} \| M')$ for any extension $M'$ without knowing $K$, because the hash state after processing $K \| M$ is the starting point for the next block. The outer hash in HMAC wraps the result with the key again, breaking this extension chain.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why can HMAC not provide non-repudiation?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">HMAC uses a symmetric key — both sender and receiver hold the same key. Either party could have generated the MAC. There's no way to prove which one created it. Non-repudiation requires asymmetric keys: only the private key holder can create the signature, so the signer cannot deny authorship.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM PREP -->
+<div id="sec-exam-prep" class="section">
+  <h1>Exam Preparation <span class="tag">Q49–Q60</span></h1>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">📋 2025 Midterm Coverage — Important Notes</div>
+    <p>Questions Q49–Q60 cover Lecture 05 hashing topics. <strong>Q52 is officially marked as having no correct answer</strong> among the given options. Q54 is confirmed correct as (c).</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Q#</th><th>Topic</th><th>Answer</th></tr>
+      <tr><td>Q49</td><td>Hash function purpose</td><td>(a) Fixed-size output from variable input</td></tr>
+      <tr><td>Q50</td><td>Collision resistance</td><td>(a) Hard to find two inputs with same hash</td></tr>
+      <tr><td>Q51</td><td>Birthday attack</td><td>(b) Finding any two inputs with same hash</td></tr>
+      <tr><td style="color:var(--warning);">Q52</td><td>Weak collision resistance</td><td style="color:var(--warning);">⚠️ NONE CORRECT</td></tr>
+      <tr><td>Q53</td><td>Weak vs strong collision</td><td>(a) Fixed vs any two inputs</td></tr>
+      <tr><td>Q54</td><td>Strong implies weak?</td><td>(c) Yes</td></tr>
+      <tr><td>Q55</td><td>Hash structure</td><td>(b) Merkle-Damgård</td></tr>
+      <tr><td>Q56</td><td>Compression function</td><td>(d) Processes one block, updates state</td></tr>
+      <tr><td>Q57</td><td>IV role in hash</td><td>(b) Initial fixed value</td></tr>
+      <tr><td>Q58</td><td>HMAC requirements</td><td>(c) Secret key + hash function</td></tr>
+      <tr><td>Q59</td><td>HMAC vs signature</td><td>(a) Symmetric vs asymmetric keys</td></tr>
+      <tr><td>Q60</td><td>HMAC formula</td><td>(b) Double-hash with ipad/opad</td></tr>
+    </table>
+  </div>
+
+  <!-- Q49 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q49</span><span style="font-size:14px;color:var(--text-muted);">Purpose of Hash Functions</span></div>
+    <div class="quiz-question">What is the primary purpose of a cryptographic hash function?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>Generate a fixed-size output from variable-size input</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Encrypt data for secure transmission</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Provide compression for large files</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Create digital signatures</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> A hash function maps any-length input to a fixed-length digest (fingerprint). (b) is wrong — hashing is one-way and keyless, not encryption. (c) is wrong — the "compression" is mathematical (many inputs → small output), not file compression like zip. (d) is wrong — hashing is a component of signatures but is not itself a signature scheme.</div>
+  </div>
+
+  <!-- Q50 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q50</span><span style="font-size:14px;color:var(--text-muted);">Collision Resistance</span></div>
+    <div class="quiz-question">What does "collision resistance" mean in hash functions?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>It should be hard to find two different inputs with the same hash</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>It should be easy to reverse the hash output</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>The hash output should always be unique</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>The hash function should use a secret key</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> Strong collision resistance means it is computationally infeasible to find any $M_1 \neq M_2$ with $h(M_1) = h(M_2)$. (c) is impossible by pigeonhole principle — with infinite inputs and finite outputs, collisions must mathematically exist; the goal is to make them hard to find, not to eliminate them.</div>
+  </div>
+
+  <!-- Q51 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q51</span><span style="font-size:14px;color:var(--text-muted);">Birthday Attack</span></div>
+    <div class="quiz-question">Which attack involves finding any two inputs that produce the same hash?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Pre-image attack</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>Birthday attack</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Brute-force attack</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Man-in-the-middle attack</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> A birthday attack exploits the birthday paradox to find any two messages with the same hash (strong collision), requiring only $\approx 2^{n/2}$ tries. (a) Pre-image attack finds a message with a specific given hash, requiring $\approx 2^n$ tries — harder.</div>
+  </div>
+
+  <!-- Q52 -->
+  <div class="quiz-card">
+    <div class="quiz-header">
+      <span class="quiz-badge badge-exam">EXAM Q52</span>
+      <span class="quiz-badge badge-invalid">❌ NO CORRECT ANSWER</span>
+      <span style="font-size:14px;color:var(--text-muted);">Weak Collision Resistance</span>
+    </div>
+    <div class="quiz-question">What is a "weak collision resistance" in hash functions?</div>
+    <div class="options">
+      <div class="option none-correct disabled"><span class="option-letter">a</span>It should be hard to find two different inputs with the same hash</div>
+      <div class="option wrong disabled"><span class="option-letter">b</span>It should be easy to modify an input without changing its hash</div>
+      <div class="option none-correct disabled"><span class="option-letter">c</span>Given a hash output, it should be hard to find any input that produces it</div>
+      <div class="option wrong disabled"><span class="option-letter">d</span>The hash function should use a secret key</div>
+    </div>
+    <div class="explanation" style="border-color:var(--warning);background:#1a1200;">
+      <p><strong>⚠️ Questions of Doubt: None of the options is correct.</strong></p>
+      <p>(a) describes <strong>strong</strong> collision resistance. (c) describes <strong>pre-image resistance</strong>.</p>
+      <p>The correct definition of <strong>weak collision resistance (second pre-image resistance)</strong>: given a specific message $M_1$ and its hash $h(M_1)$, it is computationally infeasible to find $M_2 \neq M_1$ such that $h(M_2) = h(M_1)$. The key distinction from strong: $M_1$ is <em>fixed</em> by the adversary's challenge, not freely chosen.</p>
+    </div>
+  </div>
+
+  <!-- Q53 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q53</span><span style="font-size:14px;color:var(--text-muted);">Weak vs Strong Collision</span></div>
+    <div class="quiz-question">What is the difference between weak (second pre-image) and strong collision resistance?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>Weak collision resistance deals with fixed inputs; strong deals with any two inputs</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Weak is about reversing the hash; strong is about finding any collision</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Weak requires a secret key; strong does not</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>There is no difference</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> Weak (second pre-image) resistance: given a <em>fixed</em> $M_1$, cannot find $M_2 \neq M_1$ with same hash. Strong: cannot find <em>any</em> two messages (both chosen freely) with same hash. The attacker's freedom is what differs. Strong is harder to break because the attacker can choose optimally; in weak, the challenge message is imposed.</div>
+  </div>
+
+  <!-- Q54 -->
+  <div class="quiz-card">
+    <div class="quiz-header">
+      <span class="quiz-badge badge-exam">EXAM Q54</span>
+      <span class="quiz-badge badge-doubt">✅ CONFIRMED (c)</span>
+    </div>
+    <div class="quiz-question">If a hash function is strong collision-resistant, does it imply weak collision resistance?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>No, because they are independent properties</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Only if the hash function is also pre-image resistant</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>Yes, because strong collision resistance is a stronger property</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Only for keyed hash functions</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> Strong collision resistance says: cannot find any two messages with same hash. Weak says: given $M_1$, cannot find $M_2$ with same hash. Strong implies weak — if you cannot find any colliding pair at all, you certainly cannot find one that starts from a specific $M_1$. The strong property is strictly harder to violate.</div>
+  </div>
+
+  <!-- Q55 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q55</span><span style="font-size:14px;color:var(--text-muted);">Hash Function Structure</span></div>
+    <div class="quiz-question">What is the most common structural design used in traditional hash functions like SHA-1 and SHA-2?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Sponge construction</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>Merkle-Damgård construction</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Feistel network</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Davies-Meyer construction</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> SHA-1, SHA-2, MD5, and Whirlpool all use the Merkle-Damgård construction. (a) Sponge is SHA-3/Keccak. (c) Feistel networks are used in DES/block ciphers. (d) Davies-Meyer is a method of building a compression function from a block cipher — it can be used inside Merkle-Damgård, but is not the top-level structure.</div>
+  </div>
+
+  <!-- Q56 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q56</span><span style="font-size:14px;color:var(--text-muted);">Compression Function</span></div>
+    <div class="quiz-question">Which component of a hash function processes one block at a time and updates the internal state?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Initialization Vector (IV)</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Permutation function</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Key schedule</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>Compression function</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> The compression function $f$ takes the current $b$-bit message block and $n$-bit state, producing an updated $n$-bit state. It is the core iterative engine of Merkle-Damgård. The IV provides the initial state (once). There is no key schedule in a hash function (hashing is keyless).</div>
+  </div>
+
+  <!-- Q57 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q57</span><span style="font-size:14px;color:var(--text-muted);">IV Role in Hash</span></div>
+    <div class="quiz-question">What is the role of the "initialization vector (IV)" in a hash function?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Acts as a secret key for encryption</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>Provides the initial fixed value for the hash computation</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Ensures collision resistance</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Shortens the output hash</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> The hash IV is a fixed constant (published in the standard) that initializes the state $H_0$ before the first block is processed. It is <em>not secret</em> — unlike CBC/CTR IVs, the hash IV is identical for every computation of the hash function. It starts the computation from a defined non-trivial state, not to add confidentiality.</div>
+  </div>
+
+  <!-- Q58 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q58</span><span style="font-size:14px;color:var(--text-muted);">HMAC Requirements</span></div>
+    <div class="quiz-question">Which of the following components does HMAC require?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>A public key and a block cipher</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>An IV (Initialization Vector)</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>A secret key and a hash function</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>A digital certificate</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> HMAC requires exactly two ingredients: a symmetric <strong>secret key</strong> $K$ and an underlying <strong>hash function</strong> (e.g., SHA-256 for HMAC-SHA-256). No public key, no block cipher used directly, no certificate. This is what makes HMAC simple, fast, and widely used.</div>
+  </div>
+
+  <!-- Q59 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q59</span><span style="font-size:14px;color:var(--text-muted);">HMAC vs Digital Signature</span></div>
+    <div class="quiz-question">How does HMAC differ from a digital signature?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>HMAC uses symmetric keys; signatures use asymmetric keys</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>HMAC is faster but provides non-repudiation</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Signatures are shorter than HMAC outputs</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>HMAC requires a certificate authority</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> HMAC uses a <strong>symmetric shared key</strong> — both sender and receiver hold it. Digital signatures use <strong>asymmetric keys</strong> — private key signs, public key verifies. HMAC does NOT provide non-repudiation (both parties could have created the MAC), while signatures DO. (b) is wrong about non-repudiation. (c) is wrong — HMAC output size equals the underlying hash size.</div>
+  </div>
+
+  <!-- Q60 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q60</span><span style="font-size:14px;color:var(--text-muted);">HMAC Formula</span></div>
+    <div class="quiz-question">What is the formula for HMAC?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>$H\!M\!A\!C(K, m) = H(K \| m)$</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>$H\!M\!A\!C(K, m) = H(K \oplus \text{opad} \| H(K \oplus \text{ipad} \| m))$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>$H\!M\!A\!C(K, m) = H(m \| K)$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>$H\!M\!A\!C(K, m) = \text{Encrypt}(K, H(m))$</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> The correct HMAC formula uses two-level hashing with XOR pads:
+    $$\text{HMAC}_K(M) = h\!\left( (K^+ \oplus \text{opad})\ \|\ h\!\left( (K^+ \oplus \text{ipad})\ \|\ M \right) \right)$$
+    Options (a) and (c) are naive constructions vulnerable to length extension attacks. (d) is a different construct (MAC using block cipher encryption of hash). The double-hashing structure with different pads is what makes HMAC secure.</div>
+  </div>
+
+</div>
+
+</main>
+</div>
+
+<script>
+const sections = ['sec-overview','sec-hash-intro','sec-properties','sec-mac-schemes','sec-simple-hash','sec-birthday','sec-merkle','sec-sha','sec-hmac','sec-exam-prep'];
+let current = 0;
+
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+  });
+  current = sections.indexOf(id);
+  document.getElementById('progress-fill').style.width = (current / (sections.length - 1) * 100) + '%';
+  window.scrollTo(0, 0);
+  if (window.renderMathInElement) renderMathInElement(sec, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+}
+
+function toggleKc(el) {
+  const ans = el.parentElement.querySelector('.kc-a');
+  if (ans.style.display === 'block') { ans.style.display = 'none'; el.textContent = 'Show Answer ▾'; }
+  else { ans.style.display = 'block'; el.textContent = 'Hide Answer ▴'; }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && current < sections.length - 1) show(sections[current + 1]);
+  if (e.key === 'ArrowLeft' && current > 0) show(sections[current - 1]);
+});
+
+function checkAnswer(el) {
+  const opts = el.closest('.options').querySelectorAll('.option');
+  if ([...opts].some(o => o.classList.contains('correct') || o.classList.contains('wrong'))) return;
+  if (el.dataset.correct === 'true') {
+    el.classList.add('correct');
+  } else {
+    el.classList.add('wrong');
+    opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+  }
+  opts.forEach(o => o.classList.add('disabled'));
+  const exp = el.closest('.quiz-card').querySelector('.explanation');
+  if (exp) exp.classList.add('show');
+}
+</script>
+</body>
+</html>

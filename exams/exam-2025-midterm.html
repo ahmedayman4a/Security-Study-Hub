@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="version" content="v0.1.0">
+<title>2025 Midterm Exam — CS464: Computer System Security</title>
+<link rel="stylesheet" href="exam-common.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+</head>
+<body>
+
+<div id="exam-header">
+  <div id="header-top">
+    <a href="../index.html" class="exam-brand">
+      <span class="brand-badge">CS464</span>
+      <span class="brand-title">2025 Midterm — Computer System Security</span>
+    </a>
+    <div id="timer-area">
+      <div id="timer-display">60:00</div>
+      <button class="timer-btn" onclick="toggleTimer()" id="timer-btn">▶ Start</button>
+      <button class="timer-btn" onclick="resetTimer()">↺ Reset</button>
+    </div>
+    <div id="score-area">
+      <div class="score-item"><div class="score-val sv-correct" id="sc-correct">0</div><div class="score-label">Correct</div></div>
+      <div class="score-item"><div class="score-val" id="sc-answered">0</div><div class="score-label">Answered</div></div>
+      <div class="score-item"><div class="score-val sv-total">60</div><div class="score-label">Total</div></div>
+    </div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+</div>
+
+<div class="content">
+
+<!-- ═══ SECTION 1 ═══ -->
+<div class="sec-div"><div class="sec-label">🔐 Lecture 01: AES &amp; Classical Cryptography <span class="sec-qs">Q1–Q12</span></div></div>
+
+<div class="q-card" id="qc1"><div class="q-head"><div class="q-num">1</div><span class="q-tag">Cryptanalysis</span></div>
+<div class="q-text">Which of the following BEST describes the primary goal of cryptanalysis?</div>
+<div class="opts" id="q1">
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">a</span>To securely encrypt messages, preventing unauthorized access.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">b</span>To develop new cryptographic algorithms and protocols.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q1')"><span class="ol">c</span>To analyze and break cryptographic systems, revealing the underlying plaintext or key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">d</span>To manage and distribute cryptographic keys securely.</div>
+</div>
+<div class="q-rev" id="q1-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">Cryptanalysis is the discipline of analyzing and breaking cryptographic systems to obtain plaintext or keys without authorized access. Designing systems is cryptography; key management and algorithm development are separate fields. The adversarial, analytical role of finding weaknesses is the defining characteristic of cryptanalysis.</div></div></div>
+
+<div class="q-card" id="qc2"><div class="q-head"><div class="q-num">2</div><span class="q-tag">Block vs Stream</span></div>
+<div class="q-text">What is the key difference between stream ciphers and block ciphers?</div>
+<div class="opts" id="q2">
+  <div class="opt" data-correct="true" onclick="ca(this,'q2')"><span class="ol">a</span>Stream ciphers encrypt data one bit or byte at a time, while block ciphers encrypt data in fixed-size blocks.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">b</span>Stream ciphers are generally faster than block ciphers.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">c</span>Block ciphers use a key stream generated from the key and an IV, while stream ciphers directly encrypt each bit with the key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">d</span>Stream ciphers are more resistant to known-plaintext attacks than block ciphers.</div>
+</div>
+<div class="q-rev" id="q2-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">The fundamental structural difference is granularity: stream ciphers process one bit or byte at a time using a keystream, while block ciphers divide the entire message into fixed-size blocks (e.g., 128 bits for AES) and encrypt each block as a unit. Option (c) reverses the description — using a keystream is exactly what stream ciphers do, not block ciphers.</div></div></div>
+
+<div class="q-card" id="qc3"><div class="q-head"><div class="q-num">3</div><span class="q-tag">Kerckhoffs's Principle</span></div>
+<div class="q-text">What is the generally accepted consensus regarding the security of cryptographic algorithms?</div>
+<div class="opts" id="q3">
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">a</span>The security of a cryptographic system should primarily rely on the secrecy of the algorithm itself.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q3')"><span class="ol">b</span>A strong cryptographic system relies on the secrecy of the key, not the algorithm.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">c</span>Keeping the algorithm secret is an effective defense against all types of attacks.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">d</span>Open-source algorithms are inherently less secure than proprietary algorithms.</div>
+</div>
+<div class="q-rev" id="q3-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Kerckhoffs's Principle (1883): a cryptosystem should be secure even if everything except the key is public. "Security through obscurity" is unreliable because algorithms get leaked or reverse-engineered. Modern standards like AES are fully public and globally analyzed, making them stronger, not weaker.</div></div></div>
+
+<div class="q-card" id="qc4"><div class="q-head"><div class="q-num">4</div><span class="q-tag">Cryptanalysis Attacks</span></div>
+<div class="q-text">In a codebook attack, what does the attacker need to succeed?</div>
+<div class="opts" id="q4">
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">a</span>Only ciphertexts without any plaintext.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">b</span>The encryption key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">c</span>Access to the encryption algorithm's source code.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q4')"><span class="ol">d</span>A collection of known plaintext-ciphertext pairs.</div>
+</div>
+<div class="q-rev" id="q4-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">A codebook attack builds a lookup table mapping plaintexts to ciphertexts — requiring known plaintext-ciphertext pairs encrypted under the same key. Once the table is built, any new ciphertext can be looked up directly without breaking the key explicitly.</div></div></div>
+
+<div class="q-card" id="qc5"><div class="q-head"><div class="q-num">5</div><span class="q-tag">Key Schedule</span></div>
+<div class="q-text">What is the role of the key schedule in a block cipher?</div>
+<div class="opts" id="q5">
+  <div class="opt" data-correct="true" onclick="ca(this,'q5')"><span class="ol">a</span>To expand the master key into multiple round keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">b</span>To perform byte substitutions.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">c</span>To add confusion to the cipher.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">d</span>To break plaintext into fixed-size blocks.</div>
+</div>
+<div class="q-rev" id="q5-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a) — confirmed by Questions of Doubt</div>
+<div class="rev-exp">The key schedule expands the master key into multiple round subkeys, one per round. Applying those keys in AddRoundKey does add confusion — but that is the role of the AddRoundKey operation, not the key schedule itself. The key schedule's sole job is expansion/derivation.</div></div></div>
+
+<div class="q-card" id="qc6"><div class="q-head"><div class="q-num">6</div><span class="q-tag">Block Cipher Design</span></div>
+<div class="q-text">What is the main function of confusion in a block cipher?</div>
+<div class="opts" id="q6">
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">a</span>To shuffle bits within the block.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">b</span>To expand the key into multiple subkeys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">c</span>To compress the plaintext before encryption.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q6')"><span class="ol">d</span>To obscure the relationship between the key and ciphertext.</div>
+</div>
+<div class="q-rev" id="q6-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">Shannon's concept of confusion makes the key-ciphertext relationship as complex as possible — achieved through substitution (like the AES S-box). Option (a) describes diffusion, which spreads statistical structure across the block. These are two distinct and complementary properties.</div></div></div>
+
+<div class="q-card" id="qc7"><div class="q-head"><div class="q-num">7</div><span class="q-tag">Block Cipher Design</span></div>
+<div class="q-text">Why do modern block ciphers use multiple rounds?</div>
+<div class="opts" id="q7">
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">a</span>To increase key size.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q7')"><span class="ol">b</span>To enhance confusion and diffusion.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">c</span>To allow variable block sizes.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">d</span>To reduce encryption speed for security.</div>
+</div>
+<div class="q-rev" id="q7-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A single round provides inadequate confusion and diffusion. Each additional round mixes the data further, compounding the effects. After enough rounds (e.g., 10 for AES-128), even a single-bit input change affects approximately half the output bits — the avalanche effect — which is the security goal.</div></div></div>
+
+<div class="q-card" id="qc8"><div class="q-head"><div class="q-num">8</div><span class="q-tag">Vigenère Cipher</span></div>
+<div class="q-text">What happens if the keyword in the Vigenère Cipher is as long as the plaintext and never reused?</div>
+<div class="opts" id="q8">
+  <div class="opt" data-correct="true" onclick="ca(this,'q8')"><span class="ol">a</span>It becomes unbreakable (like a one-time pad).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">b</span>It becomes equivalent to a Caesar cipher.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">c</span>It turns into a transposition cipher.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">d</span>It loses its polyalphabetic property.</div>
+</div>
+<div class="q-rev" id="q8-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">A Vigenère key as long as the message, used only once, is mathematically a one-time pad (OTP) — provably information-theoretically secure. Each character is shifted by an independently random amount, so the ciphertext reveals zero information about the plaintext. The regular Vigenère is breakable only because its key repeats, creating patterns.</div></div></div>
+
+<div class="q-card" id="qc9"><div class="q-head"><div class="q-num">9</div><span class="q-tag">Key Length &amp; Security</span></div>
+<div class="q-text">How does doubling the key length of a block cipher affect brute-force effort?</div>
+<div class="opts" id="q9">
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">a</span>Effort increases exponentially.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">b</span>Effort remains the same.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">c</span>Effort doubles.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q9')"><span class="ol">d</span>Effort squares.</div>
+</div>
+<div class="q-rev" id="q9-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d) — confirmed by Questions of Doubt as the most accurate</div>
+<div class="rev-exp">If a key is \(n\) bits, brute force requires \(2^n\) operations. Doubling to \(2n\) bits requires \(2^{2n} = (2^n)^2\) operations — the effort squares. Example: 56-bit → \(2^{56}\); 112-bit → \(2^{112} = (2^{56})^2\). The Questions of Doubt document confirmed (d) is the most precise answer.</div></div></div>
+
+<div class="q-card" id="qc10"><div class="q-head"><div class="q-num">10</div><span class="q-tag">AES vs DES</span></div>
+<div class="q-text">Why is AES widely adopted over older ciphers like DES?</div>
+<div class="opts" id="q10">
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">a</span>Larger block size (128 vs. 64 bits) and longer keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">b</span>Faster software implementation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">c</span>Publicly designed and analyzed (no backdoors).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q10')"><span class="ol">d</span>All of the above.</div>
+</div>
+<div class="q-rev" id="q10-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d) — confirmed by Questions of Doubt</div>
+<div class="rev-exp">All three are correct: (1) AES has a 128-bit block vs DES's 64 bits — twice the data per cycle; (2) AES uses byte-oriented SPN operations that map efficiently to modern CPUs, while DES's bit-level Feistel operations are slower in software; (3) AES was selected via an open NIST competition (1997–2001) with worldwide cryptanalysis, whereas DES's S-box design criteria were initially secret.</div></div></div>
+
+<div class="q-card" id="qc11"><div class="q-head"><div class="q-num">11</div><span class="q-tag">AES Operations</span></div>
+<div class="q-text">What is the purpose of the MixColumns step in AES?</div>
+<div class="opts" id="q11">
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">a</span>To substitute bytes using a lookup table.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">b</span>To shift rows cyclically.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q11')"><span class="ol">c</span>To diffuse data across columns via matrix multiplication.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">d</span>To XOR the round key.</div>
+</div>
+<div class="q-rev" id="q11-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">MixColumns provides diffusion — changes in one byte spread to all four bytes in a column. Each column is treated as a polynomial over GF(2⁸) and multiplied by a fixed matrix. After MixColumns, each output byte depends on all four input bytes. The other operations: (a) SubBytes — S-box substitution; (b) ShiftRows — row permutation; (d) AddRoundKey — XOR with subkey.</div></div></div>
+
+<div class="q-card" id="qc12"><div class="q-head"><div class="q-num">12</div><span class="q-tag">AES S-box</span></div>
+<div class="q-text">How is the AES S-box constructed?</div>
+<div class="opts" id="q12">
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">a</span>By rotating bits in each byte.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">b</span>By shuffling bytes randomly.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">c</span>Through a lookup table provided by NIST.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q12')"><span class="ol">d</span>Using a mathematical formula involving multiplicative inverses in GF(2⁸).</div>
+</div>
+<div class="q-rev" id="q12-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">The AES S-box has a precise two-step construction: (1) Compute the multiplicative inverse in GF(2⁸) — 0x00 maps to itself; (2) Apply an affine bit transformation. This design provides strong non-linearity and resistance to differential and linear cryptanalysis. Option (c) is misleading — you can implement the S-box as a lookup table, but that table was derived mathematically.</div></div></div>
+
+<!-- ═══ SECTION 2 ═══ -->
+<div class="sec-div"><div class="sec-label">🔗 Lecture 02: Block Ciphers, Stream Ciphers &amp; Key Distribution <span class="sec-qs">Q13–Q29</span></div></div>
+
+<div class="q-card" id="qc13"><div class="q-head"><div class="q-num">13</div><span class="q-tag">Multiple DES</span></div>
+<div class="q-text">What major attack makes 2DES insecure despite its longer key?</div>
+<div class="opts" id="q13">
+  <div class="opt" data-correct="true" onclick="ca(this,'q13')"><span class="ol">a</span>Meet-in-the-middle attack.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">b</span>Differential cryptanalysis.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">c</span>Frequency analysis.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">d</span>Replay attack.</div>
+</div>
+<div class="q-rev" id="q13-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">The MITM attack encrypts a known plaintext P forward under all \(2^{56}\) possible K1 values, stores the results, then decrypts the corresponding ciphertext C backward under all \(2^{56}\) K2 values, looking for matches. Total cost ≈ \(2^{57}\) — barely more than single DES. 2DES's 112-bit combined key provides essentially no real security improvement over 56 bits.</div></div></div>
+
+<div class="q-card" id="qc14"><div class="q-head"><div class="q-num">14</div><span class="q-tag">DES as a Group</span></div>
+<div class="q-text">What would be the theoretical security impact if DES were a group?</div>
+<div class="opts" id="q14">
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">a</span>DES would become resistant to differential cryptanalysis.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q14')"><span class="ol">b</span>All multiple-DES variants would collapse to single-DES security.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">c</span>Key size could be reduced to 40 bits.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">d</span>The Feistel network would become redundant.</div>
+</div>
+<div class="q-rev" id="q14-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">If DES were closed under composition, \(E_{K_2}(E_{K_1}(P)) = E_{K_3}(P)\) for some \(K_3\) in the 56-bit key space. 2DES would provide no more security than single DES. DES is mathematically confirmed NOT to be a group — which is why multi-DES has genuine value.</div></div></div>
+
+<div class="q-card" id="qc15"><div class="q-head"><div class="q-num">15</div><span class="q-tag">3DES EDE Mode</span></div>
+<div class="q-text">In 3DES, why is the middle step a decryption (EDE mode) rather than encryption?</div>
+<div class="opts" id="q15">
+  <div class="opt" data-correct="true" onclick="ca(this,'q15')"><span class="ol">a</span>To allow backward compatibility with single DES when K₁ = K₂ = K₃.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">b</span>To confuse attackers with inverse operations.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">c</span>To enable parallel processing.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">d</span>To meet NIST's encryption standards.</div>
+</div>
+<div class="q-rev" id="q15-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">When \(K_1 = K_2 = K_3 = K\), EDE becomes \(E_K(D_K(E_K(P)))\). The inner E produces X; \(D_K(X)\) immediately undoes it (recovering P); the outer \(E_K\) applies once — exactly single DES. This enabled compatible migration from legacy DES systems with no protocol changes.</div></div></div>
+
+<div class="q-card" id="qc16"><div class="q-head"><div class="q-num">16</div><span class="q-tag">Block Cipher Modes</span></div>
+<div class="q-text">Which block cipher mode encrypts each block independently, making identical plaintext blocks produce identical ciphertext blocks?</div>
+<div class="opts" id="q16">
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">a</span>CBC (Cipher Block Chaining).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q16')"><span class="ol">b</span>ECB (Electronic Codebook).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">c</span>CTR (Counter).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">d</span>GCM (Galois/Counter Mode).</div>
+</div>
+<div class="q-rev" id="q16-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">ECB applies the block cipher directly to each plaintext block with the same key — no chaining, no randomization. Identical plaintext blocks always produce identical ciphertext blocks, leaking structural information (the "ECB penguin" problem). All other modes introduce state or randomization to prevent this.</div></div></div>
+
+<div class="q-card" id="qc17"><div class="q-head"><div class="q-num">17</div><span class="q-tag">Block Cipher Modes</span></div>
+<div class="q-text">What is the main advantage of CTR mode?</div>
+<div class="opts" id="q17">
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">a</span>Built-in error propagation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">b</span>Resistance to IV reuse.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q17')"><span class="ol">c</span>Parallelizable encryption/decryption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">d</span>Fixed padding requirements.</div>
+</div>
+<div class="q-rev" id="q17-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">CTR generates keystream blocks by encrypting successive counter values. Since each block depends only on the counter (not on previous ciphertext blocks), all blocks can be computed independently and in parallel. Note: IV reuse is a critical vulnerability in CTR — the opposite of option (b).</div></div></div>
+
+<div class="q-card" id="qc18"><div class="q-head"><div class="q-num">18</div><span class="q-tag">Block Cipher Modes</span></div>
+<div class="q-text">What happens if an IV is reused in CTR mode?</div>
+<div class="opts" id="q18">
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">a</span>Encryption fails.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">b</span>Blocks become correlated.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">c</span>The key is compromised.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q18')"><span class="ol">d</span>Keystream reuse breaks confidentiality.</div>
+</div>
+<div class="q-rev" id="q18-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d) — confirmed by Questions of Doubt</div>
+<div class="rev-exp">Reusing the same nonce/IV and key generates the same keystream. XORing both ciphertexts: \(C_1 \oplus C_2 = P_1 \oplus P_2\). With language statistics, the plaintexts can be recovered — keystream reuse breaks confidentiality. The Questions of Doubt document confirmed (d) and noted that (b) is incorrect because what becomes correlated is the keystream overall, not individual blocks.</div></div></div>
+
+<div class="q-card" id="qc19"><div class="q-head"><div class="q-num">19</div><span class="q-tag">Block Cipher Modes</span></div>
+<div class="q-text">What is the critical security requirement for an IV in CBC mode?</div>
+<div class="opts" id="q19">
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">a</span>It must be secret.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">b</span>It must equal the block size.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q19')"><span class="ol">c</span>It must be random.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">d</span>It must be reused for efficiency.</div>
+</div>
+<div class="q-rev" id="q19-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">The CBC IV must be random (unpredictable) — not merely unique. A predictable IV enables chosen-plaintext attacks to verify guesses about the plaintext. The IV does NOT need to be secret — it is typically transmitted in cleartext alongside the ciphertext. Reusing an IV reveals whether two messages share the same first block.</div></div></div>
+
+<div class="q-card" id="qc20"><div class="q-head"><div class="q-num">20</div><span class="q-tag">Block Cipher Modes</span><span class="q-disputed">⚠️ DISPUTED</span></div>
+<div class="q-text">Which block cipher mode propagates a single-bit error in ciphertext to ALL subsequent blocks during decryption?</div>
+<div class="opts" id="q20" data-disputed="true">
+  <div class="opt" onclick="ca(this,'q20')"><span class="ol">a</span>ECB</div>
+  <div class="opt" onclick="ca(this,'q20')"><span class="ol">b</span>CBC</div>
+  <div class="opt" onclick="ca(this,'q20')"><span class="ol">c</span>CTR</div>
+  <div class="opt" onclick="ca(this,'q20')"><span class="ol">d</span>OFB</div>
+</div>
+<div class="q-rev" id="q20-rev"><div class="rev-lbl">Official Clarification</div><div class="rev-ans dis">⚠️ No Correct Answer — confirmed by Questions of Doubt</div>
+<div class="rev-exp">Questions of Doubt: <em>"None of the provided answers is correct. No mode propagates a single-bit error to ALL subsequent blocks during decryption."</em><br><br>Actual behavior: <strong>ECB</strong> — error in one block only; <strong>CBC</strong> — error in the corrupted block and the <em>next</em> block only (not all subsequent); <strong>CTR</strong> — error in one block only; <strong>OFB</strong> — error in one block only (keystream is independent of ciphertext).</div></div></div>
+
+<div class="q-card" id="qc21"><div class="q-head"><div class="q-num">21</div><span class="q-tag">RC4 Stream Cipher</span></div>
+<div class="q-text">What happens if an RC4 key is reused?</div>
+<div class="opts" id="q21">
+  <div class="opt" data-correct="true" onclick="ca(this,'q21')"><span class="ol">a</span>Plaintexts can be extracted via XOR.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">b</span>Encryption speeds up.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">c</span>The key schedule resets automatically.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">d</span>Error propagation increases.</div>
+</div>
+<div class="q-rev" id="q21-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">RC4 generates a deterministic keystream from the key. With key reuse: \(C_1 \oplus C_2 = P_1 \oplus P_2\). Via "crib dragging" and language statistics, both plaintexts can be recovered. This broke WEP (802.11b) which fatally reused RC4 keys.</div></div></div>
+
+<div class="q-card" id="qc22"><div class="q-head"><div class="q-num">22</div><span class="q-tag">Key Distribution</span></div>
+<div class="q-text">What is a "session key" in Needham-Schroeder?</div>
+<div class="opts" id="q22">
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">a</span>A long-term public key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">b</span>A hash of the shared secret.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q22')"><span class="ol">c</span>A temporary symmetric key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">d</span>A digital certificate.</div>
+</div>
+<div class="q-rev" id="q22-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">A session key is a randomly generated symmetric key created fresh for each communication session, discarded after the session ends. Unlike long-term keys (password hashes, service secrets) which persist indefinitely, session keys are ephemeral. In Needham-Schroeder, the KDC generates and distributes the session key.</div></div></div>
+
+<div class="q-card" id="qc23"><div class="q-head"><div class="q-num">23</div><span class="q-tag">Needham-Schroeder</span></div>
+<div class="q-text">In the Needham-Schroeder protocol, what is the purpose of nonces?</div>
+<div class="opts" id="q23">
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">a</span>To encrypt the session key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">b</span>To compress data.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">c</span>To generate digital signatures.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q23')"><span class="ol">d</span>To ensure message freshness.</div>
+</div>
+<div class="q-rev" id="q23-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">A nonce (number used once) is a random value included in messages. When a server echoes back a nonce, the requester knows the response is fresh and not a replay. If an attacker replays an old message, they won't have the correct nonce. Nonces are the primary defense against replay attacks in Needham-Schroeder.</div></div></div>
+
+<div class="q-card" id="qc24"><div class="q-head"><div class="q-num">24</div><span class="q-tag">Needham-Schroeder</span></div>
+<div class="q-text">Which cryptographic primitive does the original Needham-Schroeder protocol rely on?</div>
+<div class="opts" id="q24">
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">a</span>Hash functions.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q24')"><span class="ol">b</span>Symmetric-key encryption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">c</span>Digital signatures.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">d</span>Elliptic curve cryptography.</div>
+</div>
+<div class="q-rev" id="q24-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The original 1978 Needham-Schroeder protocol uses exclusively symmetric-key encryption. Every party shares a long-term symmetric key with the trusted KDC, which uses master keys to encrypt session key bundles. No public-key crypto, no hashing for authentication, no digital signatures.</div></div></div>
+
+<div class="q-card" id="qc25"><div class="q-head"><div class="q-num">25</div><span class="q-tag">Kerberos</span></div>
+<div class="q-text">Which three main entities interact in Kerberos?</div>
+<div class="opts" id="q25">
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">a</span>Client, Server, Certificate Authority.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">b</span>User, Router, DNS Server.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">c</span>Browser, Web Server, Proxy.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q25')"><span class="ol">d</span>Client, Authentication Server, Ticket Granting Server.</div>
+</div>
+<div class="q-rev" id="q25-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">Kerberos: (1) <strong>Client</strong> — the user; (2) <strong>Authentication Server (AS)</strong> — verifies identity using the user's long-term key and issues a TGT; (3) <strong>Ticket Granting Server (TGS)</strong> — uses the TGT to issue service-specific tickets. AS and TGS together form the KDC (Key Distribution Center).</div></div></div>
+
+<div class="q-card" id="qc26"><div class="q-head"><div class="q-num">26</div><span class="q-tag">Kerberos</span></div>
+<div class="q-text">Why does Kerberos use timestamps?</div>
+<div class="opts" id="q26">
+  <div class="opt" data-correct="true" onclick="ca(this,'q26')"><span class="ol">a</span>To prevent replay attacks.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">b</span>To log user activity.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">c</span>To synchronize clocks across networks.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">d</span>To encrypt session keys.</div>
+</div>
+<div class="q-rev" id="q26-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Kerberos embeds timestamps in tickets. Servers check that the timestamp is within ±5 minutes. A replayed ticket from minutes earlier is rejected as expired. This is Kerberos's primary replay attack defense — which is why Kerberos requires synchronized clocks, not the other way around.</div></div></div>
+
+<div class="q-card" id="qc27"><div class="q-head"><div class="q-num">27</div><span class="q-tag">Kerberos</span></div>
+<div class="q-text">Which key is used to encrypt the Ticket Granting Ticket (TGT)?</div>
+<div class="opts" id="q27">
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">a</span>The user's public key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">b</span>A session key negotiated with AES.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q27')"><span class="ol">c</span>The TGS's secret key (known only to the KDC).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">d</span>The service's private key.</div>
+</div>
+<div class="q-rev" id="q27-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">The TGT is encrypted with \(K_{TGS}\) — the TGS's long-term secret key, shared only between the TGS and the KDC. The client receives but cannot decrypt the TGT. This opaque credential is what the client presents to the TGS for service tickets — enabling single sign-on without re-contacting the AS.</div></div></div>
+
+<div class="q-card" id="qc28"><div class="q-head"><div class="q-num">28</div><span class="q-tag">Kerberos</span></div>
+<div class="q-text">Which key is NOT stored in the KDC database?</div>
+<div class="opts" id="q28">
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">a</span>User's long-term key (password hash).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q28')"><span class="ol">b</span>Client/service session keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">c</span>TGS's secret key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">d</span>Service's long-term key.</div>
+</div>
+<div class="q-rev" id="q28-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Session keys are generated freshly per authentication exchange and are never stored in the KDC database. The KDC stores permanent credentials: user long-term keys, service long-term keys, and its own keys. If the KDC's database is ever compromised, session keys from past sessions cannot be recovered — because they were never stored.</div></div></div>
+
+<div class="q-card" id="qc29"><div class="q-head"><div class="q-num">29</div><span class="q-tag">Kerberos</span><span class="q-disputed">📝 Note: both (b) and (c) valid</span></div>
+<div class="q-text">Which key is reused across multiple sessions?</div>
+<div class="opts" id="q29">
+  <div class="opt" data-correct="false" onclick="ca(this,'q29')"><span class="ol">a</span>Session keys.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q29')"><span class="ol">b</span>Long-term keys.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q29')"><span class="ol">c</span>Ticket encryption keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q29')"><span class="ol">d</span>Nonces.</div>
+</div>
+<div class="q-rev" id="q29-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b) and (c) — both valid per Questions of Doubt</div>
+<div class="rev-exp">Questions of Doubt: <em>"Answers (b) and (c) are valid. Ticket encryption keys, which are K_TGS and K_ServiceProvider, are long-term keys."</em><br><br><strong>(b) Long-term keys</strong>: user password hashes and service secret keys persist and are reused across all sessions. <strong>(c) Ticket encryption keys</strong>: K_TGS and K_Service are stored in the KDC database and reused every time a ticket is issued. Session keys are ephemeral; nonces are one-time values.</div></div></div>
+
+<!-- ═══ SECTION 3 ═══ -->
+<div class="sec-div"><div class="sec-label">🔑 Lecture 03: Public-Key Cryptography &amp; RSA <span class="sec-qs">Q30–Q38</span></div></div>
+
+<div class="q-card" id="qc30"><div class="q-head"><div class="q-num">30</div><span class="q-tag">RSA Security</span></div>
+<div class="q-text">What is the foundation of RSA's security?</div>
+<div class="opts" id="q30">
+  <div class="opt" data-correct="true" onclick="ca(this,'q30')"><span class="ol">a</span>The difficulty of factoring large integers.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">b</span>The hardness of solving discrete logarithms.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">c</span>The complexity of hash collisions.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">d</span>The secrecy of its S-boxes.</div>
+</div>
+<div class="q-rev" id="q30-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Given \(n = p \times q\) with large primes, there is no known polynomial-time algorithm to factor \(n\). If an attacker could factor \(n\), they could compute \(\phi(n) = (p-1)(q-1)\) and find \(d = e^{-1} \bmod \phi(n)\). Discrete logarithms are the basis for Diffie-Hellman and ElGamal, not RSA.</div></div></div>
+
+<div class="q-card" id="qc31"><div class="q-head"><div class="q-num">31</div><span class="q-tag">RSA Key Generation</span></div>
+<div class="q-text">What is the correct order for RSA key generation?</div>
+<div class="opts" id="q31">
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">a</span>Select \(e\) → Choose \(n\) → Factor \(n\) → Compute \(d\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">b</span>Generate \(d\) → Find \(e\) → Randomize \(n\) → Pick \(p, q\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">c</span>Compute \(n\) → Solve for \(p, q\) → Derive \(e\) → Choose \(d\).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q31')"><span class="ol">d</span>Choose primes \(p, q\) → Compute \(n = pq\) → Select \(e\) → Calculate \(d\).</div>
+</div>
+<div class="q-rev" id="q31-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">Sequence: (1) Choose large random primes \(p\) and \(q\); (2) Compute \(n = p \times q\); (3) Compute \(\phi(n) = (p-1)(q-1)\); (4) Select \(e\) with \(\gcd(e, \phi(n)) = 1\); (5) Compute \(d \equiv e^{-1} \pmod{\phi(n)}\). You cannot factor \(n\) to get back \(p\) and \(q\) — that's the whole security basis of RSA.</div></div></div>
+
+<div class="q-card" id="qc32"><div class="q-head"><div class="q-num">32</div><span class="q-tag">RSA Key Generation</span></div>
+<div class="q-text">In RSA, what condition must the public exponent \(e\) satisfy?</div>
+<div class="opts" id="q32">
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">a</span>\(e > n\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">b</span>\(e\) must be prime.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q32')"><span class="ol">c</span>\(1 < e < \phi(n)\) and \(\gcd(e, \phi(n)) = 1\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">d</span>\(e \equiv 1 \pmod{p}\).</div>
+</div>
+<div class="q-rev" id="q32-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">Two conditions: (1) \(1 < e < \phi(n)\) — valid exponent; (2) \(\gcd(e, \phi(n)) = 1\) — ensures \(d = e^{-1} \bmod \phi(n)\) exists. \(e\) does NOT need to be prime (common misconception) — it just needs to be coprime with \(\phi(n)\). Common choices: 3, 17, 65537 (all prime but chosen for efficiency).</div></div></div>
+
+<div class="q-card" id="qc33"><div class="q-head"><div class="q-num">33</div><span class="q-tag">RSA Private Key</span></div>
+<div class="q-text">How is the private exponent \(d\) computed?</div>
+<div class="opts" id="q33">
+  <div class="opt" data-correct="true" onclick="ca(this,'q33')"><span class="ol">a</span>\(d \equiv e^{-1} \pmod{\phi(n)}\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">b</span>\(d = n\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">c</span>\(d = e \bmod p\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">d</span>\(d\) is randomly selected.</div>
+</div>
+<div class="q-rev" id="q33-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">\(d\) is the modular multiplicative inverse of \(e\) modulo \(\phi(n)\): \(d \cdot e \equiv 1 \pmod{\phi(n)}\), computed via the Extended Euclidean Algorithm. Raising a ciphertext to the power \(d\) undoes the encryption because \(e \cdot d \equiv 1 \pmod{\phi(n)}\) and Euler's theorem gives \(m^{\phi(n)} \equiv 1 \pmod{n}\).</div></div></div>
+
+<div class="q-card" id="qc34"><div class="q-head"><div class="q-num">34</div><span class="q-tag">RSA Performance</span></div>
+<div class="q-text">Which operation is computationally expensive in RSA?</div>
+<div class="opts" id="q34">
+  <div class="opt" data-correct="true" onclick="ca(this,'q34')"><span class="ol">a</span>Decryption (using \(d\)).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">b</span>Encryption (using \(e\)).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">c</span>Generating \(p\) and \(q\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">d</span>Calculating gcd.</div>
+</div>
+<div class="q-rev" id="q34-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Decryption computes \(m = c^d \bmod n\). Since \(d\) is ~2048 bits, square-and-multiply requires ~2048 modular squarings. Encryption with small \(e = 65537 = 2^{16}+1\) requires only 17 multiplications. This asymmetry is why RSA-CRT (which speeds up decryption ~4×) is so valuable in practice.</div></div></div>
+
+<div class="q-card" id="qc35"><div class="q-head"><div class="q-num">35</div><span class="q-tag">RSA Usage</span></div>
+<div class="q-text">Why is RSA rarely used for bulk encryption?</div>
+<div class="opts" id="q35">
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">a</span>Lack of authentication.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q35')"><span class="ol">b</span>Slow performance.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">c</span>Fixed block size.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">d</span>Inability to encrypt large files.</div>
+</div>
+<div class="q-rev" id="q35-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">RSA is ~1000× slower than AES for bulk data. In practice, RSA only encrypts a small symmetric session key (hybrid encryption), which then encrypts the actual data with AES. This pattern is used in TLS, PGP, and SSH.</div></div></div>
+
+<div class="q-card" id="qc36"><div class="q-head"><div class="q-num">36</div><span class="q-tag">RSA Vulnerabilities</span></div>
+<div class="q-text">Which vulnerability arises from reusing the same \(n\) with different \(e\)?</div>
+<div class="opts" id="q36">
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">a</span>Nonce reuse.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">b</span>Timing attack.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">c</span>Padding oracle attack.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q36')"><span class="ol">d</span>Common modulus attack.</div>
+</div>
+<div class="q-rev" id="q36-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">If message \(m\) is encrypted under same \(n\) with two exponents \(e_1, e_2\) where \(\gcd(e_1,e_2)=1\): find \(a,b\) with \(a e_1 + b e_2 = 1\) (Bézout), then \(c_1^a \cdot c_2^b = m^{a e_1 + b e_2} = m \pmod{n}\). The plaintext is recovered without knowing either private key. Each RSA key pair must use its own distinct modulus.</div></div></div>
+
+<div class="q-card" id="qc37"><div class="q-head"><div class="q-num">37</div><span class="q-tag">RSA-CRT</span></div>
+<div class="q-text">What is the primary purpose of using CRT with RSA?</div>
+<div class="opts" id="q37">
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">a</span>To increase the key size.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">b</span>To enable quantum resistance.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">c</span>To replace modular exponentiation.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q37')"><span class="ol">d</span>To speed up decryption/signature generation by ~4×.</div>
+</div>
+<div class="q-rev" id="q37-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">RSA-CRT computes \(m_p = c^{d_p} \bmod p\) and \(m_q = c^{d_q} \bmod q\) separately, then combines via CRT. Since \(p\) and \(q\) are each ~half the size of \(n\), and modular exponentiation cost scales cubically with number size, the speedup is approximately \(2^3/2 = 4\times\). The results are combined: \(m = m_p \cdot q \cdot (q^{-1} \bmod p) + m_q \cdot p \cdot (p^{-1} \bmod q) \pmod{n}\).</div></div></div>
+
+<div class="q-card" id="qc38"><div class="q-head"><div class="q-num">38</div><span class="q-tag">RSA-CRT</span></div>
+<div class="q-text">Which step is NOT part of RSA-CRT decryption?</div>
+<div class="opts" id="q38">
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">a</span>Compute \(m_p = c^{d_p} \bmod p\) and \(m_q = c^{d_q} \bmod q\).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q38')"><span class="ol">b</span>Factor \(n\) into \(p\) and \(q\) dynamically.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">c</span>Recombine results via CRT.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">d</span>Verify the result modulo \(n\).</div>
+</div>
+<div class="q-rev" id="q38-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">RSA-CRT does NOT factor \(n\) dynamically. \(p\) and \(q\) are computed once at key generation and stored as part of the private key. Dynamically factoring \(n\) during decryption would be as hard as breaking RSA entirely — defeating the purpose. The CRT speedup comes from having \(p\), \(q\), \(d_p\), \(d_q\), and \(q^{-1} \bmod p\) pre-computed and stored in the private key.</div></div></div>
+
+<!-- ═══ SECTION 4 ═══ -->
+<div class="sec-div"><div class="sec-label">📜 Lecture 04: More Public-Key Cryptography <span class="sec-qs">Q39–Q48</span></div></div>
+
+<div class="q-card" id="qc39"><div class="q-head"><div class="q-num">39</div><span class="q-tag">PKI / MITM</span></div>
+<div class="q-text">What is one of the most common ways to prevent MITM attacks?</div>
+<div class="opts" id="q39">
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">a</span>Using strong passwords.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">b</span>Using a VPN without encryption.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q39')"><span class="ol">c</span>Implementing encryption and digital certificates.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">d</span>Disabling firewalls.</div>
+</div>
+<div class="q-rev" id="q39-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">MITM attacks succeed when an attacker can intercept and substitute keys. Defense requires: (1) <strong>Encryption</strong> — attackers can't read intercepted traffic; (2) <strong>Digital certificates</strong> — bind public keys to verified identities, so Alice can verify a key genuinely belongs to Bob, not a MITM impostor. Strong passwords help with authentication but don't prevent key substitution.</div></div></div>
+
+<div class="q-card" id="qc40"><div class="q-head"><div class="q-num">40</div><span class="q-tag">PKI / Certificates</span></div>
+<div class="q-text">What is the purpose of a Certificate Revocation List (CRL)?</div>
+<div class="opts" id="q40">
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">a</span>To store all active certificates.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">b</span>To generate new digital certificates.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q40')"><span class="ol">c</span>To list certificates that are no longer valid.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">d</span>To provide encryption keys for secure communication.</div>
+</div>
+<div class="q-rev" id="q40-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">A CRL is a signed list of certificate serial numbers that have been revoked before their expiration date (e.g., due to key compromise or identity changes). Clients check the CRL before trusting a certificate. The modern alternative is OCSP (Online Certificate Status Protocol) for real-time revocation checks.</div></div></div>
+
+<div class="q-card" id="qc41"><div class="q-head"><div class="q-num">41</div><span class="q-tag">PKI / Certificates</span></div>
+<div class="q-text">What is a root certificate in the context of a Certificate Authority?</div>
+<div class="opts" id="q41">
+  <div class="opt" data-correct="true" onclick="ca(this,'q41')"><span class="ol">a</span>A certificate that is self-signed and serves as the trust anchor for other certificates.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">b</span>A certificate stored on the client device and used to encrypt traffic.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">c</span>A certificate that encrypts data between the CA and the end-user.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">d</span>A temporary certificate used for secure email.</div>
+</div>
+<div class="q-rev" id="q41-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">A root CA certificate is self-signed (it signs itself) and is the ultimate trust anchor in the PKI hierarchy. It's pre-installed in operating systems and browsers. The chain of trust: end-entity cert → Intermediate CA cert → Root CA cert. Trust in the root is bootstrapped by the OS/browser vendor's decision to include it in their trusted root store.</div></div></div>
+
+<div class="q-card" id="qc42"><div class="q-head"><div class="q-num">42</div><span class="q-tag">PKI / Certificates</span></div>
+<div class="q-text">What does a digital certificate issued by a CA typically include?</div>
+<div class="opts" id="q42">
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">a</span>Only the private key of the certificate holder.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">b</span>A hashed password and the certificate holder's contact information.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">c</span>A list of trusted websites and their encryption standards.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q42')"><span class="ol">d</span>The public key, the identity of the certificate holder, and the CA's signature.</div>
+</div>
+<div class="q-rev" id="q42-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">A certificate (X.509) binds a public key to an identity: (1) subject's public key; (2) identity info (domain, organization, country); (3) CA's digital signature — signed with the CA's private key, verifiable by anyone with the CA's public key; (4) validity period. Certificates <strong>never</strong> contain private keys — those stay on the owner's system.</div></div></div>
+
+<div class="q-card" id="qc43"><div class="q-head"><div class="q-num">43</div><span class="q-tag">PKI / RA</span></div>
+<div class="q-text">What is the role of a Registration Authority (RA) in PKI?</div>
+<div class="opts" id="q43">
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">a</span>To revoke compromised certificates.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q43')"><span class="ol">b</span>To verify the identity of users before certificate issuance.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">c</span>To store private keys securely.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">d</span>To encrypt data transmissions.</div>
+</div>
+<div class="q-rev" id="q43-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The RA handles identity verification on behalf of the CA — checking documents, domain ownership, or business registration — then forwards verified requests to the CA for signing. RAs offload the identity-checking burden from the CA. RAs do NOT sign certificates; only CAs do.</div></div></div>
+
+<div class="q-card" id="qc44"><div class="q-head"><div class="q-num">44</div><span class="q-tag">Diffie-Hellman</span></div>
+<div class="q-text">Which property does Diffie-Hellman provide?</div>
+<div class="opts" id="q44">
+  <div class="opt" data-correct="true" onclick="ca(this,'q44')"><span class="ol">a</span>Key exchange.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">b</span>Non-repudiation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">c</span>Data integrity.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">d</span>Hashing.</div>
+</div>
+<div class="q-rev" id="q44-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a) — confirmed by Questions of Doubt</div>
+<div class="rev-exp">DH provides key exchange — two parties establish a shared secret over a public channel. It does NOT provide: authentication (vulnerable to MITM without it), non-repudiation (DH doesn't sign anything), data integrity, or hashing. To add authentication, DH is combined with digital signatures or certificates (as in DHE within TLS).</div></div></div>
+
+<div class="q-card" id="qc45"><div class="q-head"><div class="q-num">45</div><span class="q-tag">DH Security</span></div>
+<div class="q-text">Why can't an attacker easily derive the shared secret from public values in DH?</div>
+<div class="opts" id="q45">
+  <div class="opt" data-correct="true" onclick="ca(this,'q45')"><span class="ol">a</span>Due to the hardness of the discrete logarithm problem.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">b</span>Because the keys are encrypted.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">c</span>Lack of computational power.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">d</span>Use of quantum-resistant algorithms.</div>
+</div>
+<div class="q-rev" id="q45-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Public values are \(g^a \bmod p\) and \(g^b \bmod p\). The shared secret is \(g^{ab} \bmod p\). An eavesdropper who sees \(g^a \bmod p\) must find \(a\) — the discrete logarithm problem. No known polynomial-time classical algorithm can solve this for large \(p\). Standard DH is not quantum-resistant — Shor's algorithm breaks it in polynomial time.</div></div></div>
+
+<div class="q-card" id="qc46"><div class="q-head"><div class="q-num">46</div><span class="q-tag">Diffie-Hellman</span></div>
+<div class="q-text">What is the main advantage of Diffie-Hellman Ephemeral (DHE)?</div>
+<div class="opts" id="q46">
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">a</span>Faster key generation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">b</span>Smaller key sizes.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q46')"><span class="ol">c</span>Forward secrecy.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">d</span>Built-in authentication.</div>
+</div>
+<div class="q-rev" id="q46-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">DHE generates fresh DH parameters for every session. Compromising the server's long-term key later cannot decrypt past sessions — Perfect Forward Secrecy (PFS). Static DH (with fixed parameters) lacks this: compromise the long-term key, decrypt all past sessions. DHE is slightly slower due to per-session key generation but this is the price of PFS.</div></div></div>
+
+<div class="q-card" id="qc47"><div class="q-head"><div class="q-num">47</div><span class="q-tag">ElGamal</span></div>
+<div class="q-text">What type of cryptographic system does the ElGamal digital signature scheme belong to?</div>
+<div class="opts" id="q47">
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">a</span>Symmetric encryption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">b</span>Hashing algorithm.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">c</span>Quantum cryptography.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q47')"><span class="ol">d</span>Asymmetric encryption.</div>
+</div>
+<div class="q-rev" id="q47-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">ElGamal is an asymmetric (public-key) system based on the discrete logarithm problem, using a private key \(a\) and public key \(\beta = g^a \bmod p\). The private key signs; the public key verifies. Developed by Taher Elgamal in 1985, it's the basis for DSA (NIST's Digital Signature Algorithm).</div></div></div>
+
+<div class="q-card" id="qc48"><div class="q-head"><div class="q-num">48</div><span class="q-tag">ElGamal</span></div>
+<div class="q-text">What is the main purpose of the ElGamal digital signature?</div>
+<div class="opts" id="q48">
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">a</span>Encrypt messages for confidentiality.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q48')"><span class="ol">b</span>Verify the authenticity and integrity of a message.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">c</span>Generate symmetric keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">d</span>Speed up network communication.</div>
+</div>
+<div class="q-rev" id="q48-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The ElGamal digital signature verifies: (1) <strong>Authenticity</strong> — the message was signed by the holder of the corresponding private key; (2) <strong>Integrity</strong> — the message hasn't been modified. Signing does NOT encrypt the message. Critical: the nonce \(K\) used in ElGamal signing must be unique per message — reusing \(K\) allows the private key to be recovered (this broke Sony's PS3).</div></div></div>
+
+<!-- ═══ SECTION 5 ═══ -->
+<div class="sec-div"><div class="sec-label">🔢 Lecture 05: Cryptographically Secure Hashing <span class="sec-qs">Q49–Q60</span></div></div>
+
+<div class="q-card" id="qc49"><div class="q-head"><div class="q-num">49</div><span class="q-tag">Hash Functions</span></div>
+<div class="q-text">What is the primary purpose of a cryptographic hash function?</div>
+<div class="opts" id="q49">
+  <div class="opt" data-correct="true" onclick="ca(this,'q49')"><span class="ol">a</span>Generate a fixed-size output from variable-size input.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">b</span>Encrypt data for secure transmission.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">c</span>Provide compression for large files.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">d</span>Create digital signatures.</div>
+</div>
+<div class="q-rev" id="q49-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">The defining characteristic of a hash function is mapping any input of arbitrary length to a fixed-size output. A 1-byte file and a 10GB file both produce the same size digest (e.g., 256 bits for SHA-256). Hash functions are not encryption (no key, not reversible) and not compression (the output is much smaller than the input and irreversible).</div></div></div>
+
+<div class="q-card" id="qc50"><div class="q-head"><div class="q-num">50</div><span class="q-tag">Hash Properties</span></div>
+<div class="q-text">What does "collision resistance" mean in hash functions?</div>
+<div class="opts" id="q50">
+  <div class="opt" data-correct="true" onclick="ca(this,'q50')"><span class="ol">a</span>It should be hard to find two different inputs with the same hash.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">b</span>It should be easy to reverse the hash output.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">c</span>The hash output should always be unique.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">d</span>The hash function should use a secret key.</div>
+</div>
+<div class="q-rev" id="q50-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Collision resistance: finding any \(m_1 \neq m_2\) with \(H(m_1) = H(m_2)\) must be computationally infeasible. Hash outputs are NOT guaranteed unique — by the pigeonhole principle, collisions must exist (infinite inputs, finite outputs). Collision resistance only requires finding them be hard. Option (d) describes a MAC, not a plain hash.</div></div></div>
+
+<div class="q-card" id="qc51"><div class="q-head"><div class="q-num">51</div><span class="q-tag">Birthday Attack</span></div>
+<div class="q-text">Which attack involves finding any two inputs that produce the same hash?</div>
+<div class="opts" id="q51">
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">a</span>Pre-image attack.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q51')"><span class="ol">b</span>Birthday attack.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">c</span>Brute-force attack.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">d</span>Man-in-the-middle attack.</div>
+</div>
+<div class="q-rev" id="q51-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The birthday attack exploits the birthday paradox: for an \(n\)-bit hash, ~\(2^{n/2}\) random inputs gives ~50% probability of finding any two with the same hash — far fewer than the full \(2^n\) brute force space. A pre-image attack is different: it starts with a specific hash \(h\) and tries to find any \(m\) with \(H(m) = h\), costing \(2^n\) work.</div></div></div>
+
+<div class="q-card" id="qc52"><div class="q-head"><div class="q-num">52</div><span class="q-tag">Hash Properties</span><span class="q-disputed">⚠️ NO CORRECT ANSWER</span></div>
+<div class="q-text">What is a "weak collision resistance" in hash functions?</div>
+<div class="opts" id="q52" data-disputed="true">
+  <div class="opt" onclick="ca(this,'q52')"><span class="ol">a</span>It should be hard to find two different inputs with the same hash.</div>
+  <div class="opt" onclick="ca(this,'q52')"><span class="ol">b</span>It should be easy to modify an input without changing its hash.</div>
+  <div class="opt" onclick="ca(this,'q52')"><span class="ol">c</span>Given a hash output, it should be hard to find any input that produces it.</div>
+  <div class="opt" onclick="ca(this,'q52')"><span class="ol">d</span>The hash function should use a secret key.</div>
+</div>
+<div class="q-rev" id="q52-rev"><div class="rev-lbl">Official Clarification</div><div class="rev-ans dis">⚠️ No Correct Answer — confirmed by Questions of Doubt</div>
+<div class="rev-exp">Questions of Doubt: <em>"None is correct. Option (c) describes pre-image resistance, not second pre-image resistance."</em><br><br>The correct definition of <strong>weak collision resistance (second pre-image resistance)</strong>: given a fixed message \(m_1\), it is hard to find \(m_2 \neq m_1\) with \(H(m_1) = H(m_2)\).<br><br>Analysis: (a) describes <em>strong</em> collision resistance; (b) is incorrect/nonsensical; (c) describes <em>pre-image resistance</em>; (d) describes a MAC. None describes weak collision resistance correctly.</div></div></div>
+
+<div class="q-card" id="qc53"><div class="q-head"><div class="q-num">53</div><span class="q-tag">Hash Properties</span></div>
+<div class="q-text">What is the difference between weak (second pre-image) and strong collision resistance?</div>
+<div class="opts" id="q53">
+  <div class="opt" data-correct="true" onclick="ca(this,'q53')"><span class="ol">a</span>Weak collision resistance deals with fixed inputs, while strong collision resistance deals with any two inputs.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">b</span>Weak collision resistance is about reversing the hash, while strong is about finding any collision.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">c</span>Weak collision resistance requires a secret key, while strong does not.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">d</span>There is no difference; they mean the same thing.</div>
+</div>
+<div class="q-rev" id="q53-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp"><strong>Weak (second pre-image)</strong>: given a specific, fixed \(m_1\), find any \(m_2 \neq m_1\) with \(H(m_1) = H(m_2)\). The attacker is constrained to a target.<br><strong>Strong collision resistance</strong>: find <em>any</em> two different messages with the same hash — no fixed constraint. Strong is harder to achieve; the birthday attack exploits the gap between the two (\(2^{n/2}\) vs \(2^n\) work).</div></div></div>
+
+<div class="q-card" id="qc54"><div class="q-head"><div class="q-num">54</div><span class="q-tag">Hash Properties</span></div>
+<div class="q-text">If a hash function is strong collision-resistant, does it imply weak collision resistance?</div>
+<div class="opts" id="q54">
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">a</span>No, because they are independent properties.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">b</span>Only if the hash function is also pre-image resistant.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q54')"><span class="ol">c</span>Yes, because strong collision resistance is a stronger property.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">d</span>Only for keyed hash functions.</div>
+</div>
+<div class="q-rev" id="q54-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c) — confirmed by Questions of Doubt</div>
+<div class="rev-exp">If it is hard to find ANY two inputs with the same hash (strong), then it is certainly hard to find a second input that collides with a specific fixed input (weak) — the weak problem is a special case. Contrapositive: if you could break weak collision resistance (find a collision with a given target), you'd have a collision — breaking strong too. So strong → weak holds.</div></div></div>
+
+<div class="q-card" id="qc55"><div class="q-head"><div class="q-num">55</div><span class="q-tag">Hash Construction</span></div>
+<div class="q-text">What is the most common structural design used in traditional hash functions like SHA-1 and SHA-2?</div>
+<div class="opts" id="q55">
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">a</span>Sponge construction.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q55')"><span class="ol">b</span>Merkle-Damgård construction.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">c</span>Feistel network.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">d</span>Davies-Meyer construction.</div>
+</div>
+<div class="q-rev" id="q55-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Merkle-Damgård (1979) underlies MD5, SHA-1, and the SHA-2 family. The message is padded, then processed iteratively: compression function \(f\) takes the current state \(H_{i-1}\) and message block \(M_i\) to produce \(H_i\), starting from a fixed IV. The sponge construction (a) is used in SHA-3/Keccak. Davies-Meyer is one specific way to construct a compression function from a block cipher.</div></div></div>
+
+<div class="q-card" id="qc56"><div class="q-head"><div class="q-num">56</div><span class="q-tag">Hash Construction</span></div>
+<div class="q-text">Which component of a hash function processes one block at a time and updates the internal state?</div>
+<div class="opts" id="q56">
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">a</span>Initialization Vector (IV).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">b</span>Permutation function.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">c</span>Key schedule.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q56')"><span class="ol">d</span>Compression function.</div>
+</div>
+<div class="q-rev" id="q56-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">The compression function is the iterative core of Merkle-Damgård. It takes the current chaining value \(H_{i-1}\) and message block \(M_i\), outputting the next state \(H_i\). "Compression" means combining two inputs (total size \(> n\) bits) into one \(n\)-bit output. The IV provides the initial state; it does not process blocks.</div></div></div>
+
+<div class="q-card" id="qc57"><div class="q-head"><div class="q-num">57</div><span class="q-tag">Hash Construction</span></div>
+<div class="q-text">What is the role of the "initialization vector (IV)" in a hash function?</div>
+<div class="opts" id="q57">
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">a</span>Acts as a secret key for encryption.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q57')"><span class="ol">b</span>Provides the initial fixed value for the hash computation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">c</span>Ensures collision resistance.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">d</span>Shortens the output hash.</div>
+</div>
+<div class="q-rev" id="q57-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The IV in a hash function is a standardized, publicly-known constant that serves as the initial chaining value \(H_0\) for the first compression function call. It is NOT a secret (unlike a CBC IV which must be unpredictable). SHA-256's IV consists of specific 32-bit words derived from the fractional parts of square roots of the first eight primes.</div></div></div>
+
+<div class="q-card" id="qc58"><div class="q-head"><div class="q-num">58</div><span class="q-tag">HMAC</span></div>
+<div class="q-text">Which of the following components does HMAC require?</div>
+<div class="opts" id="q58">
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">a</span>A public key and a block cipher.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">b</span>An IV (Initialization Vector).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q58')"><span class="ol">c</span>A secret key and a hash function.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">d</span>A digital certificate.</div>
+</div>
+<div class="q-rev" id="q58-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">HMAC requires exactly: (1) a shared secret key \(K\) and (2) a hash function \(H\). No block cipher, IV, certificate, or asymmetric keys needed. Formula: \(\text{HMAC}(K,m) = H(K \oplus \text{opad} \| H(K \oplus \text{ipad} \| m))\). Because HMAC uses a symmetric key, it provides authentication but NOT non-repudiation.</div></div></div>
+
+<div class="q-card" id="qc59"><div class="q-head"><div class="q-num">59</div><span class="q-tag">HMAC vs Signatures</span></div>
+<div class="q-text">How does HMAC differ from a digital signature?</div>
+<div class="opts" id="q59">
+  <div class="opt" data-correct="true" onclick="ca(this,'q59')"><span class="ol">a</span>HMAC uses symmetric keys; signatures use asymmetric keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">b</span>HMAC is faster but provides non-repudiation.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">c</span>Signatures are shorter than HMAC outputs.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">d</span>HMAC requires a certificate authority.</div>
+</div>
+<div class="q-rev" id="q59-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Fundamental difference: HMAC uses a shared symmetric key (both parties must know it); digital signatures use asymmetric keys (private to sign, public to verify). This means HMAC cannot provide <strong>non-repudiation</strong> — anyone holding the shared key could have generated the HMAC. Option (b) is wrong: HMAC does NOT provide non-repudiation.</div></div></div>
+
+<div class="q-card" id="qc60"><div class="q-head"><div class="q-num">60</div><span class="q-tag">HMAC Formula</span></div>
+<div class="q-text">What is the formula for HMAC?</div>
+<div class="opts" id="q60">
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">a</span>\(\text{HMAC}(K, m) = H(K \| m)\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q60')"><span class="ol">b</span>\(\text{HMAC}(K, m) = H(K \oplus \text{opad} \| H(K \oplus \text{ipad} \| m))\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">c</span>\(\text{HMAC}(K, m) = H(m \| K)\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">d</span>\(\text{HMAC}(K, m) = \text{Encrypt}(K, H(m))\)</div>
+</div>
+<div class="q-rev" id="q60-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The inner hash \(H(K \oplus \text{ipad} \| m)\) processes the message with the inner-padded key. The outer hash wraps it: \(H(K \oplus \text{opad} \| \text{inner})\). The two different padding constants (ipad = 0x36…36, opad = 0x5C…5C) ensure inner and outer keys differ, preventing structural attacks. Options (a) and (c) are simple prepend/append constructions vulnerable to length-extension attacks.</div></div></div>
+
+<!-- COMPLETION -->
+<div id="completion">
+  <div style="font-size:48px;margin-bottom:12px;">🎓</div>
+  <h2>Exam Complete!</h2>
+  <p>You've answered all 60 questions from the 2025 CS464 Midterm.</p>
+  <div class="fs-grid">
+    <div class="fs-item"><div class="fs-val green" id="fc-correct">0</div><div class="fs-lbl">Correct</div></div>
+    <div class="fs-item"><div class="fs-val orange" id="fc-wrong">0</div><div class="fs-lbl">Wrong</div></div>
+    <div class="fs-item"><div class="fs-val" id="fc-disputed">0</div><div class="fs-lbl">Disputed</div></div>
+  </div>
+  <div id="grade-display"></div>
+  <div style="margin-top:20px;">
+    <a href="../index.html" class="back-btn">← Back to Study Hub</a>
+  </div>
+</div>
+
+</div><!-- .content -->
+
+<script>
+let correctCount = 0, totalAnswered = 0, disputedCount = 0;
+const TOTAL = 60;
+let timerSec = 3600, timerInterval = null, timerRunning = false;
+
+function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function toggleTimer(){
+  const btn=document.getElementById('timer-btn');
+  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; btn.textContent='▶ Resume'; }
+  else{
+    timerInterval=setInterval(()=>{
+      if(timerSec<=0){ clearInterval(timerInterval); timerRunning=false; return; }
+      timerSec--;
+      const el=document.getElementById('timer-display');
+      el.textContent=fmt(timerSec);
+      el.className=timerSec<300?'crit':timerSec<600?'warn':'';
+    },1000);
+    timerRunning=true; btn.textContent='⏸ Pause';
+  }
+}
+function resetTimer(){
+  clearInterval(timerInterval); timerRunning=false; timerSec=3600;
+  document.getElementById('timer-display').textContent='60:00';
+  document.getElementById('timer-display').className='';
+  document.getElementById('timer-btn').textContent='▶ Start';
+}
+
+function ca(el, gid){
+  const g=document.getElementById(gid); if(!g) return;
+  const opts=g.querySelectorAll('.opt');
+  if([...opts].some(o=>o.classList.contains('correct')||o.classList.contains('wrong')||o.classList.contains('disputed'))) return;
+  totalAnswered++;
+  if(g.dataset.disputed==='true'){
+    el.classList.add('disputed'); disputedCount++;
+  } else if(el.dataset.correct==='true'){
+    el.classList.add('correct'); correctCount++;
+  } else {
+    el.classList.add('wrong');
+    opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); });
+  }
+  opts.forEach(o=>o.classList.add('disabled'));
+  const rev=document.getElementById(gid+'-rev'); if(rev) rev.classList.add('show');
+  const card=document.getElementById('qc'+gid.replace('q','')); if(card) card.classList.add('answered');
+  document.getElementById('sc-correct').textContent=correctCount;
+  document.getElementById('sc-answered').textContent=totalAnswered;
+  document.getElementById('progress-fill').style.width=(totalAnswered/TOTAL*100)+'%';
+  if(totalAnswered===TOTAL) showCompletion();
+}
+
+function showCompletion(){
+  const wrongCount=totalAnswered-correctCount-disputedCount;
+  document.getElementById('fc-correct').textContent=correctCount;
+  document.getElementById('fc-wrong').textContent=wrongCount;
+  document.getElementById('fc-disputed').textContent=disputedCount;
+  const scoreable=TOTAL-disputedCount;
+  const pct=Math.round(correctCount/scoreable*100);
+  const grade=pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
+  const clr=pct>=70?'#34d399':pct>=60?'#f59e0b':'#f87171';
+  document.getElementById('grade-display').innerHTML=
+    `<div class="grade-badge" style="background:rgba(255,255,255,.05);color:${clr};">${pct}% · Grade ${grade}</div>
+     <p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${correctCount}/${scoreable} scoreable correct · ${disputedCount} disputed questions excluded from score</p>`;
+  if(timerRunning) toggleTimer();
+  const c=document.getElementById('completion'); c.classList.add('show');
+  c.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.renderMathInElement) renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});
+});
+</script>
+</body>
+</html>

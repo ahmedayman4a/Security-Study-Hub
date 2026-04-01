@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="version" content="v0.1.0">
+<title>Mock Exam A — CS464: Computer System Security</title>
+<link rel="stylesheet" href="exam-common.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+</head>
+<body>
+
+<div id="exam-header">
+  <div id="header-top">
+    <a href="../index.html" class="exam-brand">
+      <span class="brand-badge">CS464</span>
+      <span class="brand-title">Mock Exam A — Computer System Security</span>
+    </a>
+    <div id="timer-area">
+      <div id="timer-display">60:00</div>
+      <button class="timer-btn" onclick="toggleTimer()" id="timer-btn">▶ Start</button>
+      <button class="timer-btn" onclick="resetTimer()">↺ Reset</button>
+    </div>
+    <div id="score-area">
+      <div class="score-item"><div class="score-val sv-correct" id="sc-correct">0</div><div class="score-label">Correct</div></div>
+      <div class="score-item"><div class="score-val" id="sc-answered">0</div><div class="score-label">Answered</div></div>
+      <div class="score-item"><div class="score-val sv-total">60</div><div class="score-label">Total</div></div>
+    </div>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+</div>
+
+<div class="content">
+
+<!-- ═══ SECTION 1 ═══ -->
+<div class="sec-div"><div class="sec-label">📖 Lecture 01: AES &amp; Classical Cryptography <span class="sec-qs">Q1–Q10</span></div></div>
+
+<div class="q-card" id="qc1"><div class="q-head"><div class="q-num">1</div><span class="q-tag">Kerckhoffs</span></div>
+<div class="q-text">Kerckhoffs's Principle states that the security of a cipher should depend on:</div>
+<div class="opts" id="q1">
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">a</span>The secrecy of the algorithm, not the key.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q1')"><span class="ol">b</span>The secrecy of the key, not the algorithm.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">c</span>Using a key of at least 128 bits.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q1')"><span class="ol">d</span>Encryption and decryption using identical operations.</div>
+</div>
+<div class="q-rev" id="q1-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Kerckhoffs's principle: the algorithm may be made public; security must rest entirely on the secrecy of the key. This is why AES is fully documented — knowing how AES works gives an attacker no advantage without the key. It enables public scrutiny and peer review of algorithms without compromising deployed systems.</div></div></div>
+
+<div class="q-card" id="qc2"><div class="q-head"><div class="q-num">2</div><span class="q-tag">Avalanche Effect</span></div>
+<div class="q-text">The avalanche effect in block ciphers means:</div>
+<div class="opts" id="q2">
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">a</span>A small change in the key causes a proportionally small change in the ciphertext.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">b</span>Increasing the key size always doubles the effective security.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q2')"><span class="ol">c</span>Flipping 1 bit in the plaintext or key should cause roughly half the ciphertext bits to flip.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q2')"><span class="ol">d</span>The cipher output grows in size proportional to the number of rounds.</div>
+</div>
+<div class="q-rev" id="q2-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">The avalanche effect: a single-bit change in the input (plaintext or key) should flip approximately 50% of the output bits. This ensures ciphertexts appear completely random and hides any statistical relationship between plaintext and ciphertext. Ciphers lacking this property leak structural information — you could find partial plaintext by observing which ciphertext bits changed.</div></div></div>
+
+<div class="q-card" id="qc3"><div class="q-head"><div class="q-num">3</div><span class="q-tag">Confusion vs Diffusion</span></div>
+<div class="q-text">Which best describes Shannon's two design properties, confusion and diffusion?</div>
+<div class="opts" id="q3">
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">a</span>Confusion spreads bits across ciphertext; diffusion hides the key using non-linear substitutions.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q3')"><span class="ol">b</span>Confusion hides the key-to-ciphertext relationship (via substitution); diffusion spreads plaintext influence across ciphertext (via permutation).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">c</span>Both confusion and diffusion are properties of stream ciphers only.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q3')"><span class="ol">d</span>Diffusion prevents differential cryptanalysis; confusion prevents linear cryptanalysis exclusively.</div>
+</div>
+<div class="q-rev" id="q3-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Shannon identified two essential properties: <em>confusion</em> — making the relationship between key and ciphertext as complex/non-linear as possible (achieved via S-boxes, substitutions); <em>diffusion</em> — ensuring each plaintext bit influences many ciphertext bits (achieved via permutations, MixColumns). In AES: SubBytes provides confusion, ShiftRows+MixColumns provide diffusion.</div></div></div>
+
+<div class="q-card" id="qc4"><div class="q-head"><div class="q-num">4</div><span class="q-tag">AES Parameters</span></div>
+<div class="q-text">AES operates on which block size, with which key sizes?</div>
+<div class="opts" id="q4">
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">a</span>64-bit block, 56-bit key only.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">b</span>64-bit block, 128/192/256-bit key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q4')"><span class="ol">c</span>128-bit block, 56-bit key only.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q4')"><span class="ol">d</span>128-bit block, 128/192/256-bit key.</div>
+</div>
+<div class="q-rev" id="q4-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (d)</div>
+<div class="rev-exp">AES (Rijndael) always uses a <strong>128-bit (16-byte) block</strong>, regardless of key length. Supported key lengths are 128, 192, or 256 bits. The corresponding round counts are 10, 12, and 14. Compare with DES: 64-bit block with a 56-bit key (8 parity bits are stripped from the 64-bit key input).</div></div></div>
+
+<div class="q-card" id="qc5"><div class="q-head"><div class="q-num">5</div><span class="q-tag">AES Rounds</span></div>
+<div class="q-text">How many rounds does AES-128 use, and how many does AES-256 use?</div>
+<div class="opts" id="q5">
+  <div class="opt" data-correct="true" onclick="ca(this,'q5')"><span class="ol">a</span>AES-128: 10 rounds; AES-256: 14 rounds.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">b</span>All AES variants use 16 rounds.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">c</span>AES-128: 8 rounds; AES-256: 16 rounds.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q5')"><span class="ol">d</span>The number of rounds depends only on the plaintext, not the key size.</div>
+</div>
+<div class="q-rev" id="q5-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">AES round counts scale with key size: AES-128 → 10 rounds, AES-192 → 12 rounds, AES-256 → 14 rounds. More rounds provide a higher security margin, compensating for the additional key material. Note: each round consists of SubBytes, ShiftRows, MixColumns (omitted in the final round), and AddRoundKey.</div></div></div>
+
+<div class="q-card" id="qc6"><div class="q-head"><div class="q-num">6</div><span class="q-tag">ShiftRows</span></div>
+<div class="q-text">What does the AES ShiftRows operation do to the 4×4 state matrix?</div>
+<div class="opts" id="q6">
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">a</span>It cyclically rotates bytes in column \(i\) by \(i\) positions.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q6')"><span class="ol">b</span>It cyclically rotates bytes in row \(i\) by \(i\) positions to the left.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">c</span>It multiplies each byte by a fixed constant in \(\text{GF}(2^8)\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q6')"><span class="ol">d</span>It XORs every byte with the corresponding round key byte.</div>
+</div>
+<div class="q-rev" id="q6-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">ShiftRows cyclically shifts each <em>row</em> of the 4×4 state: row 0 unchanged, row 1 shifted left by 1, row 2 by 2, row 3 by 3. This is a permutation that provides inter-column diffusion — bytes originally in the same column end up in four different columns, so subsequent MixColumns mixes bytes from different original columns.</div></div></div>
+
+<div class="q-card" id="qc7"><div class="q-head"><div class="q-num">7</div><span class="q-tag">MixColumns</span></div>
+<div class="q-text">The AES MixColumns operation treats each column of the state as:</div>
+<div class="opts" id="q7">
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">a</span>A 32-bit integer XORed with the next column.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">b</span>A lookup index into a 256-entry S-box.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q7')"><span class="ol">c</span>A polynomial over \(\text{GF}(2^8)\), multiplied by a fixed matrix polynomial.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q7')"><span class="ol">d</span>A 4-byte sequence that is rotated and added to the round key.</div>
+</div>
+<div class="q-rev" id="q7-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">MixColumns treats each 4-byte column as a degree-3 polynomial over \(\text{GF}(2^8)\) and multiplies it by the fixed polynomial \(3x^3 + x^2 + x + 2\) (mod \(x^4+1\)). This is implemented as matrix-vector multiplication over \(\text{GF}(2^8)\). Each output byte depends on all four input bytes in the column — providing strong intra-column diffusion.</div></div></div>
+
+<div class="q-card" id="qc8"><div class="q-head"><div class="q-num">8</div><span class="q-tag">Key Schedule g()</span></div>
+<div class="q-text">In the AES key schedule, the function \(g()\) is applied to every 4th word. What does it do?</div>
+<div class="opts" id="q8">
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">a</span>It XORs consecutive words together to create the next word.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q8')"><span class="ol">b</span>It rotates the 4-byte word, applies SubBytes to each byte, then XORs with a round constant (Rcon).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">c</span>It reverses the bit order of the word and adds it to the previous round key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q8')"><span class="ol">d</span>It doubles the key length by appending a permuted copy of the current key.</div>
+</div>
+<div class="q-rev" id="q8-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The \(g()\) function (applied to \(W[4k-1]\) when generating round key \(k\)): (1) <strong>RotWord</strong> — rotate the 4 bytes left by one position; (2) <strong>SubWord</strong> — apply the AES S-box to each of the 4 bytes; (3) XOR with <strong>Rcon[k]</strong>, the round constant for round \(k\). This non-linear transformation prevents the key schedule from being inverted from partial key knowledge.</div></div></div>
+
+<div class="q-card" id="qc9"><div class="q-head"><div class="q-num">9</div><span class="q-tag">Caesar Cipher</span></div>
+<div class="q-text">The Caesar cipher has how many distinct, meaningful key values?</div>
+<div class="opts" id="q9">
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">a</span>26 (one for each letter)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q9')"><span class="ol">b</span>25 (shifts 1 through 25)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">c</span>128 (ASCII printable range)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q9')"><span class="ol">d</span>26! (all alphabet permutations)</div>
+</div>
+<div class="q-rev" id="q9-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A shift of 0 is the identity (no encryption), so only shifts 1–25 are meaningful, giving 25 keys. Brute-force needs at most 25 trials — trivially broken. Compare with the monoalphabetic substitution cipher which has \(26! \approx 4 \times 10^{26}\) possible keys, yet is still broken in seconds using frequency analysis.</div></div></div>
+
+<div class="q-card" id="qc10"><div class="q-head"><div class="q-num">10</div><span class="q-tag">Vigenère Weakness</span></div>
+<div class="q-text">The Vigenère cipher is broken in practice because:</div>
+<div class="opts" id="q10">
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">a</span>The key is always exactly 26 characters, making it equivalent to a monoalphabetic cipher.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q10')"><span class="ol">b</span>Once the key period is found (via Kasiski test or index of coincidence), each position reduces to an independent Caesar cipher broken by frequency analysis.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">c</span>Its output has the same letter frequency distribution as the original plaintext.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q10')"><span class="ol">d</span>It is perfectly secure for any key length shorter than the message.</div>
+</div>
+<div class="q-rev" id="q10-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The Vigenère cipher's repeating key is its fatal flaw. The Kasiski examination finds repeated ciphertext segments (which likely correspond to the same plaintext encrypted with the same key fragment), revealing the key length. The index of coincidence independently confirms the key length. Once the period \(L\) is known, the ciphertext is split into \(L\) groups, each encrypted with a single Caesar shift — broken instantly by frequency analysis.</div></div></div>
+
+<!-- ═══ SECTION 2 ═══ -->
+<div class="sec-div"><div class="sec-label">🔐 Lecture 02: Block Ciphers, Modes &amp; Key Distribution <span class="sec-qs">Q11–Q22</span></div></div>
+
+<div class="q-card" id="qc11"><div class="q-head"><div class="q-num">11</div><span class="q-tag">MITM on 2DES</span></div>
+<div class="q-text">Why does the meet-in-the-middle (MITM) attack reduce 2DES's effective security from 2<sup>112</sup> to approximately 2<sup>57</sup>?</div>
+<div class="opts" id="q11">
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">a</span>An algebraic flaw in DES makes the combined key factorizable.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">b</span>2DES is equivalent to single DES because DES forms a group under composition.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q11')"><span class="ol">c</span>Encrypt known plaintext with all 2<sup>56</sup> possible K₁ values and store the results; decrypt known ciphertext with all 2<sup>56</sup> possible K₂ values and look for a match — the total cost is 2×2<sup>56</sup> ≈ 2<sup>57</sup> with 2<sup>56</sup> space.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q11')"><span class="ol">d</span>The attacker guesses K₁ from the IV used in CBC mode.</div>
+</div>
+<div class="q-rev" id="q11-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">MITM: given known plaintext \(P\) and ciphertext \(C = E_{K_2}(E_{K_1}(P))\), build a table of \(E_{K_1}(P)\) for all \(2^{56}\) values of \(K_1\). Then compute \(D_{K_2}(C)\) for all \(2^{56}\) values of \(K_2\) and look for a collision with the table. A collision gives a candidate \((K_1, K_2)\). Total work: \(2 \times 2^{56} \approx 2^{57}\) — far less than the expected \(2^{112}\).</div></div></div>
+
+<div class="q-card" id="qc12"><div class="q-head"><div class="q-num">12</div><span class="q-tag">3DES EDE</span></div>
+<div class="q-text">In 3DES EDE (Encrypt-Decrypt-Encrypt) mode, the operations applied are:</div>
+<div class="opts" id="q12">
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">a</span>\(E_{K_1} \to E_{K_2} \to E_{K_3}\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q12')"><span class="ol">b</span>\(E_{K_1} \to D_{K_2} \to E_{K_3}\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">c</span>\(D_{K_1} \to E_{K_2} \to D_{K_3}\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q12')"><span class="ol">d</span>\(E_{K_1} \to E_{K_2} \to D_{K_3}\)</div>
+</div>
+<div class="q-rev" id="q12-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">3DES EDE: Encrypt with \(K_1\), Decrypt with \(K_2\), Encrypt with \(K_3\). The "Decrypt in the middle" enables backward compatibility: if \(K_1 = K_2 = K_3\), the EDE sequence is \(E \circ D \circ E = E\) (the two cancel), reducing 3DES to plain DES. With three independent 56-bit keys, the effective security is approximately 112 bits (not 168, due to time-space tradeoff attacks).</div></div></div>
+
+<div class="q-card" id="qc13"><div class="q-head"><div class="q-num">13</div><span class="q-tag">ECB Weakness</span></div>
+<div class="q-text">The critical weakness of ECB (Electronic Codebook) mode is:</div>
+<div class="opts" id="q13">
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">a</span>It requires a secret IV that must be transmitted alongside the ciphertext.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q13')"><span class="ol">b</span>Identical plaintext blocks always produce identical ciphertext blocks, leaking structural information.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">c</span>A single-bit ciphertext error corrupts the entire message.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q13')"><span class="ol">d</span>ECB cannot be parallelized, making it too slow for practical use.</div>
+</div>
+<div class="q-rev" id="q13-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">In ECB, each block is encrypted independently with the same key. Identical plaintext blocks → identical ciphertext blocks. This is catastrophically insecure for structured data — the "ECB penguin" (an image of Tux encrypted with ECB still shows the penguin outline) is the canonical demonstration. ECB also enables block-substitution attacks where an adversary rearranges blocks. Never use ECB for any real data.</div></div></div>
+
+<div class="q-card" id="qc14"><div class="q-head"><div class="q-num">14</div><span class="q-tag">CBC IV</span></div>
+<div class="q-text">In CBC mode, what is the primary purpose of the Initialization Vector (IV)?</div>
+<div class="opts" id="q14">
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">a</span>The IV is XORed with the key before each block encryption to vary the round keys.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q14')"><span class="ol">b</span>The IV XORs with the first plaintext block to randomize the first ciphertext, ensuring two identical plaintexts produce different ciphertexts.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">c</span>The IV must match the last ciphertext block for decryption to authenticate correctly.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q14')"><span class="ol">d</span>The IV determines the number of rounds the cipher executes.</div>
+</div>
+<div class="q-rev" id="q14-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">CBC mode: \(C_i = E_K(P_i \oplus C_{i-1})\), with \(C_0 = \text{IV}\). The IV provides a random starting value for the XOR chain. Without a fresh, random IV, two messages beginning with the same plaintext would produce identical initial ciphertext — leaking that the messages share a prefix. The IV need not be secret but must be unpredictable (to resist chosen-IV attacks, as in BEAST).</div></div></div>
+
+<div class="q-card" id="qc15"><div class="q-head"><div class="q-num">15</div><span class="q-tag">CTR Mode</span></div>
+<div class="q-text">A key advantage of CTR (Counter) mode over CBC is:</div>
+<div class="opts" id="q15">
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">a</span>CTR provides built-in message authentication that CBC lacks.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q15')"><span class="ol">b</span>Encryption and decryption in CTR are the same operation (XOR with keystream), the cipher's inverse is never needed, and blocks can be processed in parallel.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">c</span>CTR automatically pads messages that are not a multiple of the block size.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q15')"><span class="ol">d</span>CTR mode eliminates the need for an IV entirely.</div>
+</div>
+<div class="q-rev" id="q15-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">CTR generates keystream blocks by encrypting \(\text{Nonce} \| \text{Counter}_i\). The plaintext is XORed with the keystream — encryption and decryption are identical. Advantages: (1) only the block cipher's <em>encryption</em> direction is used; (2) all blocks are independent → full parallelism; (3) random-access decryption of any block; (4) works on arbitrary-length messages (no padding required). CTR is essentially a stream cipher built from a block cipher.</div></div></div>
+
+<div class="q-card" id="qc16"><div class="q-head"><div class="q-num">16</div><span class="q-tag">Kerberos AS</span></div>
+<div class="q-text">In Kerberos, the Authentication Server (AS) is responsible for:</div>
+<div class="opts" id="q16">
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">a</span>Issuing service tickets for every individual application server.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q16')"><span class="ol">b</span>Verifying the client's identity (via password-derived key) and issuing a Ticket-Granting Ticket (TGT) plus a session key for the TGS.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">c</span>Acting as a man-in-the-middle to decrypt and re-encrypt all service communications.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q16')"><span class="ol">d</span>Storing all session keys used between clients and services indefinitely.</div>
+</div>
+<div class="q-rev" id="q16-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The Kerberos AS is the first contact in the authentication flow. The client sends its identity; the AS looks up the client's long-term key \(K_c\) (derived from the password). It replies with: (a) the TGT, encrypted under the TGS's long-term key \(K_{TGS}\) (the client cannot read it), and (b) a session key \(K_{c,TGS}\), encrypted under \(K_c\). The client decrypts to get \(K_{c,TGS}\) and uses the TGT when requesting service tickets from the TGS.</div></div></div>
+
+<div class="q-card" id="qc17"><div class="q-head"><div class="q-num">17</div><span class="q-tag">Needham-Schroeder Nonce</span></div>
+<div class="q-text">In the Needham-Schroeder protocol, why does the client include a nonce \(N_A\) in its request to the KDC?</div>
+<div class="opts" id="q17">
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">a</span>The nonce becomes the session key shared between the two parties.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q17')"><span class="ol">b</span>The KDC includes \(N_A\) in its encrypted response, proving the response is fresh and not a replay of a previous valid reply.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">c</span>The nonce replaces timestamps, which Needham-Schroeder does not use.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q17')"><span class="ol">d</span>The nonce is the client's public component in a key-exchange operation.</div>
+</div>
+<div class="q-rev" id="q17-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A nonce (number used once) is a random value chosen fresh for each protocol run. The client sends \(N_A\) to the KDC. The KDC includes \(N_A\) in its reply, encrypted under \(K_A\) (the client's master key). Only the genuine KDC can produce a correctly-encrypted response containing \(N_A\) — and since \(N_A\) was chosen just now, the response cannot be a replay of any previous exchange.</div></div></div>
+
+<div class="q-card" id="qc18"><div class="q-head"><div class="q-num">18</div><span class="q-tag">RC4</span></div>
+<div class="q-text">RC4's internal state consists of:</div>
+<div class="opts" id="q18">
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">a</span>A 128-bit shift register updated by a non-linear feedback function.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q18')"><span class="ol">b</span>A 256-byte permutation array \(S[0..255]\) and two indices \(i, j\), initialized by the key via the KSA.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">c</span>An 8-byte state updated by a Feistel network with 16 rounds.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q18')"><span class="ol">d</span>A fixed 128-bit key expanded into a 2048-bit key schedule.</div>
+</div>
+<div class="q-rev" id="q18-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">RC4 uses a 256-byte permutation \(S\) initialized to \([0,1,\ldots,255]\) and then scrambled by the Key Scheduling Algorithm (KSA) using the secret key. The PRGA outputs one keystream byte per step: increment \(i\), update \(j = (j + S[i]) \bmod 256\), swap \(S[i] \leftrightarrow S[j]\), output \(S[(S[i]+S[j]) \bmod 256]\). Known weakness: the first bytes of the keystream are biased and should be discarded (as in WEP's failure).</div></div></div>
+
+<div class="q-card" id="qc19"><div class="q-head"><div class="q-num">19</div><span class="q-tag">Kerberos SSO</span></div>
+<div class="q-text">Kerberos achieves Single Sign-On (SSO) because:</div>
+<div class="opts" id="q19">
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">a</span>The user's password is embedded in each service ticket for re-authentication.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q19')"><span class="ol">b</span>After the initial password-based login, the TGT allows the client to obtain service tickets for any Kerberized service without re-entering the password.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">c</span>The AS stores a persistent session and automatically authenticates all future requests.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q19')"><span class="ol">d</span>All services share the same session key derived from the user's master key.</div>
+</div>
+<div class="q-rev" id="q19-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">After the user enters their password once (to decrypt the TGT), the client caches the TGT (valid for ~8 hours). To access any Kerberized service, the client presents the TGT to the TGS and receives a service-specific ticket — no password re-entry. The TGT is opaque to the client (encrypted under the TGS's key), and each service ticket is opaque to the client (encrypted under the service's key), preventing forgery.</div></div></div>
+
+<div class="q-card" id="qc20"><div class="q-head"><div class="q-num">20</div><span class="q-tag">Needham-Schroeder Replay</span></div>
+<div class="q-text">The classic replay vulnerability in the original Needham-Schroeder protocol allows:</div>
+<div class="opts" id="q20">
+  <div class="opt" data-correct="false" onclick="ca(this,'q20')"><span class="ol">a</span>An attacker to factor the master key from two intercepted sessions.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q20')"><span class="ol">b</span>An attacker who previously obtained an old session key to replay the old ticket to B, tricking B into believing it is starting a fresh session with A.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q20')"><span class="ol">c</span>The KDC to be bypassed entirely because nonces are predictable.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q20')"><span class="ol">d</span>Any passive observer to derive both parties' master keys from the transcript.</div>
+</div>
+<div class="q-rev" id="q20-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Denning &amp; Sacco (1981): if Eve compromises an old session key \(K_{AB}\), she can replay the old \(E_{K_B}(K_{AB} \| A)\) ticket to B. B decrypts it, sees a valid session key for A, and believes a fresh session has been established — even though \(K_{AB}\) is known to Eve. The fix (used in Kerberos) is to include timestamps in tickets, letting B reject stale tickets outside an allowed window.</div></div></div>
+
+<div class="q-card" id="qc21"><div class="q-head"><div class="q-num">21</div><span class="q-tag">OFB Bit Errors</span></div>
+<div class="q-text">In OFB (Output Feedback) mode, a single-bit error in the transmitted ciphertext:</div>
+<div class="opts" id="q21">
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">a</span>Causes all subsequent blocks to be unrecoverable.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q21')"><span class="ol">b</span>Corrupts only the corresponding bit in the decrypted plaintext, with no propagation to other bits.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">c</span>Corrupts the entire current block and the next block.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q21')"><span class="ol">d</span>Has no effect because OFB generates keystream independently of the ciphertext.</div>
+</div>
+<div class="q-rev" id="q21-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">OFB generates keystream by feeding the block cipher's output back into itself — entirely independent of the plaintext or ciphertext. Decryption XORs the received ciphertext with the same keystream. A single-bit flip in \(C_i\) XORs just that one bit with the correct keystream bit, flipping exactly one plaintext bit. The keystream generator remains synchronized, so future blocks are unaffected. This makes OFB suitable for noisy channels.</div></div></div>
+
+<div class="q-card" id="qc22"><div class="q-head"><div class="q-num">22</div><span class="q-tag">CFB Error Propagation</span></div>
+<div class="q-text">In CFB (Cipher Feedback) mode, a 1-bit error in ciphertext block \(C_i\) causes:</div>
+<div class="opts" id="q22">
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">a</span>No error — CFB self-synchronizes and corrects errors automatically.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q22')"><span class="ol">b</span>A 1-bit error in \(P_i\) and exactly one additional corrupted bit somewhere in \(P_{i+1}\), after which synchronization resumes.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">c</span>All blocks from \(P_i\) onward are completely garbled.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q22')"><span class="ol">d</span>Only \(P_i\) is corrupted; \(P_{i+1}\) is unaffected.</div>
+</div>
+<div class="q-rev" id="q22-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">CFB feeds the ciphertext into the shift register used for the next keystream block. A 1-bit error in \(C_i\): (1) the XOR in decrypting \(P_i\) directly flips 1 bit of \(P_i\); (2) the corrupted \(C_i\) is fed into the shift register, producing a garbled keystream input for block \(i+1\), corrupting exactly one output bit in \(P_{i+1}\). After block \(i+1\), the shift register contains only correct \(C\) values again and synchronization is restored.</div></div></div>
+
+<!-- ═══ SECTION 3 ═══ -->
+<div class="sec-div"><div class="sec-label">🔑 Lecture 03: Public-Key Cryptography &amp; RSA <span class="sec-qs">Q23–Q32</span></div></div>
+
+<div class="q-card" id="qc23"><div class="q-head"><div class="q-num">23</div><span class="q-tag">Euler's Theorem</span></div>
+<div class="q-text">RSA's correctness relies on Euler's theorem. Which statement correctly applies it?</div>
+<div class="opts" id="q23">
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">a</span>Euler's theorem proves that all keys generated by RSA are distinct.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q23')"><span class="ol">b</span>Since \(ed \equiv 1 \pmod{\phi(n)}\), we have \(m^{ed} = m^{1+k\phi(n)} \equiv m \pmod{n}\), so decryption inverts encryption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">c</span>Euler's theorem shows that RSA encryption is a one-way function.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q23')"><span class="ol">d</span>It proves that key generation terminates in polynomial time.</div>
+</div>
+<div class="q-rev" id="q23-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Euler's theorem: for \(m\) coprime to \(n\), \(m^{\phi(n)} \equiv 1 \pmod{n}\). Since \(ed \equiv 1 \pmod{\phi(n)}\), write \(ed = 1 + k\phi(n)\). Then \(m^{ed} = m \cdot (m^{\phi(n)})^k \equiv m \cdot 1^k = m \pmod{n}\). This guarantees that applying \(d\) to \(m^e\) recovers \(m\) — RSA decryption is the correct inverse of RSA encryption.</div></div></div>
+
+<div class="q-card" id="qc24"><div class="q-head"><div class="q-num">24</div><span class="q-tag">Private Key</span></div>
+<div class="q-text">In RSA, the private key \(d\) is computed as:</div>
+<div class="opts" id="q24">
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">a</span>\(d = e^2 \bmod \phi(n)\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">b</span>\(d = e \bmod (p + q)\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q24')"><span class="ol">c</span>\(d \equiv e^{-1} \pmod{\phi(n)}\), i.e., \(e \cdot d \equiv 1 \pmod{\phi(n)}\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q24')"><span class="ol">d</span>\(d = \phi(n) - e\)</div>
+</div>
+<div class="q-rev" id="q24-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">\(d\) is the modular multiplicative inverse of \(e\) modulo \(\phi(n)\). The extended Euclidean algorithm computes \(d\) such that \(e \cdot d \equiv 1 \pmod{\phi(n)}\). This inverse exists because \(\gcd(e, \phi(n)) = 1\) was required when choosing \(e\). Knowing \(\phi(n)\) is what allows computing \(d\) — which is why an attacker who can factor \(n\) into \(p, q\) and compute \(\phi(n) = (p-1)(q-1)\) breaks RSA.</div></div></div>
+
+<div class="q-card" id="qc25"><div class="q-head"><div class="q-num">25</div><span class="q-tag">Factoring Hardness</span></div>
+<div class="q-text">RSA's security is based on the integer factorization problem. What makes factoring the modulus \(n\) hard in practice?</div>
+<div class="opts" id="q25">
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">a</span>RSA moduli are kept secret so the attacker does not know \(n\).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q25')"><span class="ol">b</span>\(n\) is a product of two large secret primes; no polynomial-time factoring algorithm is known, and sub-exponential algorithms require impractical computational resources for \(n \geq 2048\) bits.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">c</span>Factoring \(n\) is computationally easy, but deriving \(d\) from \(e\) is hard even given the factorization.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q25')"><span class="ol">d</span>The RSA standard mandates 64-bit primes, making factoring provably impossible.</div>
+</div>
+<div class="q-rev" id="q25-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The best known factoring algorithm, the General Number Field Sieve (GNFS), runs in sub-exponential time but is still impractical for \(n \geq 2048\) bits. Note: if factoring were easy, RSA would be completely broken — knowing \(p, q\) immediately gives \(\phi(n)\) and thus \(d\). Also note: no proof exists that factoring is hard; it is an unproven computational assumption, which is why post-quantum alternatives are being developed.</div></div></div>
+
+<div class="q-card" id="qc26"><div class="q-head"><div class="q-num">26</div><span class="q-tag">Square-and-Multiply</span></div>
+<div class="q-text">The square-and-multiply algorithm computes \(m^e \bmod n\) by:</div>
+<div class="opts" id="q26">
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">a</span>Precomputing all powers \(m^1, m^2, m^4, \ldots\) and selecting the relevant subset to multiply.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">b</span>Reducing \(m^e \bmod n\) by GCD tricks before exponentiation.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q26')"><span class="ol">c</span>Processing the binary representation of \(e\) from MSB to LSB: always square, and additionally multiply by \(m\) for each 1-bit.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q26')"><span class="ol">d</span>Splitting the exponent using the Chinese Remainder Theorem into two half-size problems.</div>
+</div>
+<div class="q-rev" id="q26-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">Algorithm: set \(\text{result} = 1\). Read \(e\)'s binary digits from MSB to LSB. For each bit: (1) always square: \(\text{result} \leftarrow \text{result}^2 \bmod n\); (2) if the bit is 1: multiply: \(\text{result} \leftarrow \text{result} \times m \bmod n\). Total operations: \(\leq 2\lfloor\log_2 e\rfloor\). For a 2048-bit exponent, only ~3000 multiplications suffice instead of \(2^{2048}-1\).</div></div></div>
+
+<div class="q-card" id="qc27"><div class="q-head"><div class="q-num">27</div><span class="q-tag">RSA-CRT</span></div>
+<div class="q-text">How does the Chinese Remainder Theorem (CRT) speed up RSA decryption?</div>
+<div class="opts" id="q27">
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">a</span>CRT allows using a shorter private key \(d\) without reducing security.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q27')"><span class="ol">b</span>Decryption is split into two exponentiations modulo \(p\) and \(q\) (each half the size of \(n\)), which are ~4× faster each, then combined via Garner's formula.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">c</span>CRT replaces modular exponentiation with polynomial division.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q27')"><span class="ol">d</span>CRT applies to encryption only; decryption still requires full exponentiation mod \(n\).</div>
+</div>
+<div class="q-rev" id="q27-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">CRT approach: compute \(m_p = c^{d_p} \bmod p\) where \(d_p = d \bmod (p-1)\), and \(m_q = c^{d_q} \bmod q\) where \(d_q = d \bmod (q-1)\). Since \(p, q \approx n^{1/2}\), each exponentiation is roughly \((1/2)^3 = 1/8\) the cost of the full exponentiation (exponent is half as long, modulus is half as large). Combining the two results via Garner's formula costs little. Net speedup: approximately 4×.</div></div></div>
+
+<div class="q-card" id="qc28"><div class="q-head"><div class="q-num">28</div><span class="q-tag">Small Exponent Attack</span></div>
+<div class="q-text">The small public exponent attack on RSA (e.g., \(e = 3\)) works when:</div>
+<div class="opts" id="q28">
+  <div class="opt" data-correct="true" onclick="ca(this,'q28')"><span class="ol">a</span>The same message \(m\) is sent unpadded to 3 different recipients with \(e_1 = e_2 = e_3 = 3\), allowing recovery of \(m^3\) via CRT and then taking the cube root over the integers.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">b</span>Using \(e = 3\) means \(d\) is also small, making the private key easy to factor.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">c</span>Setting \(e = 3\) always results in \(m^3 < n\), so reduction mod \(n\) never occurs, making the ciphertext equal to \(m^3\) in the integers.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q28')"><span class="ol">d</span>A small \(e\) reduces the number of valid plaintexts to only 256 values.</div>
+</div>
+<div class="q-rev" id="q28-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">If message \(m\) is sent to three recipients with moduli \(n_1, n_2, n_3\) and all use \(e=3\), the attacker has \(c_i = m^3 \bmod n_i\). By CRT, compute \(X \equiv c_i \pmod{n_i}\) for \(i=1,2,3\): since \(m &lt; \min(n_i)\), we have \(m^3 &lt; n_1 n_2 n_3\), so \(X = m^3\) exactly (no modular reduction). Taking the integer cube root gives \(m\). Fix: always use OAEP padding before RSA encryption.</div></div></div>
+
+<div class="q-card" id="qc29"><div class="q-head"><div class="q-num">29</div><span class="q-tag">Non-Repudiation</span></div>
+<div class="q-text">RSA provides non-repudiation in digital signatures because:</div>
+<div class="opts" id="q29">
+  <div class="opt" data-correct="false" onclick="ca(this,'q29')"><span class="ol">a</span>RSA encrypts messages with the recipient's public key, proving the sender's identity.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q29')"><span class="ol">b</span>The sender signs with their private key \(d\) (known only to them); anyone can verify with the public key \(e\), so only the private key holder could have produced the valid signature.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q29')"><span class="ol">c</span>Non-repudiation requires both parties to share the same symmetric key.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q29')"><span class="ol">d</span>RSA non-repudiation relies on the CA to confirm message authenticity after the fact.</div>
+</div>
+<div class="q-rev" id="q29-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Non-repudiation: Alice computes \(s = m^d \bmod n\). Anyone can verify: \(s^e \bmod n = m\). Since only Alice holds \(d\), only Alice can produce a valid signature. She cannot later claim someone else signed — this is non-repudiation. Compare with MACs (shared key): both parties can compute a valid MAC, so no non-repudiation. Digital signatures require asymmetric keys.</div></div></div>
+
+<div class="q-card" id="qc30"><div class="q-head"><div class="q-num">30</div><span class="q-tag">Hybrid Encryption</span></div>
+<div class="q-text">Why is hybrid encryption (RSA + AES) used instead of pure RSA for bulk data?</div>
+<div class="opts" id="q30">
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">a</span>RSA is faster for large data; AES is used only for the key exchange.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q30')"><span class="ol">b</span>RSA is orders of magnitude slower than AES for bulk data; a random AES session key is encrypted with RSA (small), and the bulk data is encrypted with AES (fast).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">c</span>The combination of RSA and AES provides quantum resistance.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q30')"><span class="ol">d</span>Hybrid encryption is mandated by law for commercial communications.</div>
+</div>
+<div class="q-rev" id="q30-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">RSA operations involve modular exponentiations with thousands-of-bit numbers — typically 1000–10,000× slower than AES. For a 1 GB file: RSA encryption would be impractical. The hybrid solution: (1) generate a fresh random 256-bit AES session key, (2) encrypt the file with AES-256 (fast), (3) encrypt only the 32-byte session key with RSA (tiny). The recipient decrypts the RSA-wrapped key then uses it to decrypt the file. This is how TLS and PGP work.</div></div></div>
+
+<div class="q-card" id="qc31"><div class="q-head"><div class="q-num">31</div><span class="q-tag">CCA on Textbook RSA</span></div>
+<div class="q-text">Textbook RSA (without padding) is malleable. A chosen-ciphertext attack exploits this by:</div>
+<div class="opts" id="q31">
+  <div class="opt" data-correct="true" onclick="ca(this,'q31')"><span class="ol">a</span>Multiplying a target ciphertext \(c = m^e\) by a known \(r^e\) to get \((mr)^e\), submitting it for decryption to obtain \(mr\), then dividing by \(r\) to recover \(m\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">b</span>CCAs only work against stream ciphers, not RSA.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">c</span>RSA is immune to CCAs because private key operations are irreversible.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q31')"><span class="ol">d</span>A CCA requires the attacker to know the plaintext before encryption.</div>
+</div>
+<div class="q-rev" id="q31-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Textbook RSA is multiplicatively homomorphic: \(E(m_1) \cdot E(m_2) = E(m_1 m_2)\). An attacker who wants to decrypt \(c = m^e\) picks any \(r\), computes \(c' = c \cdot r^e = (mr)^e\), and submits \(c'\) to the decryption oracle. The oracle returns \(mr\). The attacker divides by \(r\) to get \(m\). OAEP padding destroys this malleability by randomizing the plaintext before encryption, making RSA-OAEP CCA-secure.</div></div></div>
+
+<div class="q-card" id="qc32"><div class="q-head"><div class="q-num">32</div><span class="q-tag">Miller-Rabin</span></div>
+<div class="q-text">The Miller-Rabin primality test is:</div>
+<div class="opts" id="q32">
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">a</span>A deterministic test that proves a number is prime with certainty.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">b</span>A deterministic polynomial-time primality test.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q32')"><span class="ol">c</span>A probabilistic test where each round with a random witness reduces the false-positive probability by at least a factor of 4; it can prove compositeness but not primality.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q32')"><span class="ol">d</span>A test that factors \(n\) to verify no prime divides it.</div>
+</div>
+<div class="q-rev" id="q32-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">Miller-Rabin with witness \(a\): if the test says "composite," the number is definitely composite. If it says "probably prime," there is a ≤1/4 chance of error. After \(k\) independent rounds with different witnesses, the error probability is ≤\((1/4)^k\). For \(k=40\), this is negligible (\(\approx 10^{-24}\)). Note: AKS (2002) is a deterministic polynomial-time test but is slower; Miller-Rabin with 40 rounds is the practical standard for RSA key generation.</div></div></div>
+
+<!-- ═══ SECTION 4 ═══ -->
+<div class="sec-div"><div class="sec-label">🏛️ Lecture 04: PKI, Diffie-Hellman &amp; ElGamal <span class="sec-qs">Q33–Q42</span></div></div>
+
+<div class="q-card" id="qc33"><div class="q-head"><div class="q-num">33</div><span class="q-tag">Digital Certificate</span></div>
+<div class="q-text">The core purpose of a digital certificate is to:</div>
+<div class="opts" id="q33">
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">a</span>Encrypt messages using the certificate owner's public key automatically.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q33')"><span class="ol">b</span>Bind a public key to an identity, with the issuing CA's digital signature as the proof of that binding.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">c</span>Store the certificate owner's private key in an encrypted form.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q33')"><span class="ol">d</span>Provide a list of all currently revoked public keys.</div>
+</div>
+<div class="q-rev" id="q33-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A digital certificate is a signed data structure: subject identity + subject's public key + validity dates + issuer + CA's digital signature over all the above. Any party that trusts the CA can verify the CA's signature and thereby trust that the included public key belongs to the claimed identity. This solves the key distribution problem — you don't need a secure channel to receive someone's public key if you can verify their certificate.</div></div></div>
+
+<div class="q-card" id="qc34"><div class="q-head"><div class="q-num">34</div><span class="q-tag">Certificate Chain</span></div>
+<div class="q-text">When validating an X.509 certificate chain, the validator:</div>
+<div class="opts" id="q34">
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">a</span>Contacts the certificate issuer directly for each validation request.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q34')"><span class="ol">b</span>Verifies each certificate's signature using its issuer's public key, walking up the chain until reaching a locally trusted root CA.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">c</span>Validates only the end-entity certificate; intermediate CAs are trusted implicitly.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q34')"><span class="ol">d</span>A chain with more than two certificates is automatically rejected for security.</div>
+</div>
+<div class="q-rev" id="q34-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Chain validation: start from the end-entity cert → verify its signature using the issuer's public key (from the next certificate in the chain) → continue until reaching a root CA whose certificate is in the local trust store (pre-installed in browsers/OS). Each link must have: (1) valid cryptographic signature, (2) validity period not expired, (3) appropriate key usage. If any link fails, the chain is invalid.</div></div></div>
+
+<div class="q-card" id="qc35"><div class="q-head"><div class="q-num">35</div><span class="q-tag">CRL</span></div>
+<div class="q-text">A Certificate Revocation List (CRL) is:</div>
+<div class="opts" id="q35">
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">a</span>A list of all valid certificates currently issued by a CA.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q35')"><span class="ol">b</span>A CA-signed list of certificate serial numbers that have been revoked before their expiration date.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">c</span>A database of users who have forgotten their passwords.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q35')"><span class="ol">d</span>The set of root CA certificates pre-installed in a browser's trust store.</div>
+</div>
+<div class="q-rev" id="q35-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A certificate must be revocable before expiry when the private key is compromised or the owner changes status. The CA publishes a signed CRL listing revoked serial numbers with revocation reasons and dates. Limitations: CRLs can be large, grow over time, and must be periodically downloaded (introducing latency and staleness). OCSP (Online Certificate Status Protocol) is a real-time alternative that checks the status of a specific certificate by serial number.</div></div></div>
+
+<div class="q-card" id="qc36"><div class="q-head"><div class="q-num">36</div><span class="q-tag">DH Shared Secret</span></div>
+<div class="q-text">In a Diffie-Hellman exchange with public parameters \((g, p)\), Alice sends \(g^a \bmod p\) and Bob sends \(g^b \bmod p\). The shared secret is:</div>
+<div class="opts" id="q36">
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">a</span>\(g^{a+b} \bmod p\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q36')"><span class="ol">b</span>\(g^{ab} \bmod p\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">c</span>\(g^{a \oplus b} \bmod p\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q36')"><span class="ol">d</span>\((g^a + g^b) \bmod p\)</div>
+</div>
+<div class="q-rev" id="q36-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Alice computes \((g^b)^a = g^{ab} \bmod p\). Bob computes \((g^a)^b = g^{ab} \bmod p\). Both arrive at \(g^{ab} \bmod p\). An eavesdropper sees \(g^a\) and \(g^b\) but cannot compute \(g^{ab}\) without solving the Computational Diffie-Hellman (CDH) problem — which is as hard as the discrete logarithm problem (DLP) in \(\mathbb{Z}_p^*\).</div></div></div>
+
+<div class="q-card" id="qc37"><div class="q-head"><div class="q-num">37</div><span class="q-tag">DH MITM</span></div>
+<div class="q-text">The fundamental reason DH is vulnerable to man-in-the-middle attacks is:</div>
+<div class="opts" id="q37">
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">a</span>DH uses the same key for encryption and authentication, creating a circular dependency.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q37')"><span class="ol">b</span>DH provides no authentication — Eve can substitute her own values for both Alice's and Bob's, establishing shared secrets with each without either party knowing.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">c</span>The discrete logarithm problem was recently solved, breaking DH's security.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q37')"><span class="ol">d</span>DH is vulnerable because all deployments use the same prime \(p\).</div>
+</div>
+<div class="q-rev" id="q37-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">In unauthenticated DH: Eve intercepts Alice's \(g^a\), sends her own \(g^e\) to Bob. She intercepts Bob's \(g^b\), sends her own \(g^{e'}\) to Alice. Alice derives shared secret \(g^{ae'}\) (with Eve), Bob derives \(g^{be}\) (with Eve). Eve decrypts, reads, re-encrypts, and forwards — a transparent relay. Neither Alice nor Bob detects Eve. Fix: authenticate the DH values using certificates or pre-shared keys (as in TLS, where the server's certificate proves ownership of its DH public key).</div></div></div>
+
+<div class="q-card" id="qc38"><div class="q-head"><div class="q-num">38</div><span class="q-tag">Perfect Forward Secrecy</span></div>
+<div class="q-text">Perfect Forward Secrecy (PFS) means:</div>
+<div class="opts" id="q38">
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">a</span>The same session key is reused across sessions to provide consistent security.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q38')"><span class="ol">b</span>Even if the long-term private key is later compromised, past session keys cannot be derived from it, protecting previously recorded sessions.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">c</span>PFS is achieved by switching to a new symmetric algorithm for each session.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q38')"><span class="ol">d</span>PFS requires the receiver to delete their private key after each communication session.</div>
+</div>
+<div class="q-rev" id="q38-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">PFS is achieved using ephemeral key pairs (DHE/ECDHE): a fresh random DH key pair is generated for each session and discarded after use. The session key derives entirely from the ephemeral exchange; the long-term private key is used only for authentication (to prevent MITM). If the long-term key is leaked years later, an adversary who recorded old sessions still cannot decrypt them — the ephemeral session keys are gone. TLS 1.3 mandates PFS.</div></div></div>
+
+<div class="q-card" id="qc39"><div class="q-head"><div class="q-num">39</div><span class="q-tag">ElGamal Nonce Reuse</span></div>
+<div class="q-text">In ElGamal encryption or DSS, reusing the random nonce \(K\) for two different messages allows an attacker to:</div>
+<div class="opts" id="q39">
+  <div class="opt" data-correct="true" onclick="ca(this,'q39')"><span class="ol">a</span>In encryption: divide the two ciphertexts to cancel the keystream, recovering the ratio of plaintexts. In DSS: solve a linear equation to recover the private key \(x\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">b</span>Nonce reuse only increases the ciphertext expansion factor but does not break security.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">c</span>Nonce reuse makes ElGamal equivalent to RSA encryption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q39')"><span class="ol">d</span>Nonce reuse only affects the DSS variant, not ElGamal encryption.</div>
+</div>
+<div class="q-rev" id="q39-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Encryption nonce reuse: both ciphertexts share the same \(C_1 = g^K\) and keystream \(y^K\). The second components are \(C_2 = m_1 \cdot y^K\) and \(C_2' = m_2 \cdot y^K\). Their ratio is \(C_2 / C_2' = m_1/m_2\) — if either message is known, the other is recovered. DSS nonce reuse is even worse: from two signatures with the same \(K\), one can solve \(K = (m_1 - m_2)(s_1 - s_2)^{-1} \bmod (p-1)\) and then recover \(x = r^{-1}(Ks - m) \bmod (p-1)\). Sony's PS3 private key was recovered exactly this way.</div></div></div>
+
+<div class="q-card" id="qc40"><div class="q-head"><div class="q-num">40</div><span class="q-tag">ElGamal Ciphertext Size</span></div>
+<div class="q-text">Compared to the plaintext, ElGamal encryption produces a ciphertext that is:</div>
+<div class="opts" id="q40">
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">a</span>The same size as the plaintext.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q40')"><span class="ol">b</span>Approximately twice the size, because the ciphertext is a pair \((C_1, C_2)\), each the size of the group modulus \(p\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">c</span>Exactly 256 bits regardless of plaintext length.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q40')"><span class="ol">d</span>256 bits shorter than the RSA equivalent for the same security level.</div>
+</div>
+<div class="q-rev" id="q40-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">ElGamal encryption: \(C_1 = g^K \bmod p\) and \(C_2 = m \cdot y^K \bmod p\). Both \(C_1\) and \(C_2\) are elements of \(\mathbb{Z}_p^*\), so each has the same bit-length as \(p\). Encrypting a message \(m\) that is also \(|p|\) bits yields a ciphertext pair of \(2|p|\) bits — double the size. This 2× expansion is a notable disadvantage of ElGamal compared to RSA, which does not inherently expand the message size.</div></div></div>
+
+<div class="q-card" id="qc41"><div class="q-head"><div class="q-num">41</div><span class="q-tag">Logjam Attack</span></div>
+<div class="q-text">The Logjam attack (2015) against TLS/DH exploited:</div>
+<div class="opts" id="q41">
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">a</span>A flaw in RSA key generation that allows factoring 1024-bit moduli.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q41')"><span class="ol">b</span>The ability to downgrade TLS connections to use 512-bit "export-grade" DH primes, for which discrete logarithms had been precomputed offline.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">c</span>Nonce reuse in ElGamal to recover TLS session keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q41')"><span class="ol">d</span>A birthday-paradox collision attack against SHA-1 certificates.</div>
+</div>
+<div class="q-rev" id="q41-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Logjam: a MITM attacker intercepts the TLS handshake and changes the offered DH group to a 512-bit "export" prime. Many servers accepted this downgrade (legacy from 1990s US export restrictions). Because many TLS implementations reused a small set of standard 512-bit primes, researchers precomputed discrete log tables for those primes. Once the discrete log of \(g^a\) was computed, the attacker derived the shared secret and read all traffic in near-real-time. Fix: disable export cipher suites, use ≥2048-bit primes.</div></div></div>
+
+<div class="q-card" id="qc42"><div class="q-head"><div class="q-num">42</div><span class="q-tag">ElGamal DSS Verification</span></div>
+<div class="q-text">In ElGamal DSS, given public key \(y = g^x \bmod p\), signature \((r, s)\) on message \(m\), the verification condition is:</div>
+<div class="opts" id="q42">
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">a</span>\(r^s \equiv g^m \pmod{p}\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q42')"><span class="ol">b</span>\(g^m \equiv y^r \cdot r^s \pmod{p}\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">c</span>\(s \equiv m \cdot r^{-1} \pmod{p-1}\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q42')"><span class="ol">d</span>\(m \equiv r^y \cdot s^g \pmod{p}\)</div>
+</div>
+<div class="q-rev" id="q42-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Signing: choose fresh random \(K\), compute \(r = g^K \bmod p\), then \(s = K^{-1}(m - xr) \bmod (p-1)\). Verification: check \(g^m \equiv y^r \cdot r^s \pmod{p}\). This works because \(y^r \cdot r^s = g^{xr} \cdot g^{Ks} = g^{xr + Ks} = g^{xr + (m-xr)} = g^m\). Each signature requires a fresh, secret, random \(K\) — reuse immediately compromises the private key \(x\).</div></div></div>
+
+<!-- ═══ SECTION 5 ═══ -->
+<div class="sec-div"><div class="sec-label">🔏 Lecture 05: Cryptographically Secure Hashing <span class="sec-qs">Q43–Q52</span></div></div>
+
+<div class="q-card" id="qc43"><div class="q-head"><div class="q-num">43</div><span class="q-tag">Pre-Image Resistance</span></div>
+<div class="q-text">First pre-image resistance of a hash function means:</div>
+<div class="opts" id="q43">
+  <div class="opt" data-correct="true" onclick="ca(this,'q43')"><span class="ol">a</span>Given a hash output \(h\), it is computationally infeasible to find any message \(m\) such that \(H(m) = h\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">b</span>Given a message \(m_1\), it is infeasible to find \(m_2 \neq m_1\) with \(H(m_1) = H(m_2)\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">c</span>It is computationally infeasible to find any two distinct messages with the same hash.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q43')"><span class="ol">d</span>The hash function must complete in constant time for all input lengths.</div>
+</div>
+<div class="q-rev" id="q43-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">Pre-image resistance (one-wayness): the hash should be a one-way function. Given \(h\), finding any \(m\) such that \(H(m) = h\) requires \(O(2^n)\) random trials for an \(n\)-bit hash — brute force. This is distinct from (b), which is <em>second pre-image</em> resistance (given a <em>specific</em> \(m_1\), find another), and (c), which is <em>collision</em> resistance (find any pair). Pre-image attacks require inverting the hash, which is the hardest property to break.</div></div></div>
+
+<div class="q-card" id="qc44"><div class="q-head"><div class="q-num">44</div><span class="q-tag">Second Pre-Image</span></div>
+<div class="q-text">Second pre-image resistance (weak collision resistance) means:</div>
+<div class="opts" id="q44">
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">a</span>Given \(h\), it is infeasible to find any \(m\) with \(H(m) = h\).</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q44')"><span class="ol">b</span>Given a specific message \(m_1\), it is infeasible to find a different message \(m_2 \neq m_1\) such that \(H(m_1) = H(m_2)\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">c</span>It is infeasible to find any two messages with the same hash, regardless of starting point.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q44')"><span class="ol">d</span>The hash is resistant to length extension attacks.</div>
+</div>
+<div class="q-rev" id="q44-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Second pre-image resistance (also called <em>weak collision resistance</em>): you are handed a specific \(m_1\) and must find a collision for it specifically. This is harder than a general collision attack (where you choose both messages freely) because your search is constrained. An \(n\)-bit hash provides \(2^n\) security against second pre-image attacks. This property is critical for document signing: an attacker should not be able to substitute a different document that hashes to the same value as a legitimately signed one.</div></div></div>
+
+<div class="q-card" id="qc45"><div class="q-head"><div class="q-num">45</div><span class="q-tag">Birthday Attack</span></div>
+<div class="q-text">The birthday attack reduces collision finding from \(O(2^n)\) to \(O(2^{n/2})\) because:</div>
+<div class="opts" id="q45">
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">a</span>The attacker knows part of the key, halving the search space.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q45')"><span class="ol">b</span>The attacker is free to choose both colliding messages, exploiting the birthday paradox: among \(\approx 2^{n/2}\) random messages, two will share a hash value with probability \(\approx 50\%\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">c</span>Merkle-Damgård hashes have a structural weakness that allows collision chains.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q45')"><span class="ol">d</span>Collision resistance is only required at the \(n/2\)-bit level by the hash standard.</div>
+</div>
+<div class="q-rev" id="q45-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Birthday paradox: in a room of \(\approx\sqrt{2N}\) people, the probability of any two sharing a birthday exceeds 50%. For an \(n\)-bit hash with \(N = 2^n\) possible outputs, after generating \(\approx 2^{n/2}\) random hash values, a collision appears with probability ≈ 50%. This is why SHA-256 (256-bit output) offers only 128-bit collision security — despite 256-bit output. For a secure hash, you need the output to be at least twice your target security level in bits.</div></div></div>
+
+<div class="q-card" id="qc46"><div class="q-head"><div class="q-num">46</div><span class="q-tag">Merkle-Damgård</span></div>
+<div class="q-text">The Merkle-Damgård construction builds a variable-length hash function from a fixed-input compression function by:</div>
+<div class="opts" id="q46">
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">a</span>Hashing all message blocks in parallel and XORing the outputs.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q46')"><span class="ol">b</span>Padding the message, dividing it into fixed-size blocks, and iterating: \(H_i = f(H_{i-1}, M_i)\) starting from a fixed IV, then outputting the final \(H_k\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">c</span>Hashing only the message length and combining with a MAC.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q46')"><span class="ol">d</span>Hashing each message bit independently and concatenating the results.</div>
+</div>
+<div class="q-rev" id="q46-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Merkle-Damgård: pad \(M\) to a multiple of the block size (padding typically includes the message length — Merkle-Damgård strengthening). Split into blocks \(M_1, \ldots, M_k\). Iterate: \(H_0 = \text{IV}\), \(H_i = f(H_{i-1}, M_i)\) for the compression function \(f\). Output \(H_k\). Security reduction: if \(f\) is a collision-resistant compression function, the resulting hash is also collision resistant. Vulnerability: length extension attacks exploit the exposed final state \(H_k\).</div></div></div>
+
+<div class="q-card" id="qc47"><div class="q-head"><div class="q-num">47</div><span class="q-tag">HMAC</span></div>
+<div class="q-text">The HMAC construction is defined as:</div>
+<div class="opts" id="q47">
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">a</span>\(\text{HMAC}(K, m) = H(K \| m)\)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q47')"><span class="ol">b</span>\(\text{HMAC}(K, m) = H\bigl((K \oplus \textit{opad}) \| H((K \oplus \textit{ipad}) \| m)\bigr)\)</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">c</span>\(\text{HMAC}(K, m) = H(m) \oplus K\) truncated to the hash output length</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q47')"><span class="ol">d</span>\(\text{HMAC}(K, m) = H(K) \oplus H(m)\)</div>
+</div>
+<div class="q-rev" id="q47-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">HMAC uses the key twice with different paddings: ipad = 0x36 repeated to the block size, opad = 0x5C repeated. The inner hash \(H((K \oplus \text{ipad}) \| m)\) binds the message to the key. The outer hash \(H((K \oplus \text{opad}) \| \text{inner})\) prevents length extension attacks against the inner hash. Options (a) and (c) are insecure: (a) allows length extension, (c) is not a proper MAC. HMAC is provably secure if the underlying hash satisfies mild assumptions.</div></div></div>
+
+<div class="q-card" id="qc48"><div class="q-head"><div class="q-num">48</div><span class="q-tag">Length Extension Attack</span></div>
+<div class="q-text">A length extension attack against \(H(K \| m)\) allows an attacker to:</div>
+<div class="opts" id="q48">
+  <div class="opt" data-correct="true" onclick="ca(this,'q48')"><span class="ol">a</span>Compute \(H(K \| m \| \textit{pad} \| \textit{extra})\) for any chosen <em>extra</em> without knowing \(K\), using only \(H(K \| m)\).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">b</span>Extend the key \(K\) to increase the MAC's security.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">c</span>Recover \(K\) from any single MAC output in linear time.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q48')"><span class="ol">d</span>Compute \(H(K \| m)\) from \(H(m)\) alone.</div>
+</div>
+<div class="q-rev" id="q48-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (a)</div>
+<div class="rev-exp">In Merkle-Damgård, the final hash state \(H_k\) is the complete internal state after processing \(K \| m\). An attacker who knows \(H_k = H(K \| m)\) can set it as the starting state and continue hashing more data \((\text{extra})\) — producing a valid \(H(K \| m \| \text{padding} \| \text{extra})\) without ever knowing \(K\). This allows forging MACs for extended messages. HMAC's double-keyed construction prevents this because the outer hash hides the inner state behind an additional keyed application.</div></div></div>
+
+<div class="q-card" id="qc49"><div class="q-head"><div class="q-num">49</div><span class="q-tag">SHA-256 Output</span></div>
+<div class="q-text">SHA-256 produces a digest of:</div>
+<div class="opts" id="q49">
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">a</span>128 bits</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">b</span>160 bits (SHA-1)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q49')"><span class="ol">c</span>256 bits</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q49')"><span class="ol">d</span>512 bits (SHA-512)</div>
+</div>
+<div class="q-rev" id="q49-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (c)</div>
+<div class="rev-exp">SHA-256 produces a 256-bit (32-byte) digest, giving 128-bit collision security (birthday bound). SHA family: SHA-1 → 160 bits (deprecated for most uses), SHA-224 → 224 bits, SHA-256 → 256 bits, SHA-384 → 384 bits, SHA-512 → 512 bits. SHA-3 (Keccak, 2015 NIST standard) uses a fundamentally different sponge construction but also supports 256-bit output (SHA3-256).</div></div></div>
+
+<div class="q-card" id="qc50"><div class="q-head"><div class="q-num">50</div><span class="q-tag">MAC vs Signature</span></div>
+<div class="q-text">The key difference between a MAC and a digital signature is:</div>
+<div class="opts" id="q50">
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">a</span>MACs use asymmetric keys; digital signatures use symmetric keys.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q50')"><span class="ol">b</span>Digital signatures provide non-repudiation (only the private key holder could sign); MACs do not, because the MAC secret is shared between parties.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">c</span>MACs are based on public-key cryptography; signatures use symmetric keys.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q50')"><span class="ol">d</span>Digital signatures authenticate only the key, not the message content.</div>
+</div>
+<div class="q-rev" id="q50-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A MAC uses a shared secret key — both the sender and receiver know \(K\) and can compute a valid MAC. A third party cannot determine which party produced the MAC, so there is no non-repudiation. A digital signature uses the signer's private key, which only they possess. Any party with the public key can verify the signature, but only the private key holder could have created it — providing non-repudiation. This is why legal contracts use digital signatures, not MACs.</div></div></div>
+
+<div class="q-card" id="qc51"><div class="q-head"><div class="q-num">51</div><span class="q-tag">HMAC Security</span></div>
+<div class="q-text">HMAC guarantees:</div>
+<div class="opts" id="q51">
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">a</span>Message confidentiality alongside integrity.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q51')"><span class="ol">b</span>Message authentication and integrity: only the party knowing the secret key \(K\) can compute or verify the tag; any message modification changes the tag.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">c</span>Equivalent security to encrypting the message with AES-256.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q51')"><span class="ol">d</span>Non-repudiation equivalent to an RSA digital signature.</div>
+</div>
+<div class="q-rev" id="q51-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">HMAC provides: (1) <strong>integrity</strong> — any change to \(m\) produces a different tag; (2) <strong>authentication</strong> — only parties sharing \(K\) can produce or verify a valid tag. HMAC does NOT provide confidentiality (the message \(m\) is transmitted in clear) nor non-repudiation (the key is shared). In TLS, HMAC is used in the record layer to verify that messages haven't been tampered with in transit, typically combined with encryption for confidentiality.</div></div></div>
+
+<div class="q-card" id="qc52"><div class="q-head"><div class="q-num">52</div><span class="q-tag">SHA-256 vs MD5</span></div>
+<div class="q-text">Why should SHA-256 be used instead of MD5 for security-critical applications?</div>
+<div class="opts" id="q52">
+  <div class="opt" data-correct="false" onclick="ca(this,'q52')"><span class="ol">a</span>SHA-256 is always faster than MD5 for all input sizes.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q52')"><span class="ol">b</span>Practical collisions in MD5 have been demonstrated; its 128-bit output provides only \(2^{64}\) collision security, which has been broken in practice.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q52')"><span class="ol">c</span>MD5 pads its output to 256 bits internally, creating a structural weakness.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q52')"><span class="ol">d</span>SHA-256 does not use Merkle-Damgård, making it fundamentally more secure than MD5.</div>
+</div>
+<div class="q-rev" id="q52-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">MD5 produces 128-bit digests → \(2^{64}\) birthday-attack collision complexity. Wang et al. (2004) demonstrated practical collisions in MD5 in minutes; this was exploited to forge SSL certificate chains (2009 rogue CA attack). SHA-256 provides 256-bit output → \(2^{128}\) collision complexity, currently considered computationally infeasible. Note: both use Merkle-Damgård (so both are vulnerable to length extension); use HMAC-SHA-256 rather than raw hash prepended with a key for MAC construction.</div></div></div>
+
+<!-- ═══ SECTION 6 ═══ -->
+<div class="sec-div"><div class="sec-label">🎲 Lecture 06: Secure Random Number Generation <span class="sec-qs">Q53–Q60</span></div></div>
+
+<div class="q-card" id="qc53"><div class="q-head"><div class="q-num">53</div><span class="q-tag">TRNG vs PRNG</span></div>
+<div class="q-text">The fundamental difference between a TRNG and a PRNG is:</div>
+<div class="opts" id="q53">
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">a</span>TRNGs are faster software algorithms; PRNGs rely on physical phenomena.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q53')"><span class="ol">b</span>PRNGs are deterministic algorithms — given the same seed, they produce the same sequence; TRNGs draw entropy from unpredictable physical processes.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">c</span>TRNGs are faster but less random than PRNGs.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q53')"><span class="ol">d</span>PRNGs cannot be seeded and produce independent values each run.</div>
+</div>
+<div class="q-rev" id="q53-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">A TRNG derives randomness from physical entropy sources (thermal noise in resistors, shot noise in semiconductors, radioactive decay, photon arrival times). Its output is non-deterministic and cannot be reproduced. A PRNG is a deterministic algorithm: \(x_{n+1} = f(x_n)\). The same seed always produces the same sequence. A CSPRNG (Cryptographically Secure PRNG) is a PRNG that passes the next-bit test: given any prefix of the output, the next bit is computationally indistinguishable from random.</div></div></div>
+
+<div class="q-card" id="qc54"><div class="q-head"><div class="q-num">54</div><span class="q-tag">LCG Weakness</span></div>
+<div class="q-text">Linear Congruential Generators (LCGs) are unsuitable for cryptography because:</div>
+<div class="opts" id="q54">
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">a</span>LCGs generate numbers too slowly for any practical use.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q54')"><span class="ol">b</span>LCGs are fully deterministic; observing a few outputs allows solving for the state and predicting all future (and past) values.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">c</span>LCGs require a hardware entropy source to produce any output.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q54')"><span class="ol">d</span>LCGs are cryptographically secure but unsuitable for simulation.</div>
+</div>
+<div class="q-rev" id="q54-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">LCG recurrence: \(X_{n+1} = (aX_n + c) \bmod m\). Given even three consecutive outputs, simple linear algebra recovers all parameters \((a, c, m)\) if unknown — or directly recovers the seed if the parameters are public. Once the state is known, all future and past values are determined. LCGs are fine for simulations and random number quality tests, but are cryptographically broken: never use for key generation, nonces, or anything security-sensitive.</div></div></div>
+
+<div class="q-card" id="qc55"><div class="q-head"><div class="q-num">55</div><span class="q-tag">Blum Blum Shub</span></div>
+<div class="q-text">The Blum Blum Shub (BBS) generator's security is based on:</div>
+<div class="opts" id="q55">
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">a</span>The hardness of computing discrete logarithms modulo a prime.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q55')"><span class="ol">b</span>The hardness of factoring \(n = p \cdot q\), where \(p \equiv q \equiv 3 \pmod{4}\) are both prime (a Blum integer).</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">c</span>BBS is unconditionally secure and requires no hardness assumption.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q55')"><span class="ol">d</span>The hardness of the shortest vector problem in lattices.</div>
+</div>
+<div class="q-rev" id="q55-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">BBS: choose Blum primes \(p \equiv q \equiv 3 \pmod{4}\), set \(n = pq\). Pick seed \(x_0\) as a random quadratic residue mod \(n\). Recurrence: \(x_i = x_{i-1}^2 \bmod n\), output the LSB(s) of each \(x_i\). Security reduces to the Quadratic Residuosity Problem, which is computationally equivalent to factoring \(n\). This makes BBS provably secure under the factoring assumption — but it is also extremely slow compared to AES-CTR-based PRNGs, limiting its practical use.</div></div></div>
+
+<div class="q-card" id="qc56"><div class="q-head"><div class="q-num">56</div><span class="q-tag">/dev/random vs /dev/urandom</span></div>
+<div class="q-text">On Linux, the difference between <code>/dev/random</code> and <code>/dev/urandom</code> is:</div>
+<div class="opts" id="q56">
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">a</span><code>/dev/random</code> always produces strong output; <code>/dev/urandom</code> produces weak pseudo-random output.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q56')"><span class="ol">b</span><code>/dev/random</code> blocks when the entropy pool is exhausted; <code>/dev/urandom</code> never blocks — it continues using a CSPRNG seeded from available entropy.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">c</span><code>/dev/urandom</code> uses network traffic as entropy; <code>/dev/random</code> uses keyboard and mouse input only.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q56')"><span class="ol">d</span>Both are identical on modern kernels and produce the same output.</div>
+</div>
+<div class="q-rev" id="q56-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Linux collects entropy from hardware events (keyboard/mouse timing, disk seeks, network arrival times). <code>/dev/random</code> is conservative: it blocks (stalls the read) when the estimated entropy count falls too low. <code>/dev/urandom</code> uses a CSPRNG (ChaCha20 on recent kernels) to stretch available entropy and never blocks. Cryptographers broadly recommend <code>/dev/urandom</code> for normal use — blocking is rarely necessary once the pool has been initially seeded at boot.</div></div></div>
+
+<div class="q-card" id="qc57"><div class="q-head"><div class="q-num">57</div><span class="q-tag">Shannon Entropy</span></div>
+<div class="q-text">The Shannon entropy of a fair coin flip (two equally likely outcomes) is:</div>
+<div class="opts" id="q57">
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">a</span>0 bits (coin flips are deterministic in quantum mechanics)</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q57')"><span class="ol">b</span>1 bit</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">c</span>2 bits</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q57')"><span class="ol">d</span>\(\log_2(n)\) bits where \(n\) is the number of flips performed</div>
+</div>
+<div class="q-rev" id="q57-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Shannon entropy: \(H = -\sum_x p(x) \log_2 p(x)\). For a fair coin: \(p(H) = p(T) = 0.5\). \[H = -(0.5 \cdot \log_2 0.5 + 0.5 \cdot \log_2 0.5) = -(0.5 \cdot (-1) + 0.5 \cdot (-1)) = 1 \text{ bit}\] Each fair coin flip provides exactly 1 bit of entropy. A biased coin (e.g., \(p=0.9\)) has lower entropy (\(\approx 0.47\) bits) because the outcome is more predictable — less information is gained per flip.</div></div></div>
+
+<div class="q-card" id="qc58"><div class="q-head"><div class="q-num">58</div><span class="q-tag">ANSI X9.17</span></div>
+<div class="q-text">ANSI X9.17 generates pseudo-random keys by:</div>
+<div class="opts" id="q58">
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">a</span>Applying a simple LCG seeded with the current system time.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q58')"><span class="ol">b</span>Using 3DES: the output block \(R_i = \text{3DES}_K(\text{DT}_i \oplus V_i)\), and the next seed \(V_{i+1} = \text{3DES}_K(R_i \oplus \text{DT}_i)\), where \(\text{DT}_i\) is a timestamp and \(V_i\) is the running seed.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">c</span>Hashing the concatenation of message data and a counter using SHA-256.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q58')"><span class="ol">d</span>Using BBS to extract LSBs of a Blum-integer squaring sequence.</div>
+</div>
+<div class="q-rev" id="q58-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">ANSI X9.17 (and its successor X9.31): uses 3DES with a secret key \(K\). Per iteration: (1) compute the output \(R_i = \text{EDE}_K(\text{DT}_i \oplus V_i)\) where \(\text{DT}_i\) is the current timestamp and \(V_i\) is the current seed/state; (2) update the seed: \(V_{i+1} = \text{EDE}_K(R_i \oplus \text{DT}_i)\). The timestamp prevents state repetition; the chained seed maintains unpredictability. X9.31 is the AES-based successor.</div></div></div>
+
+<div class="q-card" id="qc59"><div class="q-head"><div class="q-num">59</div><span class="q-tag">Intel RDRAND</span></div>
+<div class="q-text">The Intel RDRAND instruction provides cryptographically random numbers by:</div>
+<div class="opts" id="q59">
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">a</span>Reading bytes from the OS's <code>/dev/urandom</code> via a system call.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q59')"><span class="ol">b</span>Feeding on-chip thermal noise entropy into a DRBG (AES-CTR-based Deterministic Random Bit Generator) that produces the output.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">c</span>Hashing the CPU cycle counter (RDTSC) to produce an unpredictable value.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q59')"><span class="ol">d</span>Returning a fixed pseudo-random sequence updated only at system power-on.</div>
+</div>
+<div class="q-rev" id="q59-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">Intel's Digital Random Number Generator (DRNG): on-chip thermal noise is harvested via special analog circuits (the entropy source). This raw entropy seeds an SP 800-90A AES-CTR DRBG. RDRAND returns the DRBG output — high quality and fast (hundreds of MB/s). RDSEED returns the raw conditioned entropy before the DRBG, which is slower but provides entropy for seeding other generators. Intel's implementation is a black box, which has led to concerns about possible backdoors — production systems typically mix RDRAND with OS-collected entropy.</div></div></div>
+
+<div class="q-card" id="qc60"><div class="q-head"><div class="q-num">60</div><span class="q-tag">CSPRNG Requirements</span></div>
+<div class="q-text">A CSPRNG (Cryptographically Secure PRNG) must satisfy the <em>next-bit test</em>, meaning:</div>
+<div class="opts" id="q60">
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">a</span>It must produce exactly one new bit per clock cycle.</div>
+  <div class="opt" data-correct="true" onclick="ca(this,'q60')"><span class="ol">b</span>Given any number of past output bits, no polynomial-time algorithm can predict the next bit with probability significantly better than 1/2.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">c</span>The output must pass all NIST statistical randomness tests with 99% confidence.</div>
+  <div class="opt" data-correct="false" onclick="ca(this,'q60')"><span class="ol">d</span>It must require a hardware entropy source to re-seed after every 1000 outputs.</div>
+</div>
+<div class="q-rev" id="q60-rev"><div class="rev-lbl">Explanation</div><div class="rev-ans">✓ Correct: (b)</div>
+<div class="rev-exp">The next-bit test (Yao, 1982) is the gold standard for CSPRNGs: given the first \(k\) bits of output, no polynomial-time algorithm can predict bit \(k+1\) with probability &gt; 1/2 + negligible. This computational unpredictability is essential: cryptographic nonces, session keys, and IV values must be unpredictable. Statistical randomness tests (NIST, Diehard) are necessary but not sufficient — a PRNG can pass all statistical tests while still being predictable if its state is exposed. LCGs pass statistical tests but fail the next-bit test.</div></div></div>
+
+</div><!-- end .content -->
+
+<!-- Completion Screen -->
+<div id="completion-screen" style="display:none; position:fixed; inset:0; background:rgba(15,17,23,.97); z-index:200; display:none; align-items:center; justify-content:center; flex-direction:column; gap:24px;">
+  <div style="font-size:52px;">🎓</div>
+  <h2 style="color:var(--accent2); font-size:28px; margin:0;">Mock Exam A Complete</h2>
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px 48px; text-align:center;">
+    <div style="font-size:56px; font-weight:900; color:var(--accent3);" id="final-score">—</div>
+    <div style="color:var(--text-muted); margin-top:4px;">Score</div>
+    <div style="font-size:24px; color:var(--text); margin-top:16px;" id="final-grade">—</div>
+  </div>
+  <button class="timer-btn" onclick="document.getElementById('completion-screen').style.display='none'" style="padding:12px 32px; font-size:16px;">Review Answers</button>
+</div>
+
+<script>
+let correctCount = 0, totalAnswered = 0;
+const TOTAL = 60;
+let timerSec = 3600, timerInterval = null, timerRunning = false;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function updateTimerDisplay(){
+  const m = Math.floor(timerSec/60), s = timerSec%60;
+  document.getElementById('timer-display').textContent = pad(m)+':'+pad(s);
+  if(timerSec<=300) document.getElementById('timer-display').style.color='var(--danger)';
+}
+function toggleTimer(){
+  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; document.getElementById('timer-btn').textContent='▶ Resume'; }
+  else { timerRunning=true; document.getElementById('timer-btn').textContent='⏸ Pause'; timerInterval=setInterval(()=>{ if(timerSec>0){timerSec--;updateTimerDisplay();}else{clearInterval(timerInterval);document.getElementById('timer-display').textContent='00:00';} },1000); }
+}
+function resetTimer(){ clearInterval(timerInterval); timerRunning=false; timerSec=3600; updateTimerDisplay(); document.getElementById('timer-display').style.color=''; document.getElementById('timer-btn').textContent='▶ Start'; }
+
+function ca(el, gid){
+  const g=document.getElementById(gid); if(!g) return;
+  const opts=g.querySelectorAll('.opt');
+  if([...opts].some(o=>o.classList.contains('correct')||o.classList.contains('wrong'))) return;
+  totalAnswered++;
+  if(el.dataset.correct==='true'){ el.classList.add('correct'); correctCount++; }
+  else { el.classList.add('wrong'); opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+  opts.forEach(o=>o.classList.add('disabled'));
+  const rev=document.getElementById(gid+'-rev'); if(rev) rev.classList.add('show');
+  const qnum=gid.replace('q',''); const card=document.getElementById('qc'+qnum); if(card) card.classList.add('answered');
+  document.getElementById('sc-correct').textContent=correctCount;
+  document.getElementById('sc-answered').textContent=totalAnswered;
+  document.getElementById('progress-fill').style.width=(totalAnswered/TOTAL*100)+'%';
+  if(totalAnswered===TOTAL) showCompletion();
+}
+
+function showCompletion(){
+  const pct=Math.round(correctCount/TOTAL*100);
+  document.getElementById('final-score').textContent=correctCount+'/'+TOTAL+' ('+pct+'%)';
+  const grades=[{t:90,l:'A — Excellent'},{t:80,l:'B — Good'},{t:70,l:'C — Satisfactory'},{t:60,l:'D — Passing'}];
+  const grade=grades.find(g=>pct>=g.t)||{l:'F — Needs Work'};
+  document.getElementById('final-grade').textContent=grade.l;
+  const s=document.getElementById('completion-screen'); s.style.display='flex';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{ updateTimerDisplay(); });
+</script>
+</body>
+</html>

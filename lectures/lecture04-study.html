@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 464 — Lecture 04: More Public-Key Cryptography</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3247;
+    --accent: #6c8aff; --accent2: #a78bfa; --accent3: #34d399;
+    --warning: #f59e0b; --danger: #f87171; --text: #e2e8f0;
+    --text-muted: #94a3b8; --text-dim: #64748b;
+    --tag-bg: #1e3a5f; --tag-text: #93c5fd;
+    --correct-bg: #052e16; --correct-border: #16a34a;
+    --wrong-bg: #2d0000; --wrong-border: #b91c1c;
+    --hint-bg: #1c1a05; --hint-border: #854d0e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
+  #app { display: flex; min-height: 100vh; }
+  #sidebar { width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+  #sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  #sidebar-header p { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 6px 16px 4px; }
+  .nav-item { display: block; padding: 7px 16px; font-size: 13px; color: var(--text-muted); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover, .nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+  .nav-item.active { color: var(--accent); font-weight: 600; }
+  #main { margin-left: 280px; flex: 1; padding: 40px 48px 80px; max-width: 1100px; }
+  #progress-bar { position: fixed; top: 0; left: 280px; right: 0; height: 3px; background: var(--border); z-index: 200; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.3s; }
+  .section { display: none; animation: fadeIn 0.3s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  h1 .tag { font-size: 12px; font-weight: 600; background: var(--tag-bg); color: var(--tag-text); padding: 3px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; }
+  h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; font-weight: 700; color: var(--accent2); margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--accent3); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: #fff; font-weight: 700; }
+  em { color: var(--accent2); font-style: italic; }
+  ul, ol { margin: 0 0 14px 24px; color: var(--text-muted); }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--text); }
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 18px 0; border-left: 4px solid; font-size: 15px; }
+  .callout-info { background: #0c1a3a; border-color: var(--accent); }
+  .callout-tip { background: #0a2a1a; border-color: var(--accent3); }
+  .callout-warning { background: var(--hint-bg); border-color: var(--warning); }
+  .callout-danger { background: var(--wrong-bg); border-color: var(--danger); }
+  .callout-title { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info .callout-title { color: var(--accent); }
+  .callout-tip .callout-title { color: var(--accent3); }
+  .callout-warning .callout-title { color: var(--warning); }
+  .callout-danger .callout-title { color: var(--danger); }
+  code { background: #1e2235; color: #a5f3fc; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  pre { background: #111520; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.8; color: #c4d4f0; margin: 14px 0; white-space: pre; }
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--surface2); color: var(--accent); font-weight: 700; padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  tr:hover td { background: var(--surface2); }
+  .example-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .example-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--accent3); border-bottom: 1px solid var(--border); }
+  .example-badge { background: #064e3b; color: var(--accent3); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .example-body { padding: 18px 20px; }
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .quiz-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .quiz-badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 700; }
+  .badge-exam { background: #1e1a40; color: var(--accent2); }
+  .badge-practice { background: #122a40; color: var(--accent); }
+  .badge-doubt { background: #2a1a00; color: var(--warning); }
+  .quiz-question { padding: 16px 20px; font-size: 15px; font-weight: 500; line-height: 1.6; }
+  .options { padding: 0 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .option { padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.15s; display: flex; align-items: flex-start; gap: 10px; background: var(--surface2); }
+  .option:hover { border-color: var(--accent); background: #111830; }
+  .option.correct { background: var(--correct-bg); border-color: var(--correct-border); color: #6ee7b7; }
+  .option.wrong { background: var(--wrong-bg); border-color: var(--wrong-border); color: #fca5a5; }
+  .option.disabled { cursor: default; pointer-events: none; }
+  .option-letter { font-weight: 800; font-size: 12px; min-width: 22px; height: 22px; background: var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .explanation { margin: 8px 20px 16px; padding: 14px 16px; background: #0c1225; border: 1px solid var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.6; display: none; }
+  .explanation.show { display: block; }
+  .step-list { list-style: none; margin: 0; padding: 0; }
+  .step-list li { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+  .step-num { min-width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .step-content { flex: 1; }
+  .hero { padding: 40px 0 20px; }
+  .hero-tag { font-size: 12px; font-weight: 700; color: var(--accent3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .hero-title { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+  .hero-subtitle { font-size: 17px; color: var(--text-muted); margin-bottom: 32px; max-width: 620px; }
+  .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+  .topic-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.2s; }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-icon { font-size: 24px; margin-bottom: 10px; }
+  .topic-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .topic-desc { font-size: 12px; color: var(--text-dim); }
+  .kc-card { background: #0c1a3a; border: 1px solid var(--accent); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+  .kc-title { font-size: 12px; font-weight: 800; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .kc-item { margin-bottom: 14px; }
+  .kc-q { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .kc-a { color: var(--text-muted); font-size: 14px; display: none; border-left: 3px solid var(--accent3); padding-left: 12px; margin-top: 6px; }
+  .kc-toggle { font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+  .mitm-flow { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 18px 0; font-size: 14px; }
+  .mitm-row { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; padding: 8px 12px; border-radius: 6px; }
+  .mitm-normal { background: #0a2010; border-left: 3px solid var(--accent3); }
+  .mitm-attack { background: #2d0000; border-left: 3px solid var(--danger); }
+  .mitm-label { font-weight: 700; font-size: 11px; text-transform: uppercase; min-width: 60px; }
+  .mitm-normal .mitm-label { color: var(--accent3); }
+  .mitm-attack .mitm-label { color: var(--danger); }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="app">
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>CSE 464</h2>
+    <p>Lecture 04 — More Public-Key Cryptography</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Navigation</div>
+    <div class="nav-item active" onclick="show('sec-overview')">🏠 Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Content</div>
+    <div class="nav-item" onclick="show('sec-mitm')">⚠️ Key Exchange &amp; MITM</div>
+    <div class="nav-item" onclick="show('sec-certs')">📜 Certificates &amp; PKI</div>
+    <div class="nav-item" onclick="show('sec-dh')">🔗 Diffie-Hellman Key Exchange</div>
+    <div class="nav-item" onclick="show('sec-dh-security')">🛡️ DH Security &amp; DHE</div>
+    <div class="nav-item" onclick="show('sec-elgamal')">✍️ ElGamal Encryption</div>
+    <div class="nav-item" onclick="show('sec-dss')">🖊️ ElGamal DSS (Signatures)</div>
+    <div class="nav-item" onclick="show('sec-discrete-log')">📊 Discrete Logarithm Problem</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Practice</div>
+    <div class="nav-item" onclick="show('sec-exam-prep')">📋 Exam Prep (Q39–Q48)</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- OVERVIEW -->
+<div id="sec-overview" class="section active">
+  <div class="hero">
+    <div class="hero-tag">Lecture 04</div>
+    <h1 class="hero-title">More Public-Key Cryptography</h1>
+    <p class="hero-subtitle">Certificates, PKI, Diffie-Hellman key exchange, ElGamal encryption and signatures — answering the questions RSA alone cannot.</p>
+  </div>
+  <div class="topic-grid">
+    <div class="topic-card" onclick="show('sec-mitm')">
+      <div class="topic-icon">⚠️</div>
+      <div class="topic-title">Key Exchange &amp; MITM</div>
+      <div class="topic-desc">Why unauthenticated key exchange fails; the direct protocol's flaw</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-certs')">
+      <div class="topic-icon">📜</div>
+      <div class="topic-title">Certificates &amp; PKI</div>
+      <div class="topic-desc">CA hierarchy, X.509, certificate types, CRL, forgery</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-dh')">
+      <div class="topic-icon">🔗</div>
+      <div class="topic-title">Diffie-Hellman</div>
+      <div class="topic-desc">ℤ*p group, DH protocol, worked example, PFS</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-dh-security')">
+      <div class="topic-icon">🛡️</div>
+      <div class="topic-title">DH Security &amp; DHE</div>
+      <div class="topic-desc">Discrete log hardness, MITM vulnerability, Logjam</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-elgamal')">
+      <div class="topic-icon">✍️</div>
+      <div class="topic-title">ElGamal Encryption</div>
+      <div class="topic-desc">DH-based asymmetric encryption with long-term keys</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-dss')">
+      <div class="topic-icon">🖊️</div>
+      <div class="topic-title">ElGamal DSS</div>
+      <div class="topic-desc">Signing and verification; why K must never be reused</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-discrete-log')">
+      <div class="topic-icon">📊</div>
+      <div class="topic-title">Discrete Logarithm</div>
+      <div class="topic-desc">Hardness, known algorithms, connection to DH/ElGamal</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-exam-prep')">
+      <div class="topic-icon">📋</div>
+      <div class="topic-title">Exam Prep Q39–Q48</div>
+      <div class="topic-desc">All midterm questions with full explanations</div>
+    </div>
+  </div>
+  <div class="callout callout-info">
+    <div class="callout-title">📌 Three Questions This Lecture Answers</div>
+    <ol style="margin-top:8px;">
+      <li><strong>Key exchange:</strong> RSA is too slow for bulk encryption. How do parties establish a session key efficiently and securely?</li>
+      <li><strong>Authenticating public keys:</strong> How does B know the public key really belongs to A and not an impostor?</li>
+      <li><strong>Forward secrecy:</strong> If an attacker records traffic today and obtains your private key tomorrow, can they decrypt everything?</li>
+    </ol>
+  </div>
+</div>
+
+<!-- KEY EXCHANGE AND MITM -->
+<div id="sec-mitm" class="section">
+  <h1>Key Exchange &amp; Man-in-the-Middle Attack <span class="tag">Part 1</span></h1>
+
+  <h2>The Direct Key Exchange Protocol</h2>
+  <p>RSA is too slow for encrypting large messages, but it can exchange a short symmetric <strong>session key</strong>. The direct protocol works as follows:</p>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">A generates a fresh RSA key pair $[PU_A, PR_A]$ and sends $PU_A$ and $ID_A$ (A's IP address) to B — unencrypted.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">B generates a random session key $K_S$ and sends $E(PU_A, K_S)$ — the session key encrypted with A's public key.</div></li>
+    <li><div class="step-num">3</div><div class="step-content">A decrypts with $PR_A$ to recover $K_S$. Both parties now share $K_S$ and use it with AES for actual data.</div></li>
+  </ul>
+  <p>This looks clean. But it has a fatal flaw: <strong>B has no way to verify that $PU_A$ actually belongs to A</strong>.</p>
+
+  <h2>The MITM Attack</h2>
+  <p>An adversary $V$ who can intercept messages can completely subvert the protocol without being detected:</p>
+
+  <div class="mitm-flow">
+    <div class="mitm-row mitm-normal">
+      <span class="mitm-label">INTENDED</span>
+      <span>A → B: $PU_A$, $ID_A$</span>
+    </div>
+    <div class="mitm-row mitm-attack">
+      <span class="mitm-label">ATTACK</span>
+      <span>V intercepts. B never sees this. V → B: $PU_V$, $ID_A$ (impersonating A)</span>
+    </div>
+    <div class="mitm-row mitm-normal">
+      <span class="mitm-label">INTENDED</span>
+      <span>B → A: $E(PU_A, K_S)$</span>
+    </div>
+    <div class="mitm-row mitm-attack">
+      <span class="mitm-label">ATTACK</span>
+      <span>V intercepts. B sent $E(PU_V, K_S)$, so V decrypts with $PR_V$ and gets $K_S$. V → A: $E(PU_A, K_S)$ (re-encrypted)</span>
+    </div>
+  </div>
+
+  <p>Result: A and B both have $K_S$ and believe the exchange was secure — but V also has $K_S$ and can decrypt, read, and modify all future messages.</p>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ Root Cause</div>
+    <p>The protocol fails because public key distribution is <strong>unauthenticated</strong>. V successfully impersonated A by substituting their own public key. The fix: <strong>digital certificates</strong> — a trusted third party (CA) cryptographically binds a public key to a verified identity, making substitution detectable.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">In the MITM attack on the direct key exchange, what specific step does the adversary exploit?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">The adversary intercepts A's first message (which sends $PU_A$ in plaintext) and substitutes their own public key $PU_V$ before it reaches B. Since B trusts any key it receives, it encrypts $K_S$ to $PU_V$ instead of $PU_A$, allowing V to decrypt it.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CERTIFICATES AND PKI -->
+<div id="sec-certs" class="section">
+  <h1>Certificates &amp; Public Key Infrastructure (PKI) <span class="tag">Part 2</span></h1>
+
+  <h2>What Is a Digital Certificate?</h2>
+  <p>A <strong>digital certificate</strong> is a data structure that <em>binds a public key to an identity</em>, signed by a trusted third party. Specifically, A's certificate is:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$CA = E(PR_{CA},\ [T,\ ID_A,\ PU_A])$$
+  </div>
+  <p>where $T$ is a timestamp/validity period, $ID_A$ is A's identity, $PU_A$ is A's public key, and the whole bundle is signed with the CA's private key $PR_{CA}$. When B receives this certificate, B uses the CA's public key (which B already trusts) to verify the signature — proving that $PU_A$ genuinely belongs to $ID_A$, as vouched for by the CA.</p>
+
+  <h2>The CA Hierarchy</h2>
+  <p>Certificate Authorities are organized in a <strong>tree hierarchy</strong>:</p>
+  <ul>
+    <li><strong>Root CAs</strong> — the ultimate trust anchors (VeriSign/DigiCert, Comodo, etc.). Self-signed.</li>
+    <li><strong>Intermediate CAs</strong> — certified by root CAs; can issue end-entity certificates.</li>
+    <li><strong>Registration Authorities (RA)</strong> — handle administrative verification but delegate signing to a CA.</li>
+  </ul>
+  <p>Your OS and browser come <strong>pre-loaded with the public keys of trusted root CAs</strong>. This is the foundational trust assumption: you trust that the OS/browser vendor has included legitimate root CA keys.</p>
+
+  <h2>Certificate Validation — Chain of Trust</h2>
+  <p>When your browser connects to <code>https://example.com</code>:</p>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">Browser receives the server's certificate, issued by an intermediate CA.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">Browser looks up the intermediate CA's certificate (issued by a higher CA) — may also be sent by the server in a bundle.</div></li>
+    <li><div class="step-num">3</div><div class="step-content">Chain validation recurses upward until a pre-loaded <strong>root CA</strong> is reached.</div></li>
+    <li><div class="step-num">4</div><div class="step-content">Every signature in the chain is verified. If all are valid and the root CA is trusted, the certificate is accepted.</div></li>
+  </ul>
+
+  <h2>Types of Certificates</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Type</th><th>Validation</th><th>Speed</th><th>Cost</th><th>Trust Level</th></tr>
+      <tr><td><strong>DV</strong> (Domain Validation)</td><td>Domain ownership only</td><td>Minutes</td><td>Lowest (often free)</td><td>Basic</td></tr>
+      <tr><td><strong>OV</strong> (Organization Validation)</td><td>Organization identity</td><td>Days</td><td>Medium</td><td>Better</td></tr>
+      <tr><td><strong>EV</strong> (Extended Validation)</td><td>Full legal/organizational check</td><td>Days</td><td>Highest</td><td>Strongest</td></tr>
+    </table>
+  </div>
+
+  <h2>PKI and X.509</h2>
+  <p><strong>Public Key Infrastructure (PKI)</strong> is the complete set of standards, policies, and software for creating, distributing, using, and revoking certificates. <strong>X.509</strong> is the most widely used certificate format standard.</p>
+  <p>An X.509 certificate's signature is created by:</p>
+  <ol>
+    <li>Computing a <strong>message digest</strong> (hash with SHA-1 or SHA-256) of all the other certificate fields.</li>
+    <li>Encrypting the digest with the <strong>CA's private key</strong>.</li>
+  </ol>
+  <p>Verification: compute the hash of the fields, decrypt the signature with the CA's public key, compare — if they match, the certificate is authentic.</p>
+
+  <h2>Certificate Revocation</h2>
+  <ul>
+    <li><strong>CRL (Certificate Revocation List):</strong> A CA-published list of certificate serial numbers that have been revoked before expiry. Clients should check this before trusting a certificate.</li>
+    <li><strong>Root CA compromise:</strong> If a root CA is compromised, the only fix is a software update to all devices — affecting billions of endpoints.</li>
+    <li><strong>Intermediate CA compromise:</strong> Affected certificates are added to the CRL.</li>
+  </ul>
+
+  <h2>Certificate Forgery</h2>
+  <ul>
+    <li><strong>2008:</strong> Weak collision resistance of <strong>MD5</strong> was exploited to create a forged certificate. (MD5 was still used by some CAs for signatures.)</li>
+    <li><strong>2011:</strong> A rogue certificate for an intermediate CA was created, used for DNS cache poisoning and phishing.</li>
+  </ul>
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ The Fake Root CA Attack</div>
+    <p>Creating a fake root CA with OpenSSL is technically easy. The challenge is getting parties to add it to their trusted root store — but social engineering has achieved this. Once a fake root CA is trusted, it can sign any certificate, allowing HTTPS impersonation of any domain.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why is revoking a root CA certificate essentially impossible at scale?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Root CA public keys are pre-loaded into all operating systems, browsers, and devices. Removing a root CA requires pushing a software update to every device worldwide — billions of endpoints. This is why root CAs are extremely carefully guarded.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">What does a digital certificate contain? What is its purpose?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">A certificate contains: the owner's identity, the owner's public key, validity period, and the CA's digital signature over these fields. Its purpose is to bind a public key to a verified identity — so when you receive a public key, you can verify it really belongs to the claimed entity.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DIFFIE-HELLMAN -->
+<div id="sec-dh" class="section">
+  <h1>Diffie-Hellman Key Exchange <span class="tag">Part 3</span></h1>
+
+  <h2>Motivation: Perfect Forward Secrecy</h2>
+  <p>With RSA key exchange, if an attacker records your encrypted traffic today and later obtains the server's private key, they can decrypt all past session keys and hence all past conversations. RSA-based key exchange has <strong>no forward secrecy</strong>.</p>
+  <p><strong>Perfect Forward Secrecy (PFS)</strong>: even if long-term private keys are compromised in the future, previously established session keys remain secure. DH achieves this by having both parties <em>independently compute</em> the same shared secret — it is never transmitted in any form.</p>
+
+  <h2>Mathematical Background: The Group $\mathbb{Z}_p^*$</h2>
+  <p>For a prime $p$, the set $\{1, 2, \ldots, p-1\}$ forms a <strong>multiplicative group modulo $p$</strong>, denoted $\mathbb{Z}_p^*$.</p>
+  <ul>
+    <li>The <strong>order of the group</strong> $\mathbb{Z}_p^*$ is $p - 1$ (number of elements).</li>
+    <li>The <strong>order of an element</strong> $a$ is the smallest $t$ such that $a^t \equiv 1 \pmod{p}$.</li>
+    <li>A <strong>generator</strong> (primitive root) $g$ generates a cyclic subgroup by $\{g^0, g^1, g^2, \ldots\} \bmod p$.</li>
+    <li>For DH, $g$ is chosen so its subgroup has <strong>large prime order $n$</strong> (a large prime factor of $p-1$).</li>
+    <li>The triple $(p, g, n)$ is made public.</li>
+  </ul>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">EXAMPLE</span> Cyclic Subgroup with $p = 17$, $g = 2$</div>
+    <div class="example-body">
+      <div class="table-wrap">
+        <table>
+          <tr><th>$i$</th><th>$2^i \bmod 17$</th><th>$i$</th><th>$2^i \bmod 17$</th></tr>
+          <tr><td>0</td><td>1</td><td>4</td><td>16</td></tr>
+          <tr><td>1</td><td>2</td><td>5</td><td>15</td></tr>
+          <tr><td>2</td><td>4</td><td>6</td><td>13</td></tr>
+          <tr><td>3</td><td>8</td><td>7</td><td>9</td></tr>
+        </table>
+      </div>
+      <p>Cyclic subgroup: $\{1, 2, 4, 8, 16, 15, 13, 9\}$, order $n = 8$ (prime factor of $p-1 = 16$).</p>
+      <p>At $i = 8$: $2^8 = 256 \bmod 17 = 1$ — the cycle repeats.</p>
+    </div>
+  </div>
+
+  <h2>The DH Key Exchange Protocol</h2>
+  <p><strong>Setup (public):</strong> $p$ (large prime), $g$ (generator), $n$ (order of subgroup).</p>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">A picks random private key $X_A$ with $1 \leq X_A &lt; n$.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">A computes public key $Y_A = g^{X_A} \bmod p$ and sends to B.</div></li>
+    <li><div class="step-num">3</div><div class="step-content">B picks random private key $X_B$ with $1 \leq X_B &lt; n$.</div></li>
+    <li><div class="step-num">4</div><div class="step-content">B computes public key $Y_B = g^{X_B} \bmod p$ and sends to A.</div></li>
+    <li><div class="step-num">5</div><div class="step-content">A computes shared secret: $K = Y_B^{X_A} \bmod p$</div></li>
+    <li><div class="step-num">6</div><div class="step-content">B computes shared secret: $K = Y_A^{X_B} \bmod p$</div></li>
+  </ul>
+
+  <h2>Why Both Parties Get the Same Key (Proof)</h2>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$K_A = Y_B^{X_A} \bmod p = (g^{X_B})^{X_A} \bmod p = g^{X_B X_A} \bmod p$$
+    $$K_B = Y_A^{X_B} \bmod p = (g^{X_A})^{X_B} \bmod p = g^{X_A X_B} \bmod p$$
+  </div>
+  <p>Since $X_A X_B = X_B X_A$, both arrive at $K = g^{X_A X_B} \bmod p$. The secret key was <strong>never transmitted</strong>.</p>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> DH Key Exchange: $p = 17$, $g = 2$, $n = 8$</div>
+    <div class="example-body">
+      <p><strong>A chooses $X_A = 5$:</strong></p>
+      $$Y_A = 2^5 \bmod 17 = 32 \bmod 17 = 15$$
+      <p><strong>B chooses $X_B = 7$:</strong></p>
+      $$Y_B = 2^7 \bmod 17 = 128 \bmod 17 = 9 \quad (128 = 7 \times 17 + 9)$$
+      <p>They exchange: A sends 15 to B; B sends 9 to A.</p>
+      <p><strong>A computes:</strong></p>
+      $$K_A = 9^5 \bmod 17 = 59049 \bmod 17 = 8 \quad (59049 = 3473 \times 17 + 8)$$
+      <p><strong>B computes:</strong></p>
+      $$K_B = 15^7 \bmod 17 = 170859375 \bmod 17 = 8$$
+      <p><strong>Shared secret: $K = 8$</strong> ✓</p>
+      <p>An eavesdropper sees $\{17, 2, 8, 15, 9\}$ but cannot recover $X_A = 5$ or $X_B = 7$ without solving a discrete logarithm.</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">DH Exchange with $p=11$, $g=2$, $X_A=3$, $X_B=7$</span></div>
+    <div class="quiz-question">Using $p = 11$, $g = 2$: A chooses $X_A = 3$, B chooses $X_B = 7$. Compute $Y_A$, $Y_B$, and the shared secret $K$ (from both perspectives).</div>
+    <div class="explanation" style="display:block;">
+      <p>$Y_A = 2^3 \bmod 11 = 8$</p>
+      <p>$Y_B = 2^7 \bmod 11 = 128 \bmod 11 = 7$ (since $128 = 11 \times 11 + 7$)</p>
+      <p>$K_A = 7^3 \bmod 11 = 343 \bmod 11 = 2$ (since $343 = 31 \times 11 + 2$)</p>
+      <p>$K_B = 8^7 \bmod 11 = 2097152 \bmod 11 = 2$ (since $2097152 = 190650 \times 11 + 2$)</p>
+      <p><strong>Shared secret: $K = 2$</strong> ✓</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">DH Exchange with $p=23$, $g=5$, $X_A=6$, $X_B=15$</span></div>
+    <div class="quiz-question">Using $p = 23$, $g = 5$: A chooses $X_A = 6$, B chooses $X_B = 15$. Find the shared secret.</div>
+    <div class="explanation" style="display:block;">
+      <p>$Y_A = 5^6 \bmod 23 = 15625 \bmod 23 = 8$ (since $15625 = 679 \times 23 + 8$)</p>
+      <p>$Y_B = 5^{15} \bmod 23 = 19$ (use successive squaring or trust the computation)</p>
+      <p>$K_A = 19^6 \bmod 23 = 2$ &nbsp;&nbsp; $K_B = 8^{15} \bmod 23 = 2$ ✓</p>
+      <p><strong>Shared secret: $K = 2$</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- DH SECURITY -->
+<div id="sec-dh-security" class="section">
+  <h1>DH Security &amp; DHE <span class="tag">Part 4</span></h1>
+
+  <h2>The Computational DH Assumption</h2>
+  <p>DH security rests on two related hardness assumptions:</p>
+  <p><strong>1. Discrete Logarithm is Hard:</strong> Given $Y_A = g^{X_A} \bmod p$ and knowing $(g, Y_A, p)$, computing $X_A$ is infeasible for large $p$. Formally: $X_A = \log_g Y_A \bmod p$.</p>
+  <p><strong>2. Computational DH Assumption:</strong> Even if individual discrete logs are hard, given $(g^a \bmod p)$ and $(g^b \bmod p)$, computing $g^{ab} \bmod p$ is also hard.</p>
+
+  <h2>DH is Vulnerable to MITM</h2>
+  <p>Unlike the RSA MITM (where the attacker substitutes a key), the DH MITM works differently: the adversary establishes two separate DH sessions — one with A, one with B — and relays messages between them:</p>
+  <ol>
+    <li>Adversary intercepts $Y_A$ and replaces it with their own $Y_A'$.</li>
+    <li>Adversary intercepts $Y_B$ and replaces it with their own $Y_B'$.</li>
+    <li>A establishes shared secret $K_1$ with the adversary (thinking it's with B).</li>
+    <li>B establishes shared secret $K_2$ with the adversary (thinking it's with A).</li>
+    <li>Adversary knows both keys and can relay, read, and modify everything.</li>
+  </ol>
+  <p><strong>Defense: Authenticated DH.</strong> Before the DH exchange, each party must verify the other's identity using certificates. DH values are digitally signed. This is what <strong>TLS</strong> does in practice.</p>
+
+  <h2>DHE — Diffie-Hellman Ephemeral</h2>
+  <p><strong>DHE</strong> means fresh private values $X_A$ and $X_B$ are generated for <em>every session</em> and discarded immediately after. This provides <strong>Perfect Forward Secrecy (PFS)</strong>:</p>
+  <ul>
+    <li>Even if the server's long-term private key is later compromised, past sessions cannot be decrypted — the ephemeral $X_A$ values were discarded and never transmitted.</li>
+    <li>Contrast with static RSA key exchange where $K_S$ was sent encrypted with a long-term key; compromise of that key retroactively breaks all past sessions.</li>
+  </ul>
+
+  <h2>The Logjam Vulnerability</h2>
+  <p>A critical weakness in deployed DHE: many servers use the same DH parameters from <strong>RFC 2412 (OAKLEY)</strong>:</p>
+  <ul>
+    <li>Group 1: 768-bit prime</li>
+    <li>Group 2: 1024-bit prime</li>
+    <li>Group 5: 1536-bit prime</li>
+  </ul>
+  <p>Since so many servers use the exact same primes, an attacker can pre-compute a massive table for one specific prime, then quickly break discrete logs for <em>all servers using that prime</em>. Solving DL for 768-bit primes is now within academic reach; 1024-bit primes are within nation-state reach. The <strong>Logjam attack</strong> (2015) demonstrated this practically.</p>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ Recommended Minimum</div>
+    <p>Use at least <strong>2048-bit DH primes</strong>. Standardized safe primes of 768 or 1024 bits should no longer be used for security-critical applications.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why does DHE provide PFS but static RSA key exchange does not?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">With DHE, fresh random private values $X_A$ and $X_B$ are generated per session and immediately discarded. The session key was never transmitted in any form. Even if the server's long-term key is later compromised, there is nothing to decrypt retroactively. With static RSA, $K_S$ was sent as $E(PU_B, K_S)$ — compromising $PR_B$ later lets an attacker decrypt all recorded session keys.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">What is the Logjam vulnerability's root cause?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Vast numbers of servers reuse the same standard DH prime numbers from RFC 2412. This allows an attacker to amortize the expensive pre-computation of discrete log tables over millions of targets — one pre-computation breaks all servers using that prime. If each server used unique primes, this attack would be impractical.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ELGAMAL ENCRYPTION -->
+<div id="sec-elgamal" class="section">
+  <h1>ElGamal Encryption <span class="tag">Part 5</span></h1>
+
+  <h2>From Key Exchange to Encryption</h2>
+  <p>DH is an <em>interactive</em> key exchange — both parties must be online simultaneously. <strong>ElGamal</strong> turns DH's mathematics into an <em>asynchronous</em> encryption scheme: B can encrypt a message to A using A's fixed public key, without A being online.</p>
+
+  <h2>Key Setup</h2>
+  <p>A has a long-term key pair based on DH parameters $(p, g, n)$:</p>
+  <ul>
+    <li><strong>Private key:</strong> $X_A$ (random, kept secret)</li>
+    <li><strong>Public key:</strong> $Y_A = g^{X_A} \bmod p$</li>
+    <li>Full public key tuple: $(p, g, Y_A)$</li>
+  </ul>
+
+  <h2>Encryption (by B)</h2>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">B generates fresh random ephemeral $X_B$ and computes $Y_B = g^{X_B} \bmod p$.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">B computes shared secret $K = Y_A^{X_B} \bmod p$ (using A's public key).</div></li>
+    <li><div class="step-num">3</div><div class="step-content">B encrypts: $C = M \times K \bmod p$.</div></li>
+    <li><div class="step-num">4</div><div class="step-content">B sends the pair $(Y_B,\ C)$ to A.</div></li>
+  </ul>
+
+  <h2>Decryption (by A)</h2>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">A computes $K = Y_B^{X_A} \bmod p$ (using B's ephemeral public key and A's own private key). This gives the same $K$ because $Y_A^{X_B} = g^{X_A X_B} = Y_B^{X_A}$.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">A recovers: $M = C \times K^{-1} \bmod p$.</div></li>
+  </ul>
+
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Semantic Security</div>
+    <p>Each encryption uses a fresh $X_B$, so encrypting the same message twice gives different ciphertexts (since $K$ changes each time). This is called semantic security — the ciphertext reveals nothing about the plaintext even if the same message is encrypted repeatedly.</p>
+  </div>
+</div>
+
+<!-- ELGAMAL DSS -->
+<div id="sec-dss" class="section">
+  <h1>ElGamal Digital Signature Standard (DSS) <span class="tag">Part 6</span></h1>
+
+  <h2>What Is a Digital Signature?</h2>
+  <p>A digital signature proves:</p>
+  <ul>
+    <li><strong>Authentication:</strong> the message came from the claimed sender (only they have the private key).</li>
+    <li><strong>Integrity:</strong> the message has not been altered since signing.</li>
+    <li><strong>Non-repudiation:</strong> the signer cannot deny having signed.</li>
+  </ul>
+  <p>The general process: compute a <strong>hash</strong> of the message → encrypt the hash with the <strong>signer's private key</strong> → attach the resulting signature to the message. To verify: decrypt with the signer's <strong>public key</strong>, compare hashes.</p>
+
+  <h2>ElGamal DSS — Key Setup</h2>
+  <p>Generate large prime $p$ and random $g, X$ with $g, X &lt; p$:</p>
+  <ul>
+    <li>Compute $Y = g^X \bmod p$</li>
+    <li><strong>Public key:</strong> $(p, g, Y)$</li>
+    <li><strong>Private key:</strong> $X$</li>
+  </ul>
+
+  <h2>Signing a Message $M$</h2>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">Generate a <strong>fresh random $K$</strong> with $0 &lt; K &lt; p-1$ and $\gcd(K, p-1) = 1$. This $K$ must be unique for every signature.</div></li>
+    <li><div class="step-num">2</div><div class="step-content">Compute: $$\text{sig}_1 = g^K \bmod p$$</div></li>
+    <li><div class="step-num">3</div><div class="step-content">Compute: $$\text{sig}_2 = K^{-1} \times (M - X \times \text{sig}_1) \bmod (p-1)$$</div></li>
+    <li><div class="step-num">4</div><div class="step-content">Signature: the pair $(\text{sig}_1, \text{sig}_2)$.</div></li>
+  </ul>
+
+  <h2>Verifying the Signature</h2>
+  <p>Anyone with the public key $(p, g, Y)$ checks:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$Y^{\text{sig}_1} \times \text{sig}_1^{\text{sig}_2} \equiv g^M \pmod{p}$$
+  </div>
+  <p>If this holds, the signature is valid.</p>
+
+  <h2>Why This Works (Proof Sketch)</h2>
+  <p>If the signature is valid: $\text{sig}_2 = K^{-1}(M - X \cdot \text{sig}_1) \bmod (p-1)$, so $K \cdot \text{sig}_2 \equiv M - X \cdot \text{sig}_1 \pmod{p-1}$, giving $M \equiv X \cdot \text{sig}_1 + K \cdot \text{sig}_2 \pmod{p-1}$. By Fermat's Little Theorem:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$g^M \equiv g^{X \cdot \text{sig}_1 + K \cdot \text{sig}_2} = (g^X)^{\text{sig}_1} \cdot (g^K)^{\text{sig}_2} = Y^{\text{sig}_1} \cdot \text{sig}_1^{\text{sig}_2} \pmod{p}$$
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">🚨 Critical: Never Reuse K</div>
+    <p>If the same $K$ is used to sign two different messages $M_1$ and $M_2$, the two signature equations can be combined to solve for $X$ (the private key). This is not theoretical — the <strong>PlayStation 3 was compromised in 2010</strong> because Sony's firmware signing used the same $K$ for every signature. Always generate a truly random, unique $K$ per signature.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What is the difference between ElGamal encryption and ElGamal DSS?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">ElGamal encryption uses A's long-term public key $Y_A$ to allow B to encrypt a message to A — provides confidentiality. ElGamal DSS uses A's private key $X$ to sign a message — provides authenticity and integrity. Encryption hides content; signatures prove authorship.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCRETE LOGARITHM PROBLEM -->
+<div id="sec-discrete-log" class="section">
+  <h1>The Discrete Logarithm Problem <span class="tag">Part 7</span></h1>
+
+  <h2>The Problem</h2>
+  <p>Given integers $g$, $k$, and prime $p$, find $s$ such that:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$g^s \equiv k \pmod{p}$$
+  </div>
+  <p>This is the discrete logarithm $s = \log_g k \bmod p$. Exponentiation (forward direction: given $g$, $s$, compute $k$) is easy with square-and-multiply. The inverse — given $g$, $k$, find $s$ — is believed to be computationally hard for large $p$.</p>
+
+  <h2>Known Algorithms</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Algorithm</th><th>Complexity</th><th>Notes</th></tr>
+      <tr><td>Brute force</td><td>$O(p)$</td><td>Try all values of $s$</td></tr>
+      <tr><td>Baby-step giant-step</td><td>$O(\sqrt{p})$</td><td>Much better but still exponential in bit size</td></tr>
+      <tr><td>Pollard's rho</td><td>$O(\sqrt{p})$</td><td>Similar complexity, less memory</td></tr>
+      <tr><td>Index calculus</td><td>Subexponential</td><td>Best for $\mathbb{Z}_p^*$; analogous to NFS for factoring</td></tr>
+    </table>
+  </div>
+  <p>For $\mathbb{Z}_p^*$, the best algorithms are subexponential in the size of $p$ (not polynomial). For 768-bit primes, the discrete log is solvable by researchers. For 1024-bit primes, nation-state attackers can solve it. This is the basis of the Logjam vulnerability.</p>
+
+  <h2>Connection to DH and ElGamal</h2>
+  <p>If the discrete logarithm could be computed efficiently, an eavesdropper who sees $Y_A = g^{X_A} \bmod p$ could compute $X_A$ directly and break both DH and ElGamal. The computational hardness of this problem is what makes both protocols secure against passive eavesdropping.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Analogy to RSA</div>
+    <p>RSA's security depends on integer factorization being hard. DH/ElGamal's security depends on the discrete logarithm being hard. Both are believed to be hard but neither has been formally proven so. The quantum computer threat: Shor's algorithm can solve both problems in polynomial time — which is why post-quantum cryptography is an active research area.</p>
+  </div>
+</div>
+
+<!-- EXAM PREP -->
+<div id="sec-exam-prep" class="section">
+  <h1>Exam Preparation <span class="tag">Q39–Q48</span></h1>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">📋 2025 Midterm Coverage</div>
+    <p>Questions Q39–Q48 from the 2025 midterm cover Lecture 04 topics. All questions are included below with full explanations. Q44 has a "Questions of Doubt" clarification.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Q#</th><th>Topic</th><th>Answer</th></tr>
+      <tr><td>Q39</td><td>MITM Prevention</td><td>Encryption + digital certificates (c)</td></tr>
+      <tr><td>Q40</td><td>CRL Purpose</td><td>Identify revoked certificates (c)</td></tr>
+      <tr><td>Q41</td><td>Root Certificate</td><td>Self-signed trust anchor (a)</td></tr>
+      <tr><td>Q42</td><td>Certificate Contents</td><td>Public key + identity + CA signature (d)</td></tr>
+      <tr><td>Q43</td><td>RA Role</td><td>Verify identity before CA issues cert (b)</td></tr>
+      <tr><td>Q44</td><td>DH Primary Use</td><td>Key exchange (a) — <em>disputed, see note</em></td></tr>
+      <tr><td>Q45</td><td>DH Security Basis</td><td>Discrete logarithm hardness (a)</td></tr>
+      <tr><td>Q46</td><td>DHE Advantage</td><td>Perfect Forward Secrecy (c)</td></tr>
+      <tr><td>Q47</td><td>ElGamal Type</td><td>Asymmetric encryption/signature (d)</td></tr>
+      <tr><td>Q48</td><td>ElGamal Purpose</td><td>Verify authenticity and integrity (b)</td></tr>
+    </table>
+  </div>
+
+  <!-- Q39 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q39</span><span style="font-size:14px;color:var(--text-muted);">Preventing MITM</span></div>
+    <div class="quiz-question">Which mechanism prevents a man-in-the-middle attack during public key exchange?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Using a large modulus $n$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Shared secret key agreement</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>Encryption combined with digital certificates</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Symmetric key distribution</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> Certificates (verified by a CA) authenticate the public keys being exchanged, preventing the MITM from substituting their own public key. The MITM attack on the direct key exchange protocol succeeds precisely because there are no certificates — B cannot distinguish A's real key from V's substituted key. Encryption alone doesn't help if you're encrypting to the wrong key.</div>
+  </div>
+
+  <!-- Q40 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q40</span><span style="font-size:14px;color:var(--text-muted);">CRL Purpose</span></div>
+    <div class="quiz-question">What is the primary purpose of a Certificate Revocation List (CRL)?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Listing active certificates</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Registering new certificates</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>Identifying certificates that are no longer valid</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Rotating encryption keys</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> A CRL lists certificate serial numbers that have been revoked before their natural expiration date — due to key compromise, change of ownership, etc. Clients should check the CRL before trusting a certificate. Note the distinction: CRL is about revocation (early invalidation), not expiration (natural end-of-life).</div>
+  </div>
+
+  <!-- Q41 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q41</span><span style="font-size:14px;color:var(--text-muted);">Root Certificate</span></div>
+    <div class="quiz-question">What distinguishes a root certificate from other certificates in a PKI hierarchy?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>It is self-signed and serves as the ultimate trust anchor</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>It is issued by a Registration Authority</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>It has a shorter validity period</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>It uses symmetric encryption</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> A root CA certificate is <strong>self-signed</strong> — there is no higher authority above it in the hierarchy, so it must vouch for itself. It is the ultimate trust anchor: pre-loaded in all operating systems and browsers. All other certificates in a PKI chain trace their trust back to a root certificate. Note: root CAs are <em>not</em> issued by RAs — RAs are subordinates of CAs, not the other way around.</div>
+  </div>
+
+  <!-- Q42 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q42</span><span style="font-size:14px;color:var(--text-muted);">Certificate Contents</span></div>
+    <div class="quiz-question">What does a digital certificate contain?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>The user's private key</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Only the CA's signature</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>A symmetric encryption key</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>The owner's public key, identity, and the CA's digital signature</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> A certificate binds a <strong>public key</strong> to an <strong>identity</strong> (name, domain), and this binding is authenticated by the <strong>CA's digital signature</strong> over both pieces of information — plus metadata like validity period and serial number. The private key is <em>never</em> included in a certificate; it stays exclusively with the owner. Including the private key would completely defeat the purpose of asymmetric cryptography.</div>
+  </div>
+
+  <!-- Q43 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q43</span><span style="font-size:14px;color:var(--text-muted);">RA Role in PKI</span></div>
+    <div class="quiz-question">What is the role of a Registration Authority (RA) in PKI?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>It generates encryption keys on behalf of users</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>It verifies the identity of certificate applicants before the CA issues a certificate</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>It revokes certificates</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>It stores users' private keys</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> An RA is the front-end administrative entity that handles identity verification (checking documents, domain ownership, legal records) but delegates the actual cryptographic signing of certificates to the CA. Think of it as a "reseller" that does the paperwork. The RA does not sign certificates — that is exclusively the CA's role. It does not store private keys (that would be a key escrow service, a separate concept).</div>
+  </div>
+
+  <!-- Q44 -->
+  <div class="quiz-card">
+    <div class="quiz-header">
+      <span class="quiz-badge badge-exam">EXAM Q44</span>
+      <span class="quiz-badge badge-doubt">⚠️ DISPUTED</span>
+      <span style="font-size:14px;color:var(--text-muted);">DH Primary Use</span>
+    </div>
+    <div class="quiz-question">Which of the following best describes the primary use of the Diffie-Hellman algorithm?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>Key exchange</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Non-repudiation</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Digital signatures</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Password storage</div>
+    </div>
+    <div class="explanation">
+      <p><strong>Answer: (a) Key exchange.</strong></p>
+      <div class="callout callout-warning" style="margin-top:12px;">
+        <div class="callout-title">⚠️ Questions of Doubt Clarification</div>
+        <p>This question was disputed. The answer is definitively <strong>(a) key exchange</strong>. DH does <em>not</em> provide non-repudiation — it does not authenticate who you are talking to, which is why it is vulnerable to MITM attacks. Non-repudiation requires proving identity (that only one specific party could have performed an action), which DH alone cannot do. Digital signatures (c) are provided by ElGamal DSS or similar, not plain DH. DH's sole purpose is to allow two parties to agree on a shared secret over an insecure channel.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q45 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q45</span><span style="font-size:14px;color:var(--text-muted);">DH Security Basis</span></div>
+    <div class="quiz-question">What property makes DH secure against passive eavesdroppers?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>The hardness of computing discrete logarithms</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>The difficulty of factoring large integers</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>The use of symmetric encryption</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>The randomness of the key size</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> An eavesdropper sees $Y_A = g^{X_A} \bmod p$ and $Y_B = g^{X_B} \bmod p$. To compute the shared secret $K = g^{X_A X_B} \bmod p$, they need either $X_A$ or $X_B$ — which requires solving the discrete logarithm: $X_A = \log_g Y_A \bmod p$. This is computationally infeasible for large $p$. (b) is the basis of RSA security — DH and RSA rely on different hard problems.</div>
+  </div>
+
+  <!-- Q46 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q46</span><span style="font-size:14px;color:var(--text-muted);">DHE Advantage</span></div>
+    <div class="quiz-question">What advantage does DHE (Diffie-Hellman Ephemeral) provide over static RSA key exchange?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Faster computation</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Larger key sizes</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>Perfect Forward Secrecy</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Better hash functions</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> DHE generates fresh private values $X_A$ and $X_B$ for every session, discards them immediately, and never transmits them. Even if the server's long-term private key is later compromised, there is nothing to use to recover past session keys. Static RSA key exchange sends $K_S$ as $E(PU_B, K_S)$ — if $PR_B$ is ever obtained, all past sessions are retroactively broken. PFS is the property that past sessions remain secure even after future key compromise.</div>
+  </div>
+
+  <!-- Q47 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q47</span><span style="font-size:14px;color:var(--text-muted);">ElGamal Algorithm Type</span></div>
+    <div class="quiz-question">What type of cryptographic algorithm is the ElGamal DSS?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Symmetric encryption</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Hash function</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Stream cipher</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>Asymmetric encryption / digital signature scheme</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> ElGamal DSS is an <strong>asymmetric</strong> (public-key) algorithm. It uses a public key $(p, g, Y)$ for signature verification and a private key $X$ for signing. The security is based on the discrete logarithm problem in $\mathbb{Z}_p^*$, the same mathematical structure as DH. It is a <em>Digital Signature Standard</em> — used for authentication, not for symmetric encryption or hashing.</div>
+  </div>
+
+  <!-- Q48 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q48</span><span style="font-size:14px;color:var(--text-muted);">ElGamal Purpose</span></div>
+    <div class="quiz-question">What is the purpose of the ElGamal signature scheme?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>To encrypt large files efficiently</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>To verify the authenticity and integrity of a message</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>To generate symmetric session keys</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>To replace AES for data encryption</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> A digital signature proves that the message came from the claimed sender (authenticity) and has not been altered (integrity). Anyone with the signer's public key $(p, g, Y)$ can verify the signature, but only the holder of the private key $X$ can create it. ElGamal is <em>not</em> used for bulk file encryption (too slow; AES handles that) and does not generate session keys directly (that's DH key exchange).</div>
+  </div>
+
+</div>
+
+</main>
+</div>
+
+<script>
+const sectionMap = {
+  'sec-overview': '🏠 Overview',
+  'sec-mitm': '⚠️ Key Exchange & MITM',
+  'sec-certs': '📜 Certificates & PKI',
+  'sec-dh': '🔗 Diffie-Hellman',
+  'sec-dh-security': '🛡️ DH Security & DHE',
+  'sec-elgamal': '✍️ ElGamal Encryption',
+  'sec-dss': '🖊️ ElGamal DSS',
+  'sec-discrete-log': '📊 Discrete Logarithm',
+  'sec-exam-prep': '📋 Exam Prep (Q39–Q48)'
+};
+
+const sections = Object.keys(sectionMap);
+let current = 0;
+
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+  });
+  current = sections.indexOf(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+  if (window.renderMathInElement) renderMathInElement(sec, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+}
+
+function updateProgress() {
+  const pct = sections.length > 1 ? (current / (sections.length - 1)) * 100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function toggleKc(el) {
+  const ans = el.parentElement.querySelector('.kc-a');
+  if (ans.style.display === 'block') { ans.style.display = 'none'; el.textContent = 'Show Answer ▾'; }
+  else { ans.style.display = 'block'; el.textContent = 'Hide Answer ▴'; }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && current < sections.length - 1) show(sections[current + 1]);
+  if (e.key === 'ArrowLeft' && current > 0) show(sections[current - 1]);
+});
+
+function checkAnswer(el) {
+  const opts = el.closest('.options').querySelectorAll('.option');
+  if ([...opts].some(o => o.classList.contains('correct') || o.classList.contains('wrong'))) return;
+  if (el.dataset.correct === 'true') {
+    el.classList.add('correct');
+  } else {
+    el.classList.add('wrong');
+    opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+  }
+  opts.forEach(o => o.classList.add('disabled'));
+  const exp = el.closest('.quiz-card').querySelector('.explanation');
+  if (exp) exp.classList.add('show');
+}
+updateProgress();
+</script>
+</body>
+</html>

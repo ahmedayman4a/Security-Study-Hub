@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 464 — Lecture 06: Secure Random Number Generation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3247;
+    --accent: #6c8aff; --accent2: #a78bfa; --accent3: #34d399;
+    --warning: #f59e0b; --danger: #f87171; --text: #e2e8f0;
+    --text-muted: #94a3b8; --text-dim: #64748b;
+    --tag-bg: #1e3a5f; --tag-text: #93c5fd;
+    --correct-bg: #052e16; --correct-border: #16a34a;
+    --wrong-bg: #2d0000; --wrong-border: #b91c1c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
+  #app { display: flex; min-height: 100vh; }
+  #sidebar { width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+  #sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  #sidebar-header p { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 6px 16px 4px; }
+  .nav-item { display: block; padding: 7px 16px; font-size: 13px; color: var(--text-muted); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover, .nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+  .nav-item.active { color: var(--accent); font-weight: 600; }
+  #main { margin-left: 280px; flex: 1; padding: 40px 48px 80px; max-width: 1100px; }
+  #progress-bar { position: fixed; top: 0; left: 280px; right: 0; height: 3px; background: var(--border); z-index: 200; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.3s; }
+  .section { display: none; animation: fadeIn 0.3s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  h1 .tag { font-size: 12px; font-weight: 600; background: var(--tag-bg); color: var(--tag-text); padding: 3px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; }
+  h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; font-weight: 700; color: var(--accent2); margin: 24px 0 10px; }
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: #fff; font-weight: 700; }
+  em { color: var(--accent2); font-style: italic; }
+  ul, ol { margin: 0 0 14px 24px; color: var(--text-muted); }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--text); }
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 18px 0; border-left: 4px solid; font-size: 15px; }
+  .callout-info { background: #0c1a3a; border-color: var(--accent); }
+  .callout-tip { background: #0a2a1a; border-color: var(--accent3); }
+  .callout-warning { background: #1c1a05; border-color: var(--warning); }
+  .callout-danger { background: var(--wrong-bg); border-color: var(--danger); }
+  .callout-title { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info .callout-title { color: var(--accent); }
+  .callout-tip .callout-title { color: var(--accent3); }
+  .callout-warning .callout-title { color: var(--warning); }
+  .callout-danger .callout-title { color: var(--danger); }
+  code { background: #1e2235; color: #a5f3fc; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  pre { background: #111520; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.8; color: #c4d4f0; margin: 14px 0; white-space: pre; }
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--surface2); color: var(--accent); font-weight: 700; padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  tr:hover td { background: var(--surface2); }
+  .example-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .example-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--accent3); border-bottom: 1px solid var(--border); }
+  .example-badge { background: #064e3b; color: var(--accent3); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .example-body { padding: 18px 20px; }
+  .hero { padding: 40px 0 20px; }
+  .hero-tag { font-size: 12px; font-weight: 700; color: var(--accent3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .hero-title { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+  .hero-subtitle { font-size: 17px; color: var(--text-muted); margin-bottom: 32px; max-width: 620px; }
+  .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+  .topic-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.2s; }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-icon { font-size: 24px; margin-bottom: 10px; }
+  .topic-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .topic-desc { font-size: 12px; color: var(--text-dim); }
+  .kc-card { background: #0c1a3a; border: 1px solid var(--accent); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+  .kc-title { font-size: 12px; font-weight: 800; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .kc-item { margin-bottom: 14px; }
+  .kc-q { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .kc-a { color: var(--text-muted); font-size: 14px; display: none; border-left: 3px solid var(--accent3); padding-left: 12px; margin-top: 6px; }
+  .kc-toggle { font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+  .math-block { background: #111520; border-radius: 10px; padding: 20px; margin: 14px 0; }
+  .step-list { list-style: none; margin: 0; padding: 0; }
+  .step-list li { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+  .step-num { min-width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .step-content { flex: 1; }
+  .arch-flow { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 18px 0; }
+  .arch-row { display: flex; align-items: center; gap: 0; margin-bottom: 6px; }
+  .arch-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; text-align: center; min-width: 180px; }
+  .arch-arrow { font-size: 18px; color: var(--accent); padding: 0 12px; }
+  .arch-label { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="app">
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>CSE 464</h2>
+    <p>Lecture 06 — Secure Random Number Generation</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Navigation</div>
+    <div class="nav-item active" onclick="show('sec-overview')">🏠 Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Content</div>
+    <div class="nav-item" onclick="show('sec-why-rng')">❓ Why Randomness Matters</div>
+    <div class="nav-item" onclick="show('sec-prng-trng')">🎲 PRNG vs TRNG</div>
+    <div class="nav-item" onclick="show('sec-lcg')">📐 LCG — Linear Congruential Generator</div>
+    <div class="nav-item" onclick="show('sec-x931')">🔒 CSPRNG: ANSI X9.31</div>
+    <div class="nav-item" onclick="show('sec-bbs')">🔢 CSPRNG: Blum Blum Shub</div>
+    <div class="nav-item" onclick="show('sec-entropy')">🌡️ Entropy Sources (TRNG)</div>
+    <div class="nav-item" onclick="show('sec-software-entropy')">💻 Software &amp; Hardware Entropy</div>
+    <div class="nav-item" onclick="show('sec-summary')">📊 Summary &amp; Comparison</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- OVERVIEW -->
+<div id="sec-overview" class="section active">
+  <div class="hero">
+    <div class="hero-tag">Lecture 06</div>
+    <h1 class="hero-title">Secure Random Number Generation</h1>
+    <p class="hero-subtitle">Cryptography is only as strong as its randomness. From linear congruential generators to hardware entropy — understanding what makes a number truly unpredictable.</p>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ Exam Coverage Note</div>
+    <p>The 2025 midterm (Q1–Q60) does not include questions specifically on Lecture 06 content. However, RNG failures underpin many vulnerabilities covered in other lectures — RSA low entropy, DH ephemeral key security, Kerberos nonces. Understanding this lecture deepens your understanding of <em>why</em> those vulnerabilities exist.</p>
+  </div>
+
+  <div class="topic-grid">
+    <div class="topic-card" onclick="show('sec-why-rng')">
+      <div class="topic-icon">❓</div>
+      <div class="topic-title">Why Randomness Matters</div>
+      <div class="topic-desc">Session keys, nonces, RSA primes, DH private keys, password salts</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-prng-trng')">
+      <div class="topic-icon">🎲</div>
+      <div class="topic-title">PRNG vs TRNG</div>
+      <div class="topic-desc">Uniform distribution, independence, seed-based vs physical phenomena</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-lcg')">
+      <div class="topic-icon">📐</div>
+      <div class="topic-title">LCG</div>
+      <div class="topic-desc">$X_{n+1} = (aX_n + c) \bmod m$ — formula, period, why it's not crypto-secure</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-x931')">
+      <div class="topic-icon">🔒</div>
+      <div class="topic-title">ANSI X9.31</div>
+      <div class="topic-desc">3DES-based CSPRNG for financial systems — formulas, 9 DES ops per output</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-bbs')">
+      <div class="topic-icon">🔢</div>
+      <div class="topic-title">Blum Blum Shub</div>
+      <div class="topic-desc">$p \equiv q \equiv 3 \bmod 4$, LSB extraction, provable security</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-entropy')">
+      <div class="topic-icon">🌡️</div>
+      <div class="topic-title">Entropy Sources</div>
+      <div class="topic-desc">Physical phenomena, Shannon entropy formula, TRNG limitations</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-software-entropy')">
+      <div class="topic-icon">💻</div>
+      <div class="topic-title">Software &amp; Hardware</div>
+      <div class="topic-desc">/dev/random, /dev/urandom, Intel RDRAND, EGD, PRNGD</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-summary')">
+      <div class="topic-icon">📊</div>
+      <div class="topic-title">Summary &amp; Comparison</div>
+      <div class="topic-desc">PRNG/CSPRNG/TRNG comparison table and real-world architecture</div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY RANDOMNESS MATTERS -->
+<div id="sec-why-rng" class="section">
+  <h1>Why Randomness Is Critical in Security <span class="tag">Part 1</span></h1>
+
+  <h2>The Stakes</h2>
+  <p>There is a line that appears in almost every cryptographic protocol: "A chooses a random number…" The entire security of these protocols often hangs on that number being genuinely unpredictable. If an attacker can predict your "random" numbers:</p>
+  <ul>
+    <li><strong>Session keys:</strong> A predictable AES session key means the attacker can try all likely keys trivially.</li>
+    <li><strong>Nonces in Needham-Schroeder/Kerberos:</strong> Predictable nonces allow replay attacks — the freshness protection collapses.</li>
+    <li><strong>RSA prime generation:</strong> Predictable seeds during prime generation produce predictable primes. Two devices with similar seeds may share a common prime factor (the "Mining Ps and Qs" attack — 0.5% of all TLS servers broken this way).</li>
+    <li><strong>DH private values:</strong> Predictable $X_A$ or $X_B$ destroys perfect forward secrecy.</li>
+    <li><strong>ElGamal signing nonce $K$:</strong> Reusing or predicting $K$ directly reveals the private key (the PS3 hack).</li>
+    <li><strong>Password salts:</strong> Predictable salts allow pre-computation rainbow table attacks.</li>
+    <li><strong>IVs for CBC/CTR:</strong> Predictable IVs enable chosen-plaintext attacks.</li>
+  </ul>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">🚨 The Core Principle</div>
+    <p>Cryptography is only as strong as its randomness. A brilliant algorithm running on a bad random number generator is broken. Randomness is not an implementation detail — it is a foundational security requirement.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Name three cryptographic operations that require random numbers and explain what breaks if those numbers are predictable.</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">
+        (1) RSA prime generation: predictable primes → shared factors → private key compromise.<br>
+        (2) DH ephemeral key generation: predictable $X_A$ → shared secret predictable → PFS lost.<br>
+        (3) ElGamal signing nonce $K$: reusing/predicting $K$ across two signatures → private key $X$ recoverable from two signature equations.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRNG VS TRNG -->
+<div id="sec-prng-trng" class="section">
+  <h1>PRNG vs TRNG <span class="tag">Part 2</span></h1>
+
+  <h2>Properties of True Random Numbers</h2>
+  <p>Two essential properties define what we actually want from a random number source:</p>
+  <ul>
+    <li><strong>Uniform Distribution:</strong> All numbers in the designated range must occur equally often. If generating bits, 0s and 1s must each occur with probability $1/2$. Biased generators make some outputs more predictable.</li>
+    <li><strong>Independence (Unpredictability):</strong> Even if you know every number generated so far, you cannot predict the next one. Independence is the cryptographic property. A generator that is deterministic once you know its state fails this requirement.</li>
+  </ul>
+
+  <h2>Three Types of Generators</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Type</th><th>Source of Randomness</th><th>Needs Seed?</th><th>Predictable?</th><th>Speed</th></tr>
+      <tr><td><strong>PRNG</strong></td><td>Algorithm (deterministic)</td><td>Yes</td><td>Yes (if seed known)</td><td>Very fast</td></tr>
+      <tr><td><strong>TRNG</strong></td><td>Physical phenomena</td><td>No</td><td>No (genuinely random)</td><td>Slow</td></tr>
+      <tr><td><strong>CSPRNG</strong></td><td>Algorithm + entropy seed</td><td>Yes (from TRNG)</td><td>No (by design)</td><td>Fast</td></tr>
+    </table>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">💡 The Practical Solution</div>
+    <p>True randomness is precious and slow. The solution: use a TRNG to generate a small, high-quality seed. Feed that seed into a CSPRNG. The CSPRNG stretches a small amount of true randomness into a large stream of cryptographically secure pseudorandom bits at high speed.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why can't a purely algorithmic PRNG provide true randomness?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">A PRNG is a deterministic algorithm — given the same seed, it always produces the same sequence. An attacker who discovers the seed (or the algorithm and enough outputs) can reproduce the entire sequence. True randomness requires unpredictability that no algorithm can provide from first principles — only physical phenomena are fundamentally unpredictable.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LCG -->
+<div id="sec-lcg" class="section">
+  <h1>PRNG — Linear Congruential Generator <span class="tag">Part 3</span></h1>
+
+  <h2>The Formula</h2>
+  <p>The LCG generates pseudorandom numbers using a simple recurrence:</p>
+  <div class="math-block">$$X_{n+1} = (a \times X_n + c) \bmod m$$</div>
+  <p>Parameters:</p>
+  <ul>
+    <li><strong>$m$</strong> — modulus ($m > 0$)</li>
+    <li><strong>$a$</strong> — multiplier ($0 < a < m$)</li>
+    <li><strong>$c$</strong> — increment ($0 \leq c < m$)</li>
+    <li><strong>$X_0$</strong> — seed ($0 < X_0 < m$)</li>
+  </ul>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> LCG: a=7, c=0, m=32, seed=1</div>
+    <div class="example-body">
+      <div class="table-wrap">
+        <table>
+          <tr><th>$n$</th><th>$X_n$</th><th>Computation</th></tr>
+          <tr><td>0</td><td>1</td><td>seed</td></tr>
+          <tr><td>1</td><td>7</td><td>$(7 \times 1) \bmod 32 = 7$</td></tr>
+          <tr><td>2</td><td>17</td><td>$(7 \times 7) \bmod 32 = 49 \bmod 32 = 17$</td></tr>
+          <tr><td>3</td><td>23</td><td>$(7 \times 17) \bmod 32 = 119 \bmod 32 = 23$</td></tr>
+          <tr><td>4</td><td>1</td><td>$(7 \times 23) \bmod 32 = 161 \bmod 32 = 1$ ← cycles!</td></tr>
+        </table>
+      </div>
+      <p>Period = 4. The sequence $\{7, 17, 23, 1, 7, 17, \ldots\}$ repeats every 4 steps — extremely short and useless for cryptography.</p>
+    </div>
+  </div>
+
+  <h2>Getting a Better Period</h2>
+  <p>When $m$ is prime and $c = 0$, and $a$ is a primitive root modulo $m$, the recursion produces a sequence of period $m - 1$ (every non-zero value appears exactly once). A well-studied LCG uses $m = 2^{31} - 1$ (a Mersenne prime) and $a = 7^5 = 16807$.</p>
+
+  <h2>Why LCG Is NOT Cryptographically Secure</h2>
+  <div class="callout callout-danger">
+    <div class="callout-title">❌ Cryptographic Failure</div>
+    <p>Given any current value $X_n$, the next value $X_{n+1} = (aX_n + c) \bmod m$ is completely predictable if $a$, $c$, $m$ are known (they almost always are). Even if unknown, observing three consecutive outputs $(X_n, X_{n+1}, X_{n+2})$ allows solving for all parameters algebraically. An LCG should never be used to generate session keys, nonces, RSA primes, or any cryptographic material.</p>
+  </div>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">PRACTICE</span> LCG: a=5, c=3, m=13, seed=7</div>
+    <div class="example-body">
+      <p>Generate the next 4 values:</p>
+      <ul>
+        <li>$X_1 = (5 \times 7 + 3) \bmod 13 = 38 \bmod 13 = 12$</li>
+        <li>$X_2 = (5 \times 12 + 3) \bmod 13 = 63 \bmod 13 = 11$</li>
+        <li>$X_3 = (5 \times 11 + 3) \bmod 13 = 58 \bmod 13 = 6$</li>
+        <li>$X_4 = (5 \times 6 + 3) \bmod 13 = 33 \bmod 13 = 7$ ← back to seed!</li>
+      </ul>
+      <p>Period = 4.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ANSI X9.31 -->
+<div id="sec-x931" class="section">
+  <h1>CSPRNG — ANSI X9.17/X9.31 <span class="tag">Part 4</span></h1>
+
+  <h2>Overview</h2>
+  <p>The ANSI X9.17/X9.31 algorithm is a CSPRNG standard used in financial transaction systems and email exchange. It uses <strong>two-key 3DES (EDE)</strong> as its underlying cryptographic primitive, making outputs unpredictable even to attackers who know the algorithm.</p>
+
+  <h2>Inputs</h2>
+  <ul>
+    <li><strong>$K_1$, $K_2$:</strong> Two 56-bit DES keys (long-term secret). Written as $[K_1, K_2]$.</li>
+    <li><strong>$DT_j$:</strong> 64-bit timestamp (current date/time). Changes every iteration.</li>
+    <li><strong>$V_j$:</strong> 64-bit state from previous iteration. Initialized with seed $V_0$.</li>
+  </ul>
+
+  <h2>The Formulas</h2>
+  <p>At each step $j$, compute the output $R_j$ and next state $V_{j+1}$:</p>
+  <div class="math-block">
+    $$R_j = \text{EDE}([K_1, K_2],\ V_j \oplus \text{EDE}([K_1, K_2],\ DT_j))$$
+    $$V_{j+1} = \text{EDE}([K_1, K_2],\ R_j \oplus \text{EDE}([K_1, K_2],\ DT_j))$$
+  </div>
+  <p>Between two consecutive random numbers, there are <strong>nine DES encryptions</strong> total (three EDE operations × three DES per EDE = 9). This computational cost makes it virtually impossible to predict the next output even knowing all previous outputs.</p>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ Speed Limitation</div>
+    <p>The 9 DES operations per output make X9.31 significantly slower than simple PRNGs. It is unsuitable for applications needing millions of random bytes per second (e.g., bulk encryption). It is designed for cryptographic key generation, not streaming random data.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What two inputs to the X9.31 algorithm change at every iteration?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">$DT_j$ (the current date/time timestamp, different for each iteration) and $V_j$ (the state from the previous iteration, computed from the previous output $R_{j-1}$). The keys $K_1$ and $K_2$ remain fixed as the long-term secret.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BLUM BLUM SHUB -->
+<div id="sec-bbs" class="section">
+  <h1>CSPRNG — Blum Blum Shub (BBS) <span class="tag">Part 5</span></h1>
+
+  <h2>Motivation</h2>
+  <p>BBS generates a pseudorandom bit stream with a <strong>provable security reduction</strong> to the hardness of factoring large integers. If you can predict BBS outputs, you can factor $n$ — and vice versa. This is the strongest theoretical guarantee of any CSPRNG covered in this course.</p>
+
+  <h2>Setup</h2>
+  <ul class="step-list">
+    <li><div class="step-num">1</div><div class="step-content">Choose two large primes $p$ and $q$ such that $p \equiv q \equiv 3 \pmod{4}$ (i.e., $p \bmod 4 = 3$ and $q \bmod 4 = 3$).</div></li>
+    <li><div class="step-num">2</div><div class="step-content">Compute $n = p \times q$ (same structure as RSA modulus).</div></li>
+    <li><div class="step-num">3</div><div class="step-content">Choose a seed $s$ coprime to $n$: $\gcd(s, n) = 1$ (i.e., $p$ and $q$ are not factors of $s$).</div></li>
+  </ul>
+
+  <h2>Generation</h2>
+  <div class="math-block">
+    $$X_0 = s^2 \bmod n$$
+    $$X_{i+1} = X_i^2 \bmod n$$
+    $$B_i = X_i \bmod 2 \quad \text{(the LSB of } X_i\text{)}$$
+  </div>
+  <p>The output bit $B_i$ is the <strong>least significant bit</strong> of $X_i$. Outputting only the LSB (rather than the full $X_i$) maximizes security — the LSB is the hardest bit to predict from the factoring problem.</p>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> BBS: p=11, q=19, s=3</div>
+    <div class="example-body">
+      <p>Verify: $11 \bmod 4 = 3$ ✓, $19 \bmod 4 = 3$ ✓. $n = 11 \times 19 = 209$. $\gcd(3, 209) = 1$ ✓</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>$i$</th><th>$X_i$</th><th>Computation</th><th>$B_i$ (LSB)</th></tr>
+          <tr><td>0</td><td>9</td><td>$3^2 \bmod 209 = 9$</td><td>1</td></tr>
+          <tr><td>1</td><td>81</td><td>$9^2 \bmod 209 = 81$</td><td>1</td></tr>
+          <tr><td>2</td><td>82</td><td>$81^2 = 6561 \bmod 209 = 82$</td><td>0</td></tr>
+          <tr><td>3</td><td>36</td><td>$82^2 = 6724 \bmod 209 = 36$</td><td>0</td></tr>
+        </table>
+      </div>
+      <p>Bit stream: $1, 1, 0, 0, \ldots$</p>
+    </div>
+  </div>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ BBS Speed</div>
+    <p>BBS is slow — each bit requires a modular squaring of a large number. It is suitable for generating cryptographic keys (where quality matters more than speed) but not for bulk pseudorandom byte generation.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why must the BBS primes satisfy $p \equiv q \equiv 3 \pmod{4}$?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">This condition ensures that $-1$ is a quadratic non-residue modulo $n$. It is essential for the mathematical security proof of BBS — it guarantees that the quadratic residuosity problem (on which BBS security is based) is computationally hard. Without this condition, the security reduction to factoring breaks down.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why does BBS output only the LSB of each $X_i$ instead of all bits?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Outputting more bits per iteration would allow an attacker to recover the state $X_i$ and predict future values. The LSB is the hardest individual bit to predict from the quadratic residuosity problem. Extracting more bits reduces the work factor for an attacker. For maximum security, only the LSB per step is extracted.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ENTROPY SOURCES -->
+<div id="sec-entropy" class="section">
+  <h1>True Random Number Generators — Entropy Sources <span class="tag">Part 6</span></h1>
+
+  <h2>The Fundamental Difference</h2>
+  <p>A PRNG must be initialized with a seed — without it, nothing works. A <strong>TRNG works without seeds</strong> because it derives randomness from physical phenomena that are genuinely unpredictable. No algorithm can provide true unpredictability. Only analog physical processes can:</p>
+  <ul>
+    <li>Thermal noise in electronic components (random electron motion)</li>
+    <li>Radioactive decay (quantum-level randomness)</li>
+    <li>Atmospheric noise</li>
+    <li>Photon behavior in quantum optical systems</li>
+  </ul>
+
+  <h2>Shannon Entropy</h2>
+  <p>The amount of randomness (information) in a source is quantified by <strong>Shannon entropy</strong>:</p>
+  <div class="math-block">$$H = -\sum_i p_i \log_2 p_i \quad \text{(bits per word)}$$</div>
+  <p>Where $p_i$ is the probability of the $i$-th output word. For a perfectly uniform source (maximum entropy), all $N$ values have equal probability $p_i = 1/N$, giving $H = \log_2 N$ bits per word. For a byte source with uniform distribution, $H = \log_2 256 = 8$ bits — maximum.</p>
+  <p>Low entropy means the source is biased — some outputs are far more common than others — and an attacker can exploit this predictability.</p>
+
+  <h2>Limitation of Entropy Sources</h2>
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Why TRNGs Can't Replace CSPRNGs</div>
+    <p>Entropy sources are inherently slow — typically a few hundred bits of entropy per second from software sources. This is far too slow for bulk cryptographic operations (AES key streams, TLS session keys). The solution: use a TRNG to <strong>seed</strong> a fast CSPRNG. A small amount of genuine entropy is stretched into a large stream of cryptographically secure pseudorandom bits.</p>
+  </div>
+
+  <h2>The Boot-Time Entropy Problem</h2>
+  <p>At device boot time, the entropy pool is nearly empty. The system has been running for milliseconds — barely any keystrokes, mouse events, disk operations, or network packets have occurred. Devices that generate long-term keys (like RSA private keys for SSH servers) immediately at boot may do so with near-zero entropy in their seed.</p>
+  <p>Different devices in the same batch, booting in similar states, may generate nearly identical seeds — and therefore nearly identical primes. This is precisely the mechanism behind the "Mining Ps and Qs" attack that broke 0.5% of all TLS server keys. The fix: wait for sufficient entropy accumulation, or use a hardware TRNG (like Intel RDRAND) unaffected by this.</p>
+</div>
+
+<!-- SOFTWARE AND HARDWARE ENTROPY -->
+<div id="sec-software-entropy" class="section">
+  <h1>Software &amp; Hardware Entropy Sources <span class="tag">Part 7</span></h1>
+
+  <h2>Hardware-Based: Intel DRNG</h2>
+  <p>Intel's <strong>Digital Random Number Generator (DRNG)</strong>, code-named "Bull Mountain," is an on-chip hardware TRNG. It uses thermal noise in transistors as its entropy source and can produce random bits at approximately <strong>3 GHz</strong>.</p>
+  <p>Intel exposes this via the machine-code instruction <strong><code>RDRAND</code></strong> for 64-bit processors. Calling <code>RDRAND</code> fetches a fresh 64-bit random number from the DRNG hardware. The DRNG architecture:</p>
+  <ol>
+    <li>Analog thermal noise source → truly random bits.</li>
+    <li>Conditioning circuit (AES-CBC-MAC) → whitens the raw noise.</li>
+    <li>AES-CTR CSPRNG seeded from the conditioned entropy → high-throughput output.</li>
+    <li><code>RDRAND</code> instruction → user accesses the CSPRNG output.</li>
+  </ol>
+
+  <h2>Software Entropy Sources</h2>
+  <p>Every computer produces phenomena with unpredictable fine-grained timing:</p>
+  <ul>
+    <li>Exact nanosecond timing of <strong>keystrokes</strong></li>
+    <li><strong>Mouse movement</strong> interrupt timings</li>
+    <li><strong>Disk I/O</strong> completion times</li>
+    <li><strong>Network packet</strong> arrival times</li>
+    <li><strong>Log file contents</strong> and system command outputs (<code>ps</code>, <code>netstat</code>)</li>
+  </ul>
+
+  <h2>Linux Kernel Entropy: /dev/random and /dev/urandom</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>File</th><th>Source</th><th>Blocking?</th><th>Speed</th><th>Use Case</th></tr>
+      <tr><td><code>/dev/random</code></td><td>Kernel entropy pool (hardware interrupts, disk I/O, keystrokes)</td><td>Yes — blocks when pool is empty</td><td>Slow (~hundreds of bits/sec)</td><td>Long-term key generation (RSA primes)</td></tr>
+      <tr><td><code>/dev/urandom</code></td><td>CSPRNG seeded from /dev/random</td><td>No — never blocks</td><td>Fast</td><td>Session keys, IVs, nonces, general use</td></tr>
+    </table>
+  </div>
+
+  <h2>User-Space Entropy Daemons</h2>
+  <ul>
+    <li><strong>EGD (Entropy Gathering Daemon):</strong> A Perl-based daemon that gathers entropy from system events and makes it available to user-space programs via a Unix domain socket. Useful when kernel-space entropy is insufficient.</li>
+    <li><strong>PRNGD (Pseudo Random Number Generator Daemon):</strong> Similar to EGD; provides a daemon interface for pseudorandom data to processes without root access to <code>/dev/random</code>.</li>
+  </ul>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">✅ Practical Recommendation</div>
+    <p>For RSA key generation: use <code>/dev/random</code> (or hardware TRNG if available). For session keys, IVs, and nonces: <code>/dev/urandom</code> is sufficient and much faster. For embedded systems or devices that generate keys at boot: use a hardware TRNG like Intel RDRAND to avoid the boot-time entropy problem.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why might /dev/random block at device boot time?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">/dev/random only outputs bits when the kernel's entropy pool has enough genuine randomness. At boot time, the pool is nearly empty — very few events (keystrokes, disk I/O, network packets) have occurred yet. If a process requests random bytes, /dev/random blocks until sufficient entropy has been accumulated. This is why generating RSA keys immediately at boot is dangerous.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">What does /dev/urandom output when the entropy pool is empty?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">/dev/urandom never blocks. It uses the kernel's entropy to seed an internal CSPRNG. When the entropy pool is temporarily low, it continues producing CSPRNG output (pseudorandom, not truly random). For most purposes (session keys, IVs), this is acceptable. For long-term key generation, /dev/random or a hardware TRNG is preferred.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="sec-summary" class="section">
+  <h1>Summary &amp; Comparison <span class="tag">Part 8</span></h1>
+
+  <h2>Generator Comparison Table</h2>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Generator</th><th>Type</th><th>Crypto Secure?</th><th>Speed</th><th>Notes</th></tr>
+      <tr><td>LCG</td><td>PRNG</td><td style="color:var(--danger);">No</td><td>Very fast</td><td>$X_{n+1}=(aX_n+c) \bmod m$; predictable from 3 outputs</td></tr>
+      <tr><td>ANSI X9.31</td><td>CSPRNG</td><td style="color:var(--accent3);">Yes</td><td>Slow (9 DES/output)</td><td>3DES-based; used in financial systems</td></tr>
+      <tr><td>BBS</td><td>CSPRNG</td><td style="color:var(--accent3);">Yes (provable)</td><td>Slow</td><td>Provably secure under factoring assumption; LSB output</td></tr>
+      <tr><td>/dev/random</td><td>TRNG</td><td style="color:var(--accent3);">Yes</td><td>Very slow</td><td>Blocks; for long-term key generation</td></tr>
+      <tr><td>/dev/urandom</td><td>TRNG seed + CSPRNG</td><td style="color:var(--accent3);">Yes (practical)</td><td>Fast</td><td>Non-blocking; for session keys, IVs, nonces</td></tr>
+      <tr><td>Intel RDRAND</td><td>Hardware TRNG + CSPRNG</td><td style="color:var(--accent3);">Yes</td><td>3 GHz</td><td>Unaffected by boot-time entropy problem</td></tr>
+    </table>
+  </div>
+
+  <h2>The Real-World Architecture</h2>
+  <div class="arch-flow">
+    <p style="font-weight:700;color:var(--accent);margin-bottom:16px;">From physical noise to cryptographic keys:</p>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+      <div style="background:var(--surface2);border:1px solid var(--accent3);border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;color:var(--accent3);">🌡️ Physical noise (thermal, quantum, human interactions)</div>
+      <div style="padding-left:20px;color:var(--accent);font-size:20px;">↓ seeds</div>
+      <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;">🔒 Hardware TRNG / /dev/random (small, high-quality seed)</div>
+      <div style="padding-left:20px;color:var(--accent);font-size:20px;">↓ initializes</div>
+      <div style="background:var(--surface2);border:1px solid var(--accent2);border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;color:var(--accent2);">⚡ CSPRNG (BBS, X9.31, AES-CTR-DRBG) — fast, high-throughput</div>
+      <div style="padding-left:20px;color:var(--accent);font-size:20px;">↓ outputs</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 18px;font-size:14px;">🔑 Session keys, IVs, nonces, DH private values, RSA primes...</div>
+    </div>
+  </div>
+
+  <h2>Review Questions</h2>
+  <div class="kc-card">
+    <div class="kc-title">🧠 Final Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Explain why strong collision resistance implies weak collision resistance (connecting to the definitions).</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Strong: cannot find any two messages $M_1 \neq M_2$ with same hash (attacker chooses both freely). Weak: given fixed $M_1$, cannot find $M_2 \neq M_1$ with same hash (attacker must use the given $M_1$). Weak is strictly easier for the attacker (less freedom). If strong holds — no collision pair can be found at all — then certainly no pair starting from a fixed $M_1$ can be found. Strong ⊇ weak.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why is the LCG dangerous for cryptographic use, and what would a CSPRNG require instead?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">The LCG has a linear structure: $X_{n+1} = (aX_n + c) \bmod m$. Knowing $m$, $a$, $c$ (usually public) and any current value makes all future values trivially predictable. A CSPRNG must satisfy "next-bit unpredictability" — even observing all past outputs gives no advantage in predicting the next bit. BBS achieves this via the quadratic residuosity assumption; X9.31 achieves it via the security of 3DES.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Describe the architecture that balances true randomness with performance in a real system.</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Use a TRNG (hardware or /dev/random) to generate a small, high-quality seed. Feed that seed into a fast CSPRNG. The CSPRNG amplifies a small amount of true entropy into a large stream of cryptographically secure pseudorandom bits. The TRNG provides the unpredictability guarantee; the CSPRNG provides the throughput. /dev/urandom is exactly this architecture in Linux.</div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+const sections = ['sec-overview','sec-why-rng','sec-prng-trng','sec-lcg','sec-x931','sec-bbs','sec-entropy','sec-software-entropy','sec-summary'];
+let current = 0;
+
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+  });
+  current = sections.indexOf(id);
+  document.getElementById('progress-fill').style.width = (current / (sections.length - 1) * 100) + '%';
+  window.scrollTo(0, 0);
+  if (window.renderMathInElement) renderMathInElement(sec, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+}
+
+function toggleKc(el) {
+  const ans = el.parentElement.querySelector('.kc-a');
+  if (ans.style.display === 'block') { ans.style.display = 'none'; el.textContent = 'Show Answer ▾'; }
+  else { ans.style.display = 'block'; el.textContent = 'Hide Answer ▴'; }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && current < sections.length - 1) show(sections[current + 1]);
+  if (e.key === 'ArrowLeft' && current > 0) show(sections[current - 1]);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 464 — Lecture 02: Block Ciphers, Stream Ciphers & Key Distribution</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3247;
+    --accent: #6c8aff;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warning: #f59e0b;
+    --danger: #f87171;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --tag-bg: #1e3a5f;
+    --tag-text: #93c5fd;
+    --correct-bg: #052e16;
+    --correct-border: #16a34a;
+    --wrong-bg: #2d0000;
+    --wrong-border: #b91c1c;
+    --hint-bg: #1c1a05;
+    --hint-border: #854d0e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  #app { display: flex; min-height: 100vh; }
+
+  #sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s;
+  }
+
+  #sidebar-header {
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #sidebar-header h2 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #sidebar-header p {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .nav-section { padding: 8px 0; }
+
+  .nav-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 6px 16px 4px;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.15s;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover, .nav-item.active {
+    color: var(--text);
+    background: var(--surface2);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item.active { color: var(--accent); font-weight: 600; }
+
+  #main {
+    margin-left: 280px;
+    flex: 1;
+    padding: 40px 48px 80px;
+    max-width: 1100px;
+  }
+
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 280px; right: 0;
+    height: 3px;
+    background: var(--border);
+    z-index: 200;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .section { display: none; animation: fadeIn 0.3s; }
+  .section.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  h1 .tag {
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 10px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin: 24px 0 10px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent3);
+    margin: 18px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: #fff; font-weight: 700; }
+  em { color: var(--accent2); font-style: italic; }
+
+  .callout {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    border-left: 4px solid;
+    font-size: 15px;
+  }
+  .callout-info { background: #0c1a3a; border-color: var(--accent); }
+  .callout-tip { background: #0a2a1a; border-color: var(--accent3); }
+  .callout-warning { background: var(--hint-bg); border-color: var(--warning); }
+  .callout-danger { background: var(--wrong-bg); border-color: var(--danger); }
+  .callout-title { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info .callout-title { color: var(--accent); }
+  .callout-tip .callout-title { color: var(--accent3); }
+  .callout-warning .callout-title { color: var(--warning); }
+  .callout-danger .callout-title { color: var(--danger); }
+
+  code {
+    background: #1e2235;
+    color: #a5f3fc;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #111520;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #c4d4f0;
+    margin: 14px 0;
+    white-space: pre;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 700;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  tr:hover td { background: var(--surface2); }
+
+  .example-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .example-header {
+    background: var(--surface2);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent3);
+    border-bottom: 1px solid var(--border);
+  }
+  .example-badge {
+    background: #064e3b;
+    color: var(--accent3);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .example-body { padding: 18px 20px; }
+
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .quiz-header {
+    background: var(--surface2);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .quiz-badge {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge-exam { background: #1e1a40; color: var(--accent2); }
+  .badge-practice { background: #122a40; color: var(--accent); }
+  .quiz-question { padding: 16px 20px; font-size: 15px; font-weight: 500; line-height: 1.6; }
+
+  .options { padding: 0 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--surface2);
+  }
+  .option:hover { border-color: var(--accent); background: #111830; }
+  .option.correct { background: var(--correct-bg); border-color: var(--correct-border); color: #6ee7b7; }
+  .option.wrong { background: var(--wrong-bg); border-color: var(--wrong-border); color: #fca5a5; }
+  .option.disabled { cursor: default; pointer-events: none; }
+  .option-letter {
+    font-weight: 800;
+    font-size: 12px;
+    min-width: 22px;
+    height: 22px;
+    background: var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .option.correct .option-letter { background: #16a34a; }
+  .option.wrong .option-letter { background: #b91c1c; }
+
+  .quiz-footer { padding: 0 20px 16px; }
+  .reveal-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .reveal-btn:hover { opacity: 0.85; }
+  .reveal-btn.active { background: linear-gradient(135deg, #374151, #1f2937); }
+
+  .answer-reveal {
+    background: #0a1929;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+    display: none;
+  }
+  .answer-reveal.visible { display: block; animation: fadeIn 0.25s; }
+  .answer-reveal .answer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent3); margin-bottom: 6px; }
+  .answer-reveal .correct-answer { color: #6ee7b7; font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+  .answer-reveal .explanation { color: var(--text-muted); }
+
+  .kc-card {
+    border: 1px solid #2a3550;
+    border-radius: 10px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .kc-question {
+    padding: 13px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111825;
+    font-weight: 500;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .kc-question:hover { background: var(--surface2); }
+  .kc-toggle {
+    font-size: 18px;
+    color: var(--accent);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .kc-question.open .kc-toggle { transform: rotate(180deg); }
+  .kc-answer {
+    padding: 0 16px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s, padding 0.2s;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    background: #0d1220;
+  }
+  .kc-answer.open { padding: 12px 16px 14px; max-height: 600px; }
+
+  .section-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .sec-nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .sec-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sec-nav-btn.empty { visibility: hidden; }
+
+  .hero {
+    background: linear-gradient(135deg, #0c1530 0%, #1a0c2e 50%, #0c2420 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, #6c8aff22, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: #1e1a40;
+    color: var(--accent2);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 0.06em;
+  }
+  .hero h1 { font-size: 32px; margin-bottom: 12px; }
+  .hero p { color: var(--text-muted); font-size: 15px; max-width: 580px; }
+  .hero-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+    min-width: 90px;
+  }
+  .stat-num { font-size: 22px; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .topic-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-icon { font-size: 24px; margin-bottom: 8px; }
+  .topic-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .topic-sub { font-size: 12px; color: var(--text-dim); }
+
+  .formula {
+    background: #0d1525;
+    border: 1px solid #2a3a60;
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-family: 'Fira Code', monospace;
+    font-size: 15px;
+    color: #93c5fd;
+    margin: 12px 0;
+    text-align: center;
+  }
+
+  .protocol-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .protocol-step:last-child { border-bottom: none; }
+  .step-num {
+    min-width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .step-content { flex: 1; }
+  .step-label { font-weight: 700; font-size: 13px; color: var(--accent3); margin-bottom: 4px; }
+  .step-body { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+  #quiz-score {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent3);
+    z-index: 100;
+    display: none;
+  }
+
+  #menu-toggle {
+    display: none;
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 300;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 18px;
+  }
+
+  @media (max-width: 768px) {
+    #menu-toggle { display: block; }
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; padding: 24px 20px 60px; }
+    #progress-bar { left: 0; }
+  }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left: '$$', right: '$$', display: true},
+      {left: '\\(', right: '\\)', display: false}
+    ],
+    throwOnError: false
+  });"></script>
+</head>
+<body>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+<div id="quiz-score">Score: <span id="score-num">0</span>/<span id="score-den">0</span></div>
+
+<div id="app">
+
+<!-- ─── SIDEBAR ─────────────────────────────────── -->
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>CSE 464 Security</h2>
+    <p>Lecture 02 — Block Ciphers & Key Distribution</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Overview</div>
+    <a class="nav-item active" onclick="showSection('overview')">🏠 Course Overview</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Multiple DES</div>
+    <a class="nav-item" onclick="showSection('2des')">🔑 2DES & Meet-in-the-Middle</a>
+    <a class="nav-item" onclick="showSection('3des')">🔐 3DES & EDE Mode</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Block Cipher Modes</div>
+    <a class="nav-item" onclick="showSection('modes-ecb')">📦 ECB Mode</a>
+    <a class="nav-item" onclick="showSection('modes-cbc')">🔗 CBC Mode</a>
+    <a class="nav-item" onclick="showSection('modes-cfb-ofb')">🌊 CFB & OFB Modes</a>
+    <a class="nav-item" onclick="showSection('modes-ctr')">🔢 CTR Mode</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Stream Ciphers</div>
+    <a class="nav-item" onclick="showSection('stream')">〰️ Stream Ciphers & RC4</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Key Distribution</div>
+    <a class="nav-item" onclick="showSection('needham')">🤝 Needham-Schroeder</a>
+    <a class="nav-item" onclick="showSection('kerberos')">🏰 Kerberos</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Review</div>
+    <a class="nav-item" onclick="showSection('exam-prep')">📋 Exam Prep</a>
+  </div>
+</nav>
+
+<!-- ─── MAIN CONTENT ─────────────────────────────── -->
+<main id="main">
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: OVERVIEW                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-overview" class="section active">
+  <div class="hero">
+    <div class="hero-badge">CSE 464 — LECTURE 02</div>
+    <h1>Block Ciphers, Stream Ciphers &amp; Key Distribution</h1>
+    <p>From the limits of DES to real-world encryption modes, stream ciphers, and the protocols that let parties establish shared secrets over insecure networks.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Cipher Modes</div></div>
+      <div class="stat"><div class="stat-num">17</div><div class="stat-label">Exam Qs (Q13–Q29)</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Protocols</div></div>
+    </div>
+  </div>
+
+  <h2>What This Lecture Covers</h2>
+  <p>Lecture 01 established how AES and DES work as individual block ciphers. This lecture asks: how do you use them safely in the real world? The answer involves multiple layers — from fixing DES's weaknesses, to choosing the right encryption mode for multi-block messages, to distributing keys between strangers over a network.</p>
+
+  <div class="topic-grid">
+    <div class="topic-card" onclick="showSection('2des')">
+      <div class="topic-icon">🔑</div>
+      <div class="topic-title">2DES & Meet-in-the-Middle</div>
+      <div class="topic-sub">Why doubling DES's key fails. The MITM attack. DES as a group.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('3des')">
+      <div class="topic-icon">🔐</div>
+      <div class="topic-title">3DES / EDE Mode</div>
+      <div class="topic-sub">Triple encryption, backward compatibility, real-world use.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('modes-ecb')">
+      <div class="topic-icon">📦</div>
+      <div class="topic-title">ECB Mode</div>
+      <div class="topic-sub">Why naive independent block encryption leaks patterns.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('modes-cbc')">
+      <div class="topic-icon">🔗</div>
+      <div class="topic-title">CBC Mode</div>
+      <div class="topic-sub">Chaining, IV requirements, error propagation.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('modes-cfb-ofb')">
+      <div class="topic-icon">🌊</div>
+      <div class="topic-title">CFB &amp; OFB Modes</div>
+      <div class="topic-sub">Stream-cipher behavior, feedback mechanics, noise resilience.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('modes-ctr')">
+      <div class="topic-icon">🔢</div>
+      <div class="topic-title">CTR Mode</div>
+      <div class="topic-sub">Full parallelism, IV reuse danger, Q17–Q20 exam questions.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('stream')">
+      <div class="topic-icon">〰️</div>
+      <div class="topic-title">Stream Ciphers / RC4</div>
+      <div class="topic-sub">KSA, keystream generation, key reuse vulnerability.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('needham')">
+      <div class="topic-icon">🤝</div>
+      <div class="topic-title">Needham-Schroeder</div>
+      <div class="topic-sub">KDC, master keys, session keys, nonces, replay protection.</div>
+    </div>
+    <div class="topic-card" onclick="showSection('kerberos')">
+      <div class="topic-icon">🏰</div>
+      <div class="topic-title">Kerberos</div>
+      <div class="topic-sub">AS, TGS, TGT, timestamps, single sign-on.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ Questions of Doubt — Key Clarifications</div>
+    <ul style="margin: 8px 0 0 18px; line-height: 2.4; font-size: 14px;">
+      <li><strong>Q18:</strong> CTR IV reuse → answer is (d) keystream reuse. (b) is wrong wording.</li>
+      <li><strong>Q20:</strong> <strong>No correct answer.</strong> CBC propagates to current + next block only, not all subsequent blocks.</li>
+      <li><strong>Q29:</strong> Both (b) long-term keys and (c) ticket encryption keys are valid.</li>
+    </ul>
+  </div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn empty">←</button>
+    <button class="sec-nav-btn" onclick="showSection('2des')">2DES &amp; MITM →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: 2DES                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-2des" class="section">
+  <h1>2DES and the Meet-in-the-Middle Attack</h1>
+
+  <h2>DES Is Too Weak — The Obvious Fix</h2>
+  <p>DES's 56-bit key was its Achilles' heel. By 1998, dedicated hardware could crack it in under 56 hours. The simplest response: apply DES twice with two independent 56-bit keys, so the combined key is 112 bits.</p>
+
+  $$C = E_{K_2}(E_{K_1}(P))$$
+  $$P = D_{K_1}(D_{K_2}(C))$$
+
+  <p>The key space is \(2^{56} \times 2^{56} = 2^{112}\). A brute-force attack over \(2^{112}\) is completely out of reach. So is 2DES secure? The answer is a surprising <strong>no</strong> — and the reason reveals an elegant structural vulnerability.</p>
+
+  <h2>Is DES a Group? (A Prerequisite Question)</h2>
+  <p>Before discussing the attack, consider an even more fundamental question: when you apply DES twice with two keys, do you get something genuinely different from a single DES application? Or could there always be a third key \(K_3\) such that \(E(K_2, E(K_1, P)) = E(K_3, P)\)?</p>
+
+  <p>If such a \(K_3\) always existed — if the set of all DES permutations were <strong>closed under composition</strong> (forming a <em>group</em>) — then 2DES would be completely pointless. Double-encrypting would be equivalent to encrypting once with some other key. The attacker would only need to search the \(2^{56}\) space of single-DES keys.</p>
+
+  <p>This was investigated seriously. The set of all permutations on 64-bit blocks has size \((2^{64})!\), which is incomprehensibly larger than \(10^{10^{20}}\). The DES-generated permutations number at most \(2^{56} \approx 10^{17}\) — a tiny speck in that vast space. The probability that composing two DES permutations accidentally lands on another DES permutation is negligibly small. It has been mathematically confirmed: <strong>DES is not a group</strong>. 2DES is genuinely stronger than 1DES.</p>
+
+  <h2>The Meet-in-the-Middle Attack</h2>
+  <p>Even though 2DES is not equivalent to 1DES, it still fails to deliver \(2^{112}\) security. The <strong>meet-in-the-middle attack</strong> reduces the effective security to approximately \(2^{57}\).</p>
+
+  <p>The key insight is that there exists an intermediate value \(X\) — the output after the first DES and the input to the second DES — that satisfies both:</p>
+
+  $$X = E_{K_1}(P) \quad \text{and} \quad X = D_{K_2}(C)$$
+
+  <p>The attacker approaches the problem from both sides simultaneously and looks for a match at this middle value. Assume the attacker has a known plaintext–ciphertext pair \((P, C)\).</p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:16px 0;">
+    <div class="protocol-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-label">Build the Forward Table</div>
+        <div class="step-body">For every possible \(K_1\) (all \(2^{56}\) values), compute \(X = E_{K_1}(P)\) and store the pair \((X, K_1)\) in a lookup table, sorted by \(X\). Cost: \(2^{56}\) DES encryptions.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-label">Search from the Right</div>
+        <div class="step-body">For every possible \(K_2\) (all \(2^{56}\) values), compute \(X' = D_{K_2}(C)\) and look up \(X'\) in the table. Any match gives a candidate key pair \((K_1, K_2)\). Cost: \(2^{56}\) DES decryptions.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-label">Eliminate False Alarms</div>
+        <div class="step-body">There will be approximately \(2^{48}\) false matches (pairs that coincidentally produce the same \(X\) but are not the real key). Verify each candidate on a second known pair \((P', C')\). Typically only one candidate survives.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Step</th><th>Computation</th><th>Storage</th></tr></thead>
+    <tbody>
+      <tr><td>Build forward table</td><td>\(2^{56}\) encryptions</td><td>\(2^{56}\) entries</td></tr>
+      <tr><td>Search backward</td><td>\(2^{56}\) decryptions</td><td>—</td></tr>
+      <tr><td><strong>Total</strong></td><td><strong>\(\approx 2^{57}\) operations</strong></td><td>\(2^{56}\) entries</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">The Bottom Line</div>
+    Doubling the key from 56 to 112 bits added essentially no real security. The effective security of 2DES is \(\approx 2^{57}\) — barely more than single DES at \(2^{56}\). The \(2^{112}\) apparent strength is an illusion created by the double-encryption structure.
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q13</span></div>
+    <div class="quiz-question">What major attack makes 2DES insecure despite its longer key?</div>
+    <div class="options" id="q-2des-1">
+      <div class="option" onclick="checkAnswer(this, 'q-2des-1', true)"><span class="option-letter">a</span>Meet-in-the-middle attack</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-1', false)"><span class="option-letter">b</span>Differential cryptanalysis</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-1', false)"><span class="option-letter">c</span>Frequency analysis</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-1', false)"><span class="option-letter">d</span>Replay attack</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-2des-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (a)</div>
+        <div class="explanation">The MITM attack builds a table of \(2^{56}\) forward values from \(P\), searches \(2^{56}\) backward from \(C\), and finds matching intermediate values. Total cost \(\approx 2^{57}\) — barely more than breaking single DES. The 112-bit combined key space provides essentially no real security improvement over 56 bits.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q14</span></div>
+    <div class="quiz-question">What would be the theoretical security impact if DES were a group?</div>
+    <div class="options" id="q-2des-2">
+      <div class="option" onclick="checkAnswer(this, 'q-2des-2', false)"><span class="option-letter">a</span>DES would become resistant to differential cryptanalysis</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-2', true)"><span class="option-letter">b</span>All multiple-DES variants would collapse to single-DES security</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-2', false)"><span class="option-letter">c</span>Key size could be reduced to 40 bits</div>
+      <div class="option" onclick="checkAnswer(this, 'q-2des-2', false)"><span class="option-letter">d</span>The Feistel network would become redundant</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-2des-2-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (b)</div>
+        <div class="explanation">If DES were closed under composition (a group), then \(E(K_2, E(K_1, P)) = E(K_3, P)\) for some \(K_3\). 2DES would be equivalent to searching the \(2^{56}\) single-DES key space. Triple DES would similarly collapse. DES is <em>not</em> a group — confirmed by mathematical analysis — which is why multi-DES has genuine value.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the "intermediate value" X in the MITM attack?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">\(X = E_{K_1}(P)\) — the output after the first DES encryption. It also equals \(D_{K_2}(C)\) — the input to the second DES going backward from the ciphertext. The attack finds the \(K_1, K_2\) pair for which both paths produce the same X.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does the MITM attack produce ~2⁴⁸ false alarms?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The forward table has \(2^{56}\) X values over a \(2^{64}\)-bit output space. For each of the \(2^{56}\) backward queries, the probability of a random match is \(2^{56}/2^{64} = 2^{-8}\). Total expected false matches: \(2^{56} \times 2^{-8} = 2^{48}\). A second plaintext-ciphertext pair is used to filter these out.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('overview')">← Overview</button>
+    <button class="sec-nav-btn" onclick="showSection('3des')">3DES →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: 3DES                                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-3des" class="section">
+  <h1>3DES — EDE Mode and Backward Compatibility</h1>
+
+  <h2>Fixing 2DES: Triple Encryption</h2>
+  <p>The meet-in-the-middle attack teaches a deep lesson: simply stacking block ciphers does not multiply their security. The key insight for defeating MITM is to require three layers, not two. <strong>Triple DES (3DES)</strong> applies DES three times in a carefully chosen pattern:</p>
+
+  $$C = E_{K_3}\!\bigl(D_{K_2}\!\bigl(E_{K_1}(P)\bigr)\bigr)$$
+
+  <p>This is <strong>EDE mode</strong> — Encrypt, then Decrypt, then Encrypt. The decryption in the middle may seem strange. Why not EEE (Encrypt–Encrypt–Encrypt)?</p>
+
+  <h2>The Backward Compatibility Argument for EDE</h2>
+  <p>Consider what happens when all three keys are set equal: \(K_1 = K_2 = K_3 = K\). Trace through step by step:</p>
+
+  <div style="background:var(--surface);border-left:4px solid var(--accent3);padding:18px 24px;margin:16px 0;border-radius:8px;">
+    $$E_K\!\Bigl(\underbrace{D_K\!\bigl(\underbrace{E_K(P)}_{\text{produces some } X}\bigr)}_{\text{= }P}\Bigr) = E_K(P)$$
+    <p style="margin:10px 0 0 0;font-size:14px;color:var(--text-muted);">The inner \(E_K\) produces \(X\). Applying \(D_K\) immediately undoes it, recovering \(P\). The outer \(E_K\) then applies once — this is exactly single DES.</p>
+  </div>
+
+  <p>When all three keys are the same, 3DES EDE reduces <em>exactly</em> to single DES. This enabled a gradual, compatible migration: organizations deploying new 3DES hardware could communicate with legacy DES-only systems by using the same key three times — no protocol changes, no compatibility breaks.</p>
+
+  <p>With three <strong>distinct</strong> keys, 3DES achieves effective security of approximately \(2^{112}\). The meet-in-the-middle attack has been extended to 3DES with two keys (where \(K_1 = K_3 \neq K_2\)), but its cost is of order \(2^{112}\) — sufficient for most applications. 3DES was widely used until AES made it obsolete — AES is faster and provides stronger security. All new systems use AES.</p>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q15</span></div>
+    <div class="quiz-question">In 3DES, why is the middle step a decryption (EDE mode) rather than encryption (EEE)?</div>
+    <div class="options" id="q-3des-1">
+      <div class="option" onclick="checkAnswer(this, 'q-3des-1', true)"><span class="option-letter">a</span>To allow backward compatibility with single DES when K₁ = K₂ = K₃</div>
+      <div class="option" onclick="checkAnswer(this, 'q-3des-1', false)"><span class="option-letter">b</span>To confuse attackers with inverse operations</div>
+      <div class="option" onclick="checkAnswer(this, 'q-3des-1', false)"><span class="option-letter">c</span>To enable parallel processing</div>
+      <div class="option" onclick="checkAnswer(this, 'q-3des-1', false)"><span class="option-letter">d</span>To meet NIST's encryption standards</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-3des-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (a)</div>
+        <div class="explanation">When \(K_1=K_2=K_3\), EDE becomes \(E_K(D_K(E_K(P))) = E_K(P)\) — exactly single DES. The middle D and inner E cancel. This backward compatibility was critical for gradual migration: legacy DES hardware could talk to new 3DES hardware by using the same key three times.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the effective security of 3DES with three distinct keys vs. two keys?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">With three distinct keys (168-bit total key): effective security ≈ \(2^{112}\) due to the extended MITM attack. With two keys (\(K_1 = K_3 \neq K_2\), 112-bit total): also ≈ \(2^{112}\), but slightly easier to attack. Three distinct keys is stronger but 168 bits is "unwieldy" for many applications (slower, more key storage). Two-key 3DES-EDE was the common practical choice.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('2des')">← 2DES &amp; MITM</button>
+    <button class="sec-nav-btn" onclick="showSection('modes-ecb')">ECB Mode →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: ECB                                       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-modes-ecb" class="section">
+  <h1>Block Cipher Modes — ECB</h1>
+
+  <h2>Why Modes Are Necessary</h2>
+  <p>A block cipher encrypts exactly one fixed-size block. Real messages are almost never exactly that size. Worse, encrypting a long message as a series of independent blocks creates a fundamental security problem: if the same plaintext block appears multiple times (common in text, images, and structured data), it will produce the same ciphertext block every time. Pattern structure in the plaintext leaks directly into the ciphertext.</p>
+  <p><strong>Block cipher modes of operation</strong> define how to apply a block cipher to multi-block messages. There are five standard modes: ECB, CBC, CFB, OFB, and CTR. Each makes different tradeoffs.</p>
+
+  <h2>ECB — Electronic Codebook Mode</h2>
+  <p>In <strong>ECB mode</strong>, each plaintext block is encrypted independently with the same key. No interaction exists between blocks:</p>
+
+  $$C_i = E_K(P_i)$$
+  $$P_i = D_K(C_i)$$
+
+  <p>This is the most obvious approach and the most dangerous. The cipher acts exactly like a codebook: the same plaintext block always maps to the same ciphertext block, regardless of position.</p>
+
+  <p>You might wonder: if AES is secure, how can this be broken? The answer is that AES itself is not broken. The attacker does not decrypt the blocks. Instead, they observe that some ciphertext blocks are <em>identical</em>, and conclude that the corresponding plaintext blocks are also identical. This reveals structural information about the plaintext without breaking the cipher at all.</p>
+
+  <p>The most famous demonstration is the <strong>"ECB penguin"</strong>: encrypting a bitmap image with AES-ECB produces a ciphertext image where the outline of the original penguin is still clearly visible, because regions of uniform color produce runs of identical ciphertext blocks.</p>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">ECB Rule: Never Use for Multi-Block Messages</div>
+    ECB is appropriate only for encrypting a single block or very short, non-repeating messages. For any real content, it leaks pattern information and should be considered broken.
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q16</span></div>
+    <div class="quiz-question">Which block cipher mode encrypts each block independently, making identical plaintext blocks produce identical ciphertext blocks?</div>
+    <div class="options" id="q-ecb-1">
+      <div class="option" onclick="checkAnswer(this, 'q-ecb-1', false)"><span class="option-letter">a</span>CBC (Cipher Block Chaining)</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ecb-1', true)"><span class="option-letter">b</span>ECB (Electronic Codebook)</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ecb-1', false)"><span class="option-letter">c</span>CTR (Counter)</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ecb-1', false)"><span class="option-letter">d</span>GCM (Galois/Counter Mode)</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ecb-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (b) ECB</div>
+        <div class="explanation">ECB: \(C_i = E_K(P_i)\). No chaining, no IV, no context from other blocks. Same plaintext block → same ciphertext block. This is its fundamental flaw for any multi-block message.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('3des')">← 3DES</button>
+    <button class="sec-nav-btn" onclick="showSection('modes-cbc')">CBC Mode →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: CBC                                       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-modes-cbc" class="section">
+  <h1>Block Cipher Modes — CBC</h1>
+
+  <h2>Cipher Block Chaining</h2>
+  <p>In <strong>CBC mode</strong>, each plaintext block is XORed with the <em>previous</em> ciphertext block before encryption. This creates a dependency chain: each ciphertext block depends on all previous plaintext blocks.</p>
+
+  $$C_i = E_K(P_i \oplus C_{i-1})$$
+  $$P_i = D_K(C_i) \oplus C_{i-1}$$
+
+  <p>For the first block, there is no previous ciphertext. An <strong>Initialization Vector (IV)</strong> fills this role as \(C_0\):</p>
+
+  $$C_1 = E_K(P_1 \oplus \text{IV})$$
+  $$P_1 = D_K(C_1) \oplus \text{IV}$$
+
+  <p>Because each block's encryption depends on all previous ciphertext, identical plaintext blocks at different positions produce different ciphertext blocks (since \(C_{i-1}\) differs). CBC solves ECB's pattern-leakage problem.</p>
+
+  <h2>The IV: Random, Not Secret</h2>
+  <p>The IV must be <strong>random and unpredictable</strong> — this is the critical security requirement. It does not need to be secret; it is routinely sent alongside the ciphertext (the receiver needs it to decrypt the first block). But if the IV is predictable, an attacker who knows the first plaintext block \(P_1\) can check whether \(E_K(P_1 \oplus \text{IV})\) matches \(C_1\), leaking plaintext information.</p>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">IV Rules</div>
+    <ul style="margin: 6px 0 0 16px; line-height: 2.2;">
+      <li>Must be <strong>random</strong> (unpredictable) — this is the critical requirement.</li>
+      <li>Does NOT need to be secret — transmit it openly with the ciphertext.</li>
+      <li>Must NEVER be reused with the same key — reuse reveals whether the first plaintext blocks of two messages are identical.</li>
+    </ul>
+  </div>
+
+  <h2>Error Propagation in CBC</h2>
+  <p>Suppose ciphertext block \(C_i\) is corrupted in transmission. What happens during decryption?</p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:16px 0;">
+    <div class="protocol-step">
+      <div class="step-num">i</div>
+      <div class="step-content">
+        <div class="step-label">Block i is fully garbled</div>
+        <div class="step-body">\(P_i = D_K(C_i) \oplus C_{i-1}\). Since \(C_i\) is wrong, \(D_K(C_i)\) is garbage. All bits of \(P_i\) are corrupted.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">i+1</div>
+      <div class="step-content">
+        <div class="step-label">Block i+1 has one bit flipped (per corrupted bit in Cᵢ)</div>
+        <div class="step-body">\(P_{i+1} = D_K(C_{i+1}) \oplus C_i\). \(D_K(C_{i+1})\) is correct, but the corrupted \(C_i\) is XORed in. Only the bits that were flipped in \(C_i\) are wrong.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">i+2+</div>
+      <div class="step-content">
+        <div class="step-label">All subsequent blocks are correct</div>
+        <div class="step-body">\(C_{i+1}\) and all later blocks are undamaged. Decryption proceeds correctly from block \(i+2\) onward.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Q20 — No Correct Answer</div>
+    The 2025 midterm asked which mode propagates a ciphertext error to <em>all subsequent blocks</em>. <strong>No standard mode does this.</strong> CBC propagates to the current block (fully garbled) and the next block (one bit flipped per corrupted ciphertext bit) — then stops. This question has no correct answer among the given options.
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q19</span></div>
+    <div class="quiz-question">What is the critical security requirement for an IV in CBC mode?</div>
+    <div class="options" id="q-cbc-1">
+      <div class="option" onclick="checkAnswer(this, 'q-cbc-1', false)"><span class="option-letter">a</span>It must be secret</div>
+      <div class="option" onclick="checkAnswer(this, 'q-cbc-1', false)"><span class="option-letter">b</span>It must equal the block size</div>
+      <div class="option" onclick="checkAnswer(this, 'q-cbc-1', true)"><span class="option-letter">c</span>It must be random</div>
+      <div class="option" onclick="checkAnswer(this, 'q-cbc-1', false)"><span class="option-letter">d</span>It must be reused for efficiency</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-cbc-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (c)</div>
+        <div class="explanation">Random (unpredictable), not secret. The IV is typically sent openly alongside the ciphertext — the receiver needs it. The critical security property is <em>randomness</em>, not secrecy. A predictable IV allows certain chosen-plaintext attacks.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q20</span><span class="quiz-badge badge-practice" style="margin-left:8px">⚠️ NO CORRECT ANSWER</span></div>
+    <div class="quiz-question">Which block cipher mode propagates a single-bit error in ciphertext to ALL subsequent blocks during decryption?</div>
+    <div class="quiz-footer">
+      <button class="reveal-btn" onclick="toggleReveal(this, 'q-cbc-2-reveal')">Show Answer</button>
+      <div class="answer-reveal" id="q-cbc-2-reveal">
+        <div class="answer-label">🔴 Questions of Doubt: No correct answer</div>
+        <div class="correct-answer">⚠️ None of the options is correct</div>
+        <div class="explanation"><strong>From Questions of Doubt:</strong> "None of the provided answers is correct. No mode of operation propagates a single-bit error in ciphertext to all subsequent blocks. CBC propagates to the current and next blocks only. ECB, CTR, and OFB contain the error in the current block only." If forced to choose, (b) CBC is the closest answer — but technically incorrect.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ In CBC mode, why can decryption be parallelized but encryption cannot?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Encryption: \(C_i = E_K(P_i \oplus C_{i-1})\). You need \(C_{i-1}\) before computing \(C_i\) — strictly sequential. Decryption: \(P_i = D_K(C_i) \oplus C_{i-1}\). All ciphertext blocks are already available, so you can compute \(D_K(C_i)\) for all \(i\) simultaneously, then XOR each with \(C_{i-1}\) — parallelizable.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('modes-ecb')">← ECB Mode</button>
+    <button class="sec-nav-btn" onclick="showSection('modes-cfb-ofb')">CFB &amp; OFB →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: CFB + OFB                                 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-modes-cfb-ofb" class="section">
+  <h1>Block Cipher Modes — CFB &amp; OFB</h1>
+
+  <h2>CFB — Cipher Feedback Mode</h2>
+  <p>Both CFB and OFB convert a block cipher into a <strong>stream cipher</strong> — they let you encrypt data one segment (e.g., one byte) at a time, without waiting for a full block to accumulate. This is useful when you cannot pad the message to a block boundary, or when data arrives byte-by-byte in real time.</p>
+
+  <p>In <strong>CFB mode</strong>, a shift register (initialized with the IV) feeds into the block cipher. The output is used to encrypt one byte (or \(s\) bits) of plaintext. The resulting ciphertext byte is then shifted into the register:</p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:16px 0;">
+    <div class="protocol-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-label">Encrypt the shift register</div>
+        <div class="step-body">Apply the block cipher to the \(b\)-bit shift register. Retain the leftmost \(s\) bits of the output.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-label">Encrypt plaintext</div>
+        <div class="step-body">XOR those \(s\) bits with the next \(s\) plaintext bits to produce \(s\) ciphertext bits.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-label">Update the shift register</div>
+        <div class="step-body">Shift the register left by \(s\) bits and insert the new \(s\) ciphertext bits at the right end.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-label">Repeat</div>
+        <div class="step-body">Go to step 1 for the next \(s\) bits of plaintext.</div>
+      </div>
+    </div>
+  </div>
+
+  $$C_i = P_i \oplus \text{MSB}_s(E_K(\text{shift register}))$$
+
+  <p>Key property: only the <strong>encryption</strong> direction of the block cipher is used, at both sending and receiving ends. No decryption operation is required of the underlying cipher.</p>
+
+  <p><strong>Error propagation in CFB:</strong> A corrupted \(s\)-bit ciphertext segment enters the shift register and stays there for \(b/s\) steps, contaminating the keystream for those steps. After the corrupted segment has been completely shifted out, the error stops propagating. Errors are local but affect more than one segment (unlike OFB, as we will see).</p>
+
+  <h2>OFB — Output Feedback Mode</h2>
+  <p><strong>OFB mode</strong> is nearly identical to CFB, with one critical change: instead of feeding back the <em>ciphertext</em> into the shift register, OFB feeds back the <em>output of the block cipher encryption</em> (the keystream itself) — before XOR with the plaintext.</p>
+
+  $$O_i = E_K(O_{i-1}), \quad O_0 = \text{IV}$$
+  $$C_i = P_i \oplus O_i \qquad P_i = C_i \oplus O_i$$
+
+  <p>Because the keystream \(O_i\) is generated <em>entirely independently</em> of the plaintext and ciphertext (the feedback loop never sees ciphertext), OFB has a crucial advantage:</p>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">OFB vs CFB Error Property</div>
+    In OFB, a corrupted ciphertext bit corrupts <strong>only the corresponding plaintext bit</strong> during decryption. The keystream generation is unaffected (it never sees the ciphertext). This makes OFB preferable over CFB for noisy transmission channels where bit errors are common.
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Property</th><th>CFB</th><th>OFB</th></tr></thead>
+    <tbody>
+      <tr><td>Feedback source</td><td>Ciphertext bytes</td><td>Keystream bytes (before XOR)</td></tr>
+      <tr><td>Encryption direction needed</td><td>Encrypt only</td><td>Encrypt only</td></tr>
+      <tr><td>Parallelizable enc/dec</td><td>No (dec yes)</td><td>Precompute keystream</td></tr>
+      <tr><td>Ciphertext error propagation</td><td>Limited (washes out after b/s steps)</td><td>None (one bit only)</td></tr>
+      <tr><td>Best for</td><td>Byte-oriented streams</td><td>Noisy channels</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does OFB have better noise tolerance than CFB?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">CFB: the ciphertext is fed back into the shift register. A corrupted ciphertext byte enters the register and contaminates the keystream for b/s subsequent decryptions. OFB: only the keystream (never the ciphertext) is fed back. A corrupted ciphertext bit flips only the corresponding plaintext bit — the keystream generation is completely unaffected.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ In which modes is only the encryption operation of the block cipher needed?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">CFB, OFB, and CTR. In all three, the block cipher is applied to generate a keystream (either by encrypting the shift register, feeding back the output, or encrypting counter values). The plaintext or ciphertext is then XORed with the keystream — no block cipher decryption is involved.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('modes-cbc')">← CBC Mode</button>
+    <button class="sec-nav-btn" onclick="showSection('modes-ctr')">CTR Mode →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: CTR                                       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-modes-ctr" class="section">
+  <h1>Block Cipher Modes — CTR</h1>
+
+  <h2>Counter Mode</h2>
+  <p>In <strong>CTR mode</strong>, there is no feedback from previous blocks at all. Instead, a counter is encrypted directly to produce a keystream, and each plaintext block is XORed with its corresponding keystream block:</p>
+
+  $$\text{Keystream}_i = E_K(\text{Nonce} \| \text{Counter}_i)$$
+  $$C_i = P_i \oplus \text{Keystream}_i$$
+  $$P_i = C_i \oplus \text{Keystream}_i$$
+
+  <p>The counter starts at an initial value (typically a nonce concatenated with 0, 1, 2, ...) and is incremented modulo \(2^b\) for each block. Since each keystream block depends only on its own counter value, all blocks are completely independent of each other.</p>
+
+  <h2>Advantages of CTR Mode</h2>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-weight:700;color:var(--accent3);margin-bottom:8px;font-size:13px;">PARALLELIZABLE</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">Each keystream block \(E_K(\text{Nonce}\|i)\) depends only on the counter value \(i\). All blocks can be computed simultaneously. Both encryption and decryption are fully parallelizable.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-weight:700;color:var(--accent3);margin-bottom:8px;font-size:13px;">RANDOM ACCESS</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">To decrypt block \(j\) without decrypting preceding blocks, compute \(E_K(\text{Nonce}\|j)\) and XOR with \(C_j\). No sequential processing needed.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-weight:700;color:var(--accent3);margin-bottom:8px;font-size:13px;">NO PADDING</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">XOR the keystream with plaintext byte-by-byte. Truncate to the exact message length. No block-alignment padding is required.</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-weight:700;color:var(--accent3);margin-bottom:8px;font-size:13px;">PRECOMPUTATION</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0;">The keystream can be computed before the plaintext is known. At transmission time, just XOR with the pre-computed keystream blocks.</p>
+    </div>
+  </div>
+
+  <h2>The Critical Danger: IV Reuse</h2>
+  <p>CTR mode is deadly if the same nonce (IV) is reused with the same key, even once. If two messages \(P^{(1)}\) and \(P^{(2)}\) are encrypted with the same key and same nonce:</p>
+
+  $$C^{(1)}_i = P^{(1)}_i \oplus \text{KS}_i \quad \text{and} \quad C^{(2)}_i = P^{(2)}_i \oplus \text{KS}_i$$
+
+  <p>The attacker computes:</p>
+
+  $$C^{(1)}_i \oplus C^{(2)}_i = P^{(1)}_i \oplus P^{(2)}_i$$
+
+  <p>With both plaintexts in natural language (or any structured format), the XOR can often be exploited to recover both plaintexts through "crib dragging" — guessing words in one plaintext and checking if the implied other plaintext makes sense.</p>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q17</span></div>
+    <div class="quiz-question">What is the main advantage of CTR mode?</div>
+    <div class="options" id="q-ctr-1">
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-1', false)"><span class="option-letter">a</span>Built-in error propagation</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-1', false)"><span class="option-letter">b</span>Resistance to IV reuse</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-1', true)"><span class="option-letter">c</span>Parallelizable encryption/decryption</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-1', false)"><span class="option-letter">d</span>Fixed padding requirements</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ctr-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (c)</div>
+        <div class="explanation">Each keystream block is computed from its counter independently. Both encryption and decryption run fully in parallel. (b) is <em>wrong</em> — CTR is catastrophically vulnerable to IV reuse. (a) is wrong — error propagation is a weakness, not an advantage.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q18</span><span class="quiz-badge badge-practice" style="margin-left:8px">⚠️ DISPUTED</span></div>
+    <div class="quiz-question">What happens if an IV is reused in CTR mode?</div>
+    <div class="options" id="q-ctr-2">
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-2', false)"><span class="option-letter">a</span>Encryption fails</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-2', false)"><span class="option-letter">b</span>Blocks become correlated</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-2', false)"><span class="option-letter">c</span>The key is compromised</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ctr-2', true)"><span class="option-letter">d</span>Keystream reuse breaks confidentiality</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ctr-2-reveal">
+        <div class="answer-label">🔴 From "Questions of Doubt"</div>
+        <div class="correct-answer">✓ Answer: (d)</div>
+        <div class="explanation"><strong>From Questions of Doubt:</strong> "(b) isn't correct — what becomes correlated is the whole ciphertext, not the individual blocks. (d) is correct. The reuse of IV doesn't directly break confidentiality by itself — you need at least 2 ciphertexts to obtain the XOR of the corresponding plaintexts. With natural-language text both plaintexts can be recovered."</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Mode Comparison Summary</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mode</th><th>Parallel Enc?</th><th>Parallel Dec?</th><th>Error Propagation</th><th>Needs Padding?</th><th>IV?</th></tr></thead>
+    <tbody>
+      <tr><td>ECB</td><td>✓</td><td>✓</td><td>None (contained)</td><td>Yes</td><td>No</td></tr>
+      <tr><td>CBC</td><td>✗</td><td>✓</td><td>Current + next block</td><td>Yes</td><td>Yes (random)</td></tr>
+      <tr><td>CFB</td><td>✗</td><td>✓</td><td>Limited (washes out)</td><td>No</td><td>Yes</td></tr>
+      <tr><td>OFB</td><td>Precompute</td><td>Precompute</td><td>None (1 bit only)</td><td>No</td><td>Yes</td></tr>
+      <tr><td>CTR</td><td>✓</td><td>✓</td><td>None (contained)</td><td>No</td><td>Yes (unique!)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('modes-cfb-ofb')">← CFB &amp; OFB</button>
+    <button class="sec-nav-btn" onclick="showSection('stream')">Stream Ciphers →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: STREAM CIPHERS / RC4                      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-stream" class="section">
+  <h1>Stream Ciphers &amp; RC4</h1>
+
+  <h2>What is a Stream Cipher?</h2>
+  <p>A stream cipher takes a different approach from block ciphers: instead of grouping plaintext into fixed blocks and encrypting each block as a unit, a stream cipher encrypts data <strong>continuously, one byte at a time</strong>. It generates a long sequence of pseudorandom bytes called a <strong>keystream</strong>, derived from the secret key. Each plaintext byte is XORed with the corresponding keystream byte:</p>
+
+  $$C_i = P_i \oplus \text{KS}_i \qquad P_i = C_i \oplus \text{KS}_i$$
+
+  <p>The security rests entirely on the quality of the keystream. A good keystream must be statistically indistinguishable from random: all 256 byte values should appear with equal frequency, the sequence should not repeat for a very long time, and knowledge of one byte should give no information about the next.</p>
+
+  <p>Stream ciphers are naturally suited to <strong>real-time communications</strong> where data arrives byte-by-byte and cannot wait for a block to fill — voice calls, video streams, and satellite communications have historically used stream ciphers. Modern practice often uses AES in CTR or OFB mode to achieve stream-cipher-like behavior with a well-analyzed block-cipher foundation.</p>
+
+  <h2>RC4 — Rivest Cipher 4</h2>
+  <p>RC4 (designed 1987, leaked publicly 1994) is one of the most widely deployed stream ciphers in history: SSL/TLS, WEP Wi-Fi security, and many other protocols used it. It is now deprecated due to statistical biases in its keystream, but it remains an important teaching example.</p>
+
+  <p>RC4 is a <strong>variable-key-length</strong>, <strong>byte-oriented</strong> stream cipher. Its central data structure is a state vector \(S\) — an array of 256 bytes, always forming a permutation of the values 0–255.</p>
+
+  <h3>Phase 1: State Initialization</h3>
+  <p>Fill \(S\) with values 0 through 255 in order — the identity permutation:</p>
+  <pre>S[0] = 0x00, S[1] = 0x01, ..., S[255] = 0xFF</pre>
+
+  <h3>Phase 2: Build Temporary Vector T</h3>
+  <p>If the key \(K\) has \(\text{keylen}\) bytes, fill a 256-element vector \(T\) by cycling through the key:</p>
+
+  $$T[i] = K[i \bmod \text{keylen}], \quad 0 \leq i \leq 255$$
+
+  <p>For example, with a 3-byte key \([k_0, k_1, k_2]\), the vector \(T\) repeats the key pattern 85 full times (and then once more for the final byte): \([k_0, k_1, k_2, k_0, k_1, k_2, \ldots]\).</p>
+
+  <h3>Key Scheduling Algorithm (KSA)</h3>
+  <p>The KSA uses \(T\) to produce a key-dependent scrambling of \(S\):</p>
+<pre class="code-block" style="white-space:pre;overflow-x:auto">j = 0
+for i = 0 to 255:
+    j = (j + S[i] + T[i]) mod 256
+    SWAP(S[i], S[j])</pre>
+  <p>After the KSA, \(S\) is a pseudo-random permutation of 0–255 determined by the key. Swapping never destroys or duplicates values, so \(S\) always remains a valid permutation.</p>
+
+  <h3>Keystream Generation (PRGA)</h3>
+  <p>Once \(S\) is initialized, generate one keystream byte per iteration:</p>
+<pre class="code-block" style="white-space:pre;overflow-x:auto">i, j = 0
+while (true):
+    i = (i + 1) mod 256
+    j = (j + S[i]) mod 256
+    SWAP(S[i], S[j])
+    k = (S[i] + S[j]) mod 256
+    output S[k]    ← XOR this with plaintext byte</pre>
+  <p>Each iteration advances both pointers, swaps two elements (continuously evolving the permutation), computes a third index \(k\) from the sum of the two swapped values, and outputs \(S[k]\). This multi-level indirection makes the output hard to predict.</p>
+
+  <h2>RC4 Key Reuse Vulnerability</h2>
+  <p>RC4 shares the fundamental stream cipher weakness: <strong>never reuse a key</strong>. The same key produces the same keystream. If two messages are encrypted with the same keystream:</p>
+
+  $$C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}$$
+
+  <p>From the XOR of the two plaintexts, both can often be recovered when the content is natural-language text. WEP (Wi-Fi Encrypted Protocol) was completely broken partly because its short IV led to keystream reuse across messages.</p>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q21</span></div>
+    <div class="quiz-question">What happens if an RC4 key is reused?</div>
+    <div class="options" id="q-rc4-1">
+      <div class="option" onclick="checkAnswer(this, 'q-rc4-1', true)"><span class="option-letter">a</span>Plaintexts can be extracted via XOR</div>
+      <div class="option" onclick="checkAnswer(this, 'q-rc4-1', false)"><span class="option-letter">b</span>Encryption speeds up</div>
+      <div class="option" onclick="checkAnswer(this, 'q-rc4-1', false)"><span class="option-letter">c</span>The key schedule resets automatically</div>
+      <div class="option" onclick="checkAnswer(this, 'q-rc4-1', false)"><span class="option-letter">d</span>Error propagation increases</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-rc4-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (a)</div>
+        <div class="explanation">Same key → same keystream. \(C^{(1)} \oplus C^{(2)} = P^{(1)} \oplus P^{(2)}\). With natural-language plaintexts, both can be recovered via crib dragging. This exact vulnerability broke WEP.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What does the RC4 KSA produce, in one sentence?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">A key-dependent pseudo-random permutation of the bytes 0–255 in the state vector \(S\).</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why is S[k] output as the keystream byte rather than S[i] or S[j]?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Using S[i] or S[j] directly would be predictable — an attacker might deduce which positions were used. Computing \(k = (S[i] + S[j]) \bmod 256\) uses both current state values to index into a third, unpredictable position in the array, adding an extra layer of indirection that makes the output significantly harder to predict.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('modes-ctr')">← CTR Mode</button>
+    <button class="sec-nav-btn" onclick="showSection('needham')">Needham-Schroeder →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: NEEDHAM-SCHROEDER                         -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-needham" class="section">
+  <h1>Needham-Schroeder Key Distribution Protocol</h1>
+
+  <h2>The Problem: Key Distribution at Scale</h2>
+  <p>Imagine a secure communication system for 1,000 users. The naïve approach — every user physically exchanges a key with every other user — requires \(\binom{1000}{2} = 499{,}500\) key exchanges. As the group changes, all those keys must be updated. This is completely infeasible.</p>
+
+  <p>A more efficient alternative: a <strong>Key Distribution Center (KDC)</strong>. Each user shares exactly one <strong>master key</strong> with the KDC. To communicate with any other user, they ask the KDC to generate a temporary <strong>session key</strong> just for that conversation. But this raises immediate security questions: how does A know a response is really from the KDC? How does B know the request really came from A? How can B be sure the session key is fresh and not a replay from an old session?</p>
+
+  <p>The <strong>Needham-Schroeder protocol</strong> (1978) answers all these questions precisely using only symmetric encryption and carefully designed nonces.</p>
+
+  <h2>Participants and Keys</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Party</th><th>Role</th><th>Key</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A</strong></td><td>Initiator — wants to talk to B</td><td>\(K_A\): master key with KDC</td></tr>
+      <tr><td><strong>B</strong></td><td>Responder</td><td>\(K_B\): master key with KDC</td></tr>
+      <tr><td><strong>KDC</strong></td><td>Trusted third party</td><td>Knows both \(K_A\) and \(K_B\)</td></tr>
+      <tr><td><strong>\(K_S\)</strong></td><td>Session key</td><td>Generated fresh by KDC for each session</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Protocol Steps</h2>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:16px 0;">
+    <div class="protocol-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-label">A → KDC: Request a session key</div>
+        <div class="step-body">$$E(K_A,\ [ID_A,\ ID_B,\ N_1])$$
+A sends its identity, B's identity, and a fresh <strong>nonce</strong> \(N_1\) (a "number used once"), all encrypted under \(K_A\). The nonce is A's fingerprint on this specific request — it ensures the response matches this particular request and is not a replay of an old one.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-label">KDC → A: Session key + Ticket for B</div>
+        <div class="step-body">$$E(K_A,\ [K_S,\ ID_A,\ ID_B,\ N_1,\ E(K_B,\ [K_S,\ ID_A])])$$
+KDC generates \(K_S\) and sends A: the session key, the original request echoed back (A verifies \(N_1\) to confirm freshness), and a <strong>ticket</strong> for B — \(E(K_B, [K_S, ID_A])\). A cannot read the ticket (no access to \(K_B\)), but B can. Since the whole response is encrypted under \(K_A\), only A can read it → A knows it came from the KDC.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-label">A → B: Forward the ticket</div>
+        <div class="step-body">$$E(K_B,\ [K_S,\ ID_A])$$
+A forwards the ticket to B. It is still encrypted under \(K_B\) — A cannot tamper with it or read the session key out of it. Only B can decrypt this.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-label">B → A: Challenge with nonce N₂</div>
+        <div class="step-body">$$E(K_S,\ [N_2])$$
+B decrypts the ticket using \(K_B\), obtains \(K_S\) and \(ID_A\). B now has the session key but needs to verify A is really on the other end. B generates a new nonce \(N_2\) and sends it encrypted under \(K_S\). Only someone with \(K_S\) (i.e., A or the KDC) can decrypt this.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-label">A → B: Response to challenge</div>
+        <div class="step-body">$$E(K_S,\ [N_2 - 1])$$
+A decrypts \(N_2\), applies the transformation, and sends \(N_2 - 1\) back. B verifies: (1) the sender knows \(K_S\); (2) since \(N_2\) was just generated by B, the response is fresh — no replay. Session established.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>What Does Each Step Actually Prove?</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Message</th><th>What it proves</th></tr></thead>
+    <tbody>
+      <tr><td>Message 2 includes \(N_1\)</td><td>KDC's response matches A's specific request (freshness)</td></tr>
+      <tr><td>Message 2 encrypted under \(K_A\)</td><td>Sender has \(K_A\) → response really came from KDC</td></tr>
+      <tr><td>Ticket encrypted under \(K_B\)</td><td>Only B can extract \(K_S\) and \(ID_A\) — A cannot forge the ticket</td></tr>
+      <tr><td>Messages 4–5 with \(N_2\)</td><td>A has \(K_S\) → A is who the KDC said they were. \(N_2\) is fresh → not a replay.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q22</span></div>
+    <div class="quiz-question">What is a "session key" in Needham-Schroeder?</div>
+    <div class="options" id="q-ns-1">
+      <div class="option" onclick="checkAnswer(this, 'q-ns-1', false)"><span class="option-letter">a</span>A long-term public key</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-1', false)"><span class="option-letter">b</span>A hash of the shared secret</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-1', true)"><span class="option-letter">c</span>A temporary symmetric key</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-1', false)"><span class="option-letter">d</span>A digital certificate</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ns-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (c)</div>
+        <div class="explanation">A session key is a temporary symmetric key generated by the KDC for a specific communication session. Unlike master keys (persistent), session keys are used for one session only and then discarded.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q23</span></div>
+    <div class="quiz-question">In the Needham-Schroeder protocol, what is the purpose of nonces?</div>
+    <div class="options" id="q-ns-2">
+      <div class="option" onclick="checkAnswer(this, 'q-ns-2', false)"><span class="option-letter">a</span>To encrypt the session key</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-2', false)"><span class="option-letter">b</span>To compress data</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-2', false)"><span class="option-letter">c</span>To generate digital signatures</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-2', true)"><span class="option-letter">d</span>To ensure message freshness</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ns-2-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (d)</div>
+        <div class="explanation">Nonces are numbers used exactly once, unique to each protocol run. They prevent replay attacks by ensuring that a response corresponds to this specific, current request — not a cached response from a previous session.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q24</span></div>
+    <div class="quiz-question">Which cryptographic primitive does the original Needham-Schroeder protocol rely on?</div>
+    <div class="options" id="q-ns-3">
+      <div class="option" onclick="checkAnswer(this, 'q-ns-3', false)"><span class="option-letter">a</span>Hash functions</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-3', true)"><span class="option-letter">b</span>Symmetric-key encryption</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-3', false)"><span class="option-letter">c</span>Digital signatures</div>
+      <div class="option" onclick="checkAnswer(this, 'q-ns-3', false)"><span class="option-letter">d</span>Elliptic curve cryptography</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-ns-3-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (b)</div>
+        <div class="explanation">The protocol uses only symmetric-key encryption. Messages are encrypted with pre-shared master keys (\(K_A\), \(K_B\)) and the session key \(K_S\). No public-key cryptography, hashing, or digital signatures are involved in the original protocol.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does the KDC include B's ticket in its response to A, rather than sending it directly to B?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The KDC sends everything through A to reduce protocol messages. A forwards the ticket to B. Since the ticket is encrypted with \(K_B\), A cannot read or tamper with it. This is a clean design: the KDC never needs to initiate communication with B.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What specific attack does the nonce-challenge in messages 4–5 prevent?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Replay of message 3. An attacker who captured message 3 (the ticket) from an old session could replay it to B. But to respond correctly to B's challenge \(N_2\), they would need \(K_S\). If the old \(K_S\) is unknown, the attack fails. Additionally, \(N_2\) is freshly generated — a replayed response would not contain the right value.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('stream')">← Stream Ciphers</button>
+    <button class="sec-nav-btn" onclick="showSection('kerberos')">Kerberos →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: KERBEROS                                  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-kerberos" class="section">
+  <h1>Kerberos</h1>
+
+  <h2>Why Needham-Schroeder is Not Enough</h2>
+  <p>The Needham-Schroeder protocol handles the core key distribution problem, but real networks need more. Consider a university: hundreds of students need access to printers, file servers, database servers, and web services. Each service needs to authenticate the student. The student should be able to log in once and access multiple services without re-authenticating every time — <em>single sign-on (SSO)</em>.</p>
+
+  <p><strong>Kerberos</strong> (originally designed at MIT in the 1980s) solves these scalability requirements while preserving Needham-Schroeder's security model. The key design change: split the KDC into two distinct servers.</p>
+
+  <h2>The Two-Server Architecture</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Server</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Authentication Server (AS)</strong></td><td>Verifies the client's identity (password). Issues a Ticket-Granting Ticket (TGT).</td></tr>
+      <tr><td><strong>Ticket-Granting Server (TGS)</strong></td><td>Issues service-specific tickets. Client must present a valid TGT to reach TGS.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The client authenticates to AS <em>once per login session</em>. The TGT it receives can be reused for multiple requests to TGS — one per service needed. This is the SSO property: authenticate once, access many services.</p>
+
+  <h2>Kerberos Keys</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Key</th><th>Shared Between</th><th>Type</th></tr></thead>
+    <tbody>
+      <tr><td>\(K_\text{Client}\)</td><td>AS &amp; Client</td><td>Long-term (from password)</td></tr>
+      <tr><td>\(K_\text{TGS}\)</td><td>AS &amp; TGS</td><td>Long-term (ticket encryption key)</td></tr>
+      <tr><td>\(K_\text{SP}\)</td><td>TGS &amp; Service Provider</td><td>Long-term (ticket encryption key)</td></tr>
+      <tr><td>\(K_\text{Client-TGS}\)</td><td>AS → Client → TGS</td><td>Session key (temporary)</td></tr>
+      <tr><td>\(K_\text{Client-SP}\)</td><td>TGS → Client → SP</td><td>Session key (temporary)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Q29 — Long-Term vs Session Keys</div>
+    <strong>From Questions of Doubt:</strong> "Answers (b) and (c) are valid here. Ticket encryption keys, which are \(K_\text{TGS}\) and \(K_\text{SP}\), are long-term keys." Session keys (\(K_\text{Client-TGS}\), \(K_\text{Client-SP}\)) are temporary — never stored in the KDC database. Long-term keys (\(K_\text{Client}\), \(K_\text{TGS}\), \(K_\text{SP}\)) are persistent and stored by the KDC.
+  </div>
+
+  <h2>Kerberos Message Flow</h2>
+
+  <h3>Phase 1: Client → AS (Authentication)</h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:14px 0;">
+    <div class="protocol-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-label">Client → AS (plaintext)</div>
+        <div class="step-body">Client sends its identity and the requested service (TGS). No key needed — sent in plaintext.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">2+3</div>
+      <div class="step-content">
+        <div class="step-label">AS → Client (encrypted with K_Client)</div>
+        <div class="step-body">
+          $$E(K_\text{Client},\ [K_\text{Client-TGS},\ E(K_\text{TGS},\ [ClientID,\ ClientIP,\ Validity,\ K_\text{Client-TGS}])])$$
+          Message 2: session key \(K_\text{Client-TGS}\). Message 3: TGT (encrypted with \(K_\text{TGS}\) — client cannot read it). Both encrypted under \(K_\text{Client}\) so only the legitimate client can decrypt.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Phase 2: Client → TGS (Service Ticket Request)</h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:14px 0;">
+    <div class="protocol-step">
+      <div class="step-num">4+5</div>
+      <div class="step-content">
+        <div class="step-label">Client → TGS</div>
+        <div class="step-body">Message 4: the TGT + requested service ID. Message 5: Client Authenticator = \(E(K_\text{Client-TGS},\ [ClientID,\ \text{Timestamp}])\). TGS decrypts the TGT with \(K_\text{TGS}\) to get \(K_\text{Client-TGS}\), then decrypts the authenticator. The <strong>timestamp</strong> prevents replay: TGS rejects authenticators more than a few minutes old.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">6+7</div>
+      <div class="step-content">
+        <div class="step-label">TGS → Client</div>
+        <div class="step-body">Message 6: service ticket \(E(K_\text{SP},\ [ClientID,\ ClientIP,\ Validity,\ K_\text{Client-SP}])\). Message 7: \(K_\text{Client-SP}\) encrypted with \(K_\text{Client-TGS}\).</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Phase 3: Client → Service Provider</h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:14px 0;">
+    <div class="protocol-step">
+      <div class="step-num">8+9</div>
+      <div class="step-content">
+        <div class="step-label">Client → Service Provider</div>
+        <div class="step-body">Message 8: service ticket (encrypted with \(K_\text{SP}\)). Message 9: Authenticator = \(E(K_\text{Client-SP},\ [ClientID,\ \text{Timestamp}])\). SP decrypts ticket to get \(K_\text{Client-SP}\), decrypts authenticator, verifies identity and timestamp.</div>
+      </div>
+    </div>
+    <div class="protocol-step">
+      <div class="step-num">10</div>
+      <div class="step-content">
+        <div class="step-label">SP → Client: Confirmation</div>
+        <div class="step-body">$$E(K_\text{Client-SP},\ [\text{Timestamp} + 1])$$ Confirms SP has \(K_\text{Client-SP}\) and the session key is working. Client verifies this proves they are talking to the real SP.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q25</span></div>
+    <div class="quiz-question">Which three main entities interact in Kerberos?</div>
+    <div class="options" id="q-kerb-1">
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-1', false)"><span class="option-letter">a</span>Client, Server, Certificate Authority</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-1', false)"><span class="option-letter">b</span>User, Router, DNS Server</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-1', false)"><span class="option-letter">c</span>Browser, Web Server, Proxy</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-1', true)"><span class="option-letter">d</span>Client, Authentication Server, Ticket Granting Server</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-kerb-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (d)</div>
+        <div class="explanation">Kerberos: Client (wants services), AS (verifies identity, issues TGT), TGS (issues service tickets). The Service Provider is a fourth entity but not part of the KDC structure. The exam focuses on the three main KDC-side entities.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q26</span></div>
+    <div class="quiz-question">Why does Kerberos use timestamps?</div>
+    <div class="options" id="q-kerb-2">
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-2', true)"><span class="option-letter">a</span>To prevent replay attacks</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-2', false)"><span class="option-letter">b</span>To log user activity</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-2', false)"><span class="option-letter">c</span>To synchronize clocks across networks</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-2', false)"><span class="option-letter">d</span>To encrypt session keys</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-kerb-2-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (a)</div>
+        <div class="explanation">Timestamps provide freshness. TGS and Service Providers reject authenticators with timestamps outside a small window (typically ±5 minutes). A captured authenticator cannot be replayed because its timestamp will quickly become stale — unlike Needham-Schroeder's nonces, which require an explicit challenge-response.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q27</span></div>
+    <div class="quiz-question">Which key is used to encrypt the Ticket Granting Ticket (TGT)?</div>
+    <div class="options" id="q-kerb-3">
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-3', false)"><span class="option-letter">a</span>The user's public key</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-3', false)"><span class="option-letter">b</span>A session key negotiated with AES</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-3', true)"><span class="option-letter">c</span>The TGS's secret key (known only to the KDC)</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-3', false)"><span class="option-letter">d</span>The service's private key</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-kerb-3-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (c)</div>
+        <div class="explanation">The TGT is encrypted with \(K_\text{TGS}\) — a long-term key shared only between AS and TGS. The client cannot read the TGT (no access to \(K_\text{TGS}\)) and treats it as an opaque token to hand to TGS.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q28</span></div>
+    <div class="quiz-question">Which key is NOT stored in the KDC database?</div>
+    <div class="options" id="q-kerb-4">
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-4', false)"><span class="option-letter">a</span>User's long-term key (password hash)</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-4', true)"><span class="option-letter">b</span>Client/service session keys</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-4', false)"><span class="option-letter">c</span>TGS's secret key</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-4', false)"><span class="option-letter">d</span>Service's long-term key</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-kerb-4-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Answer: (b)</div>
+        <div class="explanation">Session keys are ephemeral — generated fresh for each session and never persisted. Long-term keys (\(K_\text{Client}\), \(K_\text{TGS}\), \(K_\text{SP}\)) are stored in the KDC database and reused across many sessions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">📋 2025 MIDTERM Q29</span><span class="quiz-badge badge-practice" style="margin-left:8px">⚠️ DISPUTED</span></div>
+    <div class="quiz-question">Which key is reused across multiple sessions?</div>
+    <div class="options" id="q-kerb-5">
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-5', false)"><span class="option-letter">a</span>Session keys</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-5', true)"><span class="option-letter">b</span>Long-term keys</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-5', true)"><span class="option-letter">c</span>Ticket encryption keys</div>
+      <div class="option" onclick="checkAnswer(this, 'q-kerb-5', false)"><span class="option-letter">d</span>Nonces</div>
+    </div>
+    <div class="quiz-footer">
+      <div class="answer-reveal" id="q-kerb-5-reveal">
+        <div class="answer-label">🔴 From "Questions of Doubt"</div>
+        <div class="correct-answer">✓ Answers: (b) AND (c) — both valid</div>
+        <div class="explanation"><strong>From Questions of Doubt:</strong> "Answers (b) and (c) are valid here. Ticket encryption keys, which are \(K_\text{TGS}\) and \(K_\text{SP}\), are long-term keys." Long-term keys are reused by definition. Ticket encryption keys (\(K_\text{TGS}\), \(K_\text{SP}\)) are also long-term — reused across sessions to encrypt different tickets. Session keys (a) and nonces (d) are never reused.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does Kerberos separate AS from TGS?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The separation is a security principle: AS handles sensitive password-based authentication (directly touching \(K_\text{Client}\), derived from the password), while TGS handles service authorization (only ever seeing \(K_\text{Client-TGS}\), a temporary session key). A compromise of TGS does not expose password-derived keys. Additionally, AS can be made very restricted (contact only at login), while TGS can be more accessible.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ How does Kerberos prevent a stolen TGT from being used indefinitely?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">TGTs have a validity period (e.g., 8 hours). A stolen TGT automatically expires. The shorter the validity period, the smaller the window for misuse. In high-security environments, the period can be set to minutes.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the single sign-on (SSO) property of Kerberos?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The client authenticates to AS once per login session. The TGT it receives can be reused for multiple requests to TGS — one per service. The client does not re-enter a password for each service (printer, file server, etc.); it presents the TGT and gets a fresh service ticket each time.</div></div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('needham')">← Needham-Schroeder</button>
+    <button class="sec-nav-btn" onclick="showSection('exam-prep')">Exam Prep →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SECTION: EXAM PREP                                 -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="sec-exam-prep" class="section">
+  <h1>Exam Preparation — Lecture 02</h1>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ "Questions of Doubt" — Must Know for Exam</div>
+    <ul style="margin: 8px 0 0 18px; line-height: 2.6; font-size: 14px;">
+      <li><strong>Q18:</strong> CTR IV reuse → answer (d) keystream reuse breaks confidentiality. (b) "blocks become correlated" is wrong wording — the whole ciphertext becomes correlated.</li>
+      <li><strong>Q20:</strong> <strong>No correct answer.</strong> No mode propagates a bit error to ALL subsequent blocks. CBC propagates to current + next only.</li>
+      <li><strong>Q29:</strong> Both (b) long-term keys and (c) ticket encryption keys (\(K_\text{TGS}\), \(K_\text{SP}\)) are valid answers. They are both long-term.</li>
+    </ul>
+  </div>
+
+  <h2>Midterm Question Index — Lecture 02</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Q#</th><th>Topic</th><th>Section</th></tr></thead>
+    <tbody>
+      <tr><td>Q13</td><td>2DES — MITM attack</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('2des')">2DES &amp; MITM</a></td></tr>
+      <tr><td>Q14</td><td>DES as a group</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('2des')">2DES &amp; MITM</a></td></tr>
+      <tr><td>Q15</td><td>3DES EDE backward compatibility</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('3des')">3DES</a></td></tr>
+      <tr><td>Q16</td><td>ECB mode — independent blocks</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('modes-ecb')">ECB</a></td></tr>
+      <tr><td>Q17</td><td>CTR advantage — parallelism</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('modes-ctr')">CTR</a></td></tr>
+      <tr><td>Q18 ⚠️</td><td>CTR IV reuse (disputed)</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('modes-ctr')">CTR</a></td></tr>
+      <tr><td>Q19</td><td>CBC IV requirement</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('modes-cbc')">CBC</a></td></tr>
+      <tr><td>Q20 ⚠️</td><td>Error propagation (no correct answer)</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('modes-cbc')">CBC</a></td></tr>
+      <tr><td>Q21</td><td>RC4 key reuse</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('stream')">Stream Ciphers</a></td></tr>
+      <tr><td>Q22</td><td>Session key definition</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('needham')">Needham-Schroeder</a></td></tr>
+      <tr><td>Q23</td><td>Nonce purpose</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('needham')">Needham-Schroeder</a></td></tr>
+      <tr><td>Q24</td><td>Needham-Schroeder primitive</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('needham')">Needham-Schroeder</a></td></tr>
+      <tr><td>Q25</td><td>Kerberos entities</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('kerberos')">Kerberos</a></td></tr>
+      <tr><td>Q26</td><td>Kerberos timestamps</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('kerberos')">Kerberos</a></td></tr>
+      <tr><td>Q27</td><td>TGT encryption key</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('kerberos')">Kerberos</a></td></tr>
+      <tr><td>Q28</td><td>KDC stored keys</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('kerberos')">Kerberos</a></td></tr>
+      <tr><td>Q29 ⚠️</td><td>Key reuse across sessions (disputed)</td><td><a style="color:var(--accent);cursor:pointer" onclick="showSection('kerberos')">Kerberos</a></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Quick Knowledge Checks</h2>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Why does 2DES fail despite a 112-bit combined key?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The meet-in-the-middle attack. Build a table of \(2^{56}\) forward encryptions from \(P\). Search \(2^{56}\) backward decryptions from \(C\). Match at the intermediate value. Total cost ≈ \(2^{57}\). The 112-bit key space is irrelevant because the attacker never searches it directly.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What two properties must a good keystream have?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">1. Statistical randomness: all byte values appear equally often; bytes are uncorrelated. 2. Long period: the sequence should not repeat for an extremely long time. Together these ensure that the keystream gives no information about the key or previous bytes.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ What is the difference between a master key and a session key in Needham-Schroeder?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Master keys (\(K_A\), \(K_B\)) are long-term — shared between each user and the KDC, used for many sessions. Session keys (\(K_S\)) are temporary — generated fresh by the KDC for one specific conversation and discarded afterward. Session keys limit damage if a key is later compromised.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ How does Kerberos achieve single sign-on?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">The client authenticates to AS once per login session and receives a TGT. For each service it needs, the client presents the TGT to TGS and gets a service-specific ticket — without re-entering a password. AS is contacted only at login; TGS handles all subsequent service authorizations.</div></div>
+  <div class="kc-card"><div class="kc-question" onclick="toggleKC(this)"><span>❓ Compare: how do Needham-Schroeder and Kerberos prevent replay attacks?</span><span class="kc-toggle">▾</span></div><div class="kc-answer">Needham-Schroeder: nonce-challenge (\(N_2\), \(N_2-1\)). B generates a fresh nonce; A must respond with the correct transformation. A replay of an old session cannot answer the new nonce. Kerberos: timestamps in authenticators. TGS and SP reject authenticators whose timestamps are more than ~5 minutes old. Kerberos requires synchronized clocks; Needham-Schroeder does not.</div></div>
+
+  <h2>Comprehensive Review Questions</h2>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">💡 REVIEW</span></div>
+    <div class="quiz-question">An attacker captures a 2DES-encrypted message along with a known plaintext-ciphertext pair (P, C). The attacker builds a forward table from P and a backward table from C. How many false alarms should the attacker expect, and how do they resolve them?</div>
+    <div class="quiz-footer">
+      <button class="reveal-btn" onclick="toggleReveal(this, 'q-review-1-reveal')">Show Answer</button>
+      <div class="answer-reveal" id="q-review-1-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ ~2⁴⁸ false alarms</div>
+        <div class="explanation">The forward table has \(2^{56}\) entries over a \(2^{64}\)-bit space. For each of the \(2^{56}\) backward queries, the probability of a random match is \(2^{56}/2^{64} = 2^{-8}\). Expected false matches: \(2^{56} \times 2^{56} / 2^{64} = 2^{48}\). To resolve: test each candidate \((K_1, K_2)\) on a second known pair \((P', C')\). The probability of a false alarm surviving is \(2^{-64}\) per additional pair, so one or two additional pairs typically leave only the real key.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">💡 REVIEW</span></div>
+    <div class="quiz-question">A developer encrypts user session tokens using AES-ECB. A security researcher claims they can detect when two different users have the same role (admin, user, guest) embedded in their token without breaking AES. Explain how and propose a fix.</div>
+    <div class="quiz-footer">
+      <button class="reveal-btn" onclick="toggleReveal(this, 'q-review-2-reveal')">Show Answer</button>
+      <div class="answer-reveal" id="q-review-2-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ ECB pattern leakage</div>
+        <div class="explanation">If the role string ("admin", "user") is aligned to a 128-bit block boundary, identical role fields produce identical ciphertext blocks. The researcher collects tokens from multiple users, identifies repeated ciphertext blocks, and concludes those users share the same role value. Fix: use CBC or CTR mode with a fresh random IV per token. The IV ensures that even identical plaintext blocks produce different ciphertext, eliminating the detectable pattern.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">💡 REVIEW</span></div>
+    <div class="quiz-question">In a Kerberos deployment, the TGS server is compromised by an attacker. What can the attacker do, and what are they prevented from doing?</div>
+    <div class="quiz-footer">
+      <button class="reveal-btn" onclick="toggleReveal(this, 'q-review-3-reveal')">Show Answer</button>
+      <div class="answer-reveal" id="q-review-3-reveal">
+        <div class="answer-label">Explanation</div>
+        <div class="correct-answer">✓ Limited damage by AS/TGS separation</div>
+        <div class="explanation">The attacker gains access to \(K_\text{TGS}\) (used to encrypt TGTs) and \(K_\text{SP}\) values (used to issue service tickets). They can forge service tickets for any service provider and impersonate clients to services. However, they do NOT have access to clients' long-term keys \(K_\text{Client}\) (derived from passwords) — these are known only to AS and each individual client. So they cannot impersonate the KDC to clients, cannot obtain clients' passwords, and cannot issue new TGTs. The AS/TGS separation limits the damage scope.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-nav">
+    <button class="sec-nav-btn" onclick="showSection('kerberos')">← Kerberos</button>
+    <button class="sec-nav-btn empty">→</button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ─── SECTION MAP ─────────────────────────────────────
+const sectionMap = {
+  'overview':     'sec-overview',
+  '2des':         'sec-2des',
+  '3des':         'sec-3des',
+  'modes-ecb':    'sec-modes-ecb',
+  'modes-cbc':    'sec-modes-cbc',
+  'modes-cfb-ofb':'sec-modes-cfb-ofb',
+  'modes-ctr':    'sec-modes-ctr',
+  'stream':       'sec-stream',
+  'needham':      'sec-needham',
+  'kerberos':     'sec-kerberos',
+  'exam-prep':    'sec-exam-prep',
+};
+
+let correctCount = 0, totalAnswered = 0;
+
+function showSection(key) {
+  const id = sectionMap[key];
+  if (!id) return;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(a => {
+    if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'" + key + "'")) {
+      a.classList.add('active');
+    }
+  });
+  window.scrollTo(0, 0);
+  updateProgress();
+  if (window.renderMathInElement) {
+    renderMathInElement(document.getElementById(id), {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\(', right: '\\)', display: false}
+      ],
+      throwOnError: false
+    });
+  }
+}
+
+function updateProgress() {
+  const sections = Object.keys(sectionMap);
+  const current = Object.keys(sectionMap).findIndex(k => {
+    const el = document.getElementById(sectionMap[k]);
+    return el && el.classList.contains('active');
+  });
+  const pct = sections.length > 1 ? Math.round(((current + 1) / sections.length) * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function checkAnswer(el, groupId, isCorrect) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  const options = group.querySelectorAll('.option');
+  const alreadyAnswered = Array.from(options).some(o => o.classList.contains('correct') || o.classList.contains('wrong'));
+  if (alreadyAnswered) return;
+  totalAnswered++;
+  if (isCorrect) {
+    el.classList.add('correct');
+    correctCount++;
+  } else {
+    el.classList.add('wrong');
+    options.forEach(o => {
+      if (o.getAttribute('onclick') && o.getAttribute('onclick').includes('true')) {
+        o.classList.add('correct');
+      }
+    });
+  }
+  options.forEach(o => o.classList.add('disabled'));
+  const reveal = document.getElementById(groupId + '-reveal');
+  if (reveal) reveal.classList.add('visible');
+  updateScore();
+}
+
+function toggleReveal(btn, revealId) {
+  const el = document.getElementById(revealId);
+  if (!el) return;
+  if (el.classList.contains('visible')) {
+    el.classList.remove('visible');
+    btn.classList.remove('active');
+    btn.textContent = 'Show Answer';
+  } else {
+    el.classList.add('visible');
+    btn.classList.add('active');
+    btn.textContent = 'Hide Answer';
+  }
+}
+
+function toggleKC(questionEl) {
+  questionEl.classList.toggle('open');
+  const answer = questionEl.nextElementSibling;
+  if (answer) answer.classList.toggle('open');
+}
+
+function updateScore() {
+  const scoreEl = document.getElementById('quiz-score');
+  if (scoreEl) {
+    scoreEl.style.display = 'block';
+    document.getElementById('score-num').textContent = correctCount;
+    document.getElementById('score-den').textContent = totalAnswered;
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+updateProgress();
+</script>
+</body>
+</html>

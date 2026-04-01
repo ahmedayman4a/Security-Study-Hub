@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Source materials (large PDFs — track separately or via Git LFS if desired)
+source/
+
+# Prompts / internal notes
+prompt.md

@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 464 — Lecture 03: Public-Key Cryptography &amp; RSA</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3247;
+    --accent: #6c8aff; --accent2: #a78bfa; --accent3: #34d399;
+    --warning: #f59e0b; --danger: #f87171; --text: #e2e8f0;
+    --text-muted: #94a3b8; --text-dim: #64748b;
+    --tag-bg: #1e3a5f; --tag-text: #93c5fd;
+    --correct-bg: #052e16; --correct-border: #16a34a;
+    --wrong-bg: #2d0000; --wrong-border: #b91c1c;
+    --hint-bg: #1c1a05; --hint-border: #854d0e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 16px; }
+  #app { display: flex; min-height: 100vh; }
+  #sidebar { width: 280px; min-width: 280px; background: var(--surface); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+  #sidebar-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  #sidebar-header p { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 6px 16px 4px; }
+  .nav-item { display: block; padding: 7px 16px; font-size: 13px; color: var(--text-muted); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover, .nav-item.active { color: var(--text); background: var(--surface2); border-left-color: var(--accent); }
+  .nav-item.active { color: var(--accent); font-weight: 600; }
+  #main { margin-left: 280px; flex: 1; padding: 40px 48px 80px; max-width: 1100px; }
+  #progress-bar { position: fixed; top: 0; left: 280px; right: 0; height: 3px; background: var(--border); z-index: 200; }
+  #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; transition: width 0.3s; }
+  .section { display: none; animation: fadeIn 0.3s; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  h1 .tag { font-size: 12px; font-weight: 600; background: var(--tag-bg); color: var(--tag-text); padding: 3px 10px; border-radius: 20px; margin-left: 10px; vertical-align: middle; }
+  h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 17px; font-weight: 700; color: var(--accent2); margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--accent3); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: #fff; font-weight: 700; }
+  em { color: var(--accent2); font-style: italic; }
+  ul, ol { margin: 0 0 14px 24px; color: var(--text-muted); }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--text); }
+  .callout { border-radius: 10px; padding: 16px 20px; margin: 18px 0; border-left: 4px solid; font-size: 15px; }
+  .callout-info { background: #0c1a3a; border-color: var(--accent); }
+  .callout-tip { background: #0a2a1a; border-color: var(--accent3); }
+  .callout-warning { background: var(--hint-bg); border-color: var(--warning); }
+  .callout-danger { background: var(--wrong-bg); border-color: var(--danger); }
+  .callout-title { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info .callout-title { color: var(--accent); }
+  .callout-tip .callout-title { color: var(--accent3); }
+  .callout-warning .callout-title { color: var(--warning); }
+  .callout-danger .callout-title { color: var(--danger); }
+  code { background: #1e2235; color: #a5f3fc; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  pre { background: #111520; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.8; color: #c4d4f0; margin: 14px 0; white-space: pre; }
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--surface2); color: var(--accent); font-weight: 700; padding: 10px 14px; text-align: left; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  tr:hover td { background: var(--surface2); }
+  .example-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .example-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--accent3); border-bottom: 1px solid var(--border); }
+  .example-badge { background: #064e3b; color: var(--accent3); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .example-body { padding: 18px 20px; }
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin: 20px 0; overflow: hidden; }
+  .quiz-header { background: var(--surface2); padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .quiz-badge { font-size: 11px; padding: 2px 10px; border-radius: 10px; font-weight: 700; }
+  .badge-exam { background: #1e1a40; color: var(--accent2); }
+  .badge-practice { background: #122a40; color: var(--accent); }
+  .quiz-question { padding: 16px 20px; font-size: 15px; font-weight: 500; line-height: 1.6; }
+  .options { padding: 0 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .option { padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.15s; display: flex; align-items: flex-start; gap: 10px; background: var(--surface2); }
+  .option:hover { border-color: var(--accent); background: #111830; }
+  .option.correct { background: var(--correct-bg); border-color: var(--correct-border); color: #6ee7b7; }
+  .option.wrong { background: var(--wrong-bg); border-color: var(--wrong-border); color: #fca5a5; }
+  .option.disabled { cursor: default; pointer-events: none; }
+  .option-letter { font-weight: 800; font-size: 12px; min-width: 22px; height: 22px; background: var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .explanation { margin: 8px 20px 16px; padding: 14px 16px; background: #0c1225; border: 1px solid var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.6; display: none; }
+  .explanation.show { display: block; }
+  .step-list { list-style: none; margin: 0; padding: 0; }
+  .step-list li { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+  .step-num { min-width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-top: 3px; }
+  .step-content { flex: 1; }
+  .hero { padding: 40px 0 20px; }
+  .hero-tag { font-size: 12px; font-weight: 700; color: var(--accent3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .hero-title { font-size: 36px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+  .hero-subtitle { font-size: 17px; color: var(--text-muted); margin-bottom: 32px; max-width: 600px; }
+  .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+  .topic-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.2s; }
+  .topic-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic-icon { font-size: 24px; margin-bottom: 10px; }
+  .topic-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .topic-desc { font-size: 12px; color: var(--text-dim); }
+  .kc-card { background: #0c1a3a; border: 1px solid var(--accent); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+  .kc-title { font-size: 12px; font-weight: 800; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .kc-item { margin-bottom: 14px; }
+  .kc-q { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .kc-a { color: var(--text-muted); font-size: 14px; display: none; border-left: 3px solid var(--accent3); padding-left: 12px; margin-top: 6px; }
+  .kc-toggle { font-size: 12px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+</style>
+</head>
+<body>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="app">
+
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>CSE 464</h2>
+    <p>Lecture 03 — Public-Key Cryptography &amp; RSA</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Navigation</div>
+    <div class="nav-item active" onclick="show('sec-overview')">🏠 Overview</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Content</div>
+    <div class="nav-item" onclick="show('sec-pubkey')">🔑 Public-Key Cryptography</div>
+    <div class="nav-item" onclick="show('sec-rsa-math')">📐 RSA Math Foundation</div>
+    <div class="nav-item" onclick="show('sec-keygen')">⚙️ RSA Key Generation</div>
+    <div class="nav-item" onclick="show('sec-rsa-ops')">🔒 Encryption &amp; Decryption</div>
+    <div class="nav-item" onclick="show('sec-modexp')">⚡ Fast Modular Exponentiation</div>
+    <div class="nav-item" onclick="show('sec-crt')">🚀 RSA-CRT Speedup</div>
+    <div class="nav-item" onclick="show('sec-security')">🛡️ RSA Security</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Practice</div>
+    <div class="nav-item" onclick="show('sec-exam-prep')">📋 Exam Prep (Q30–Q38)</div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- OVERVIEW -->
+<div id="sec-overview" class="section active">
+  <div class="hero">
+    <div class="hero-tag">Lecture 03</div>
+    <h1 class="hero-title">Public-Key Cryptography &amp; RSA</h1>
+    <p class="hero-subtitle">From the key distribution problem to number theory — how RSA uses modular exponentiation and Euler's theorem to create a one-way trapdoor function.</p>
+  </div>
+  <div class="topic-grid">
+    <div class="topic-card" onclick="show('sec-pubkey')">
+      <div class="topic-icon">🔑</div>
+      <div class="topic-title">Public-Key Cryptography</div>
+      <div class="topic-desc">Key pairs, asymmetric services, why not for bulk encryption</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-rsa-math')">
+      <div class="topic-icon">📐</div>
+      <div class="topic-title">RSA Math Foundation</div>
+      <div class="topic-desc">Euler's theorem, totient function, multiplicative inverses mod ϕ(n)</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-keygen')">
+      <div class="topic-icon">⚙️</div>
+      <div class="topic-title">RSA Key Generation</div>
+      <div class="topic-desc">Full 7-step procedure, choosing e, computing d, worked example</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-rsa-ops')">
+      <div class="topic-icon">🔒</div>
+      <div class="topic-title">Encryption &amp; Decryption</div>
+      <div class="topic-desc">C = Mᵉ mod n, M = Cᵈ mod n, asymmetry between e and d</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-modexp')">
+      <div class="topic-icon">⚡</div>
+      <div class="topic-title">Fast Modular Exponentiation</div>
+      <div class="topic-desc">Square-and-multiply, why naive computation is impossible</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-crt')">
+      <div class="topic-icon">🚀</div>
+      <div class="topic-title">RSA-CRT Speedup</div>
+      <div class="topic-desc">Chinese Remainder Theorem, ~4x decryption speedup</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-security')">
+      <div class="topic-icon">🛡️</div>
+      <div class="topic-title">RSA Security</div>
+      <div class="topic-desc">Factoring, chosen ciphertext, low entropy, forward secrecy</div>
+    </div>
+    <div class="topic-card" onclick="show('sec-exam-prep')">
+      <div class="topic-icon">📋</div>
+      <div class="topic-title">Exam Prep Q30–Q38</div>
+      <div class="topic-desc">All midterm questions with full explanations</div>
+    </div>
+  </div>
+  <div class="callout callout-tip">
+    <div class="callout-title">✅ Before This Lecture</div>
+    <p>You should be comfortable with: modular arithmetic, GCD / Extended Euclidean Algorithm, and why symmetric key distribution is a problem. If DES and AES feel solid, you're ready.</p>
+  </div>
+</div>
+
+<!-- PUBLIC KEY CRYPTOGRAPHY -->
+<div id="sec-pubkey" class="section">
+  <h1>Public-Key Cryptography <span class="tag">Part 1</span></h1>
+
+  <h2>The Key Distribution Problem</h2>
+  <p>Every symmetric cipher — DES, 3DES, AES — shares a fundamental assumption: both parties already have the same secret key. But how do two parties who have never communicated before establish that shared key? If they want to use AES to communicate securely, they first need the same 128-bit key — but sharing it over an insecure channel is precisely the problem they are trying to solve.</p>
+  <p>This is the <strong>key distribution problem</strong>, and it plagued cryptography for centuries. <strong>Public-key cryptography</strong> (also called <strong>asymmetric cryptography</strong>) solves this by using a mathematically related <em>pair</em> of keys: one public, one private. What one key encrypts, only the other can decrypt — and the two keys cannot practically be derived from each other.</p>
+
+  <h2>Key Pairs</h2>
+  <p>In public-key cryptography, every party has a <strong>key pair</strong>:</p>
+  <ul>
+    <li><strong>Public key ($PU$):</strong> Published openly. Anyone can have it. Think of it as a padlock anyone can snap shut.</li>
+    <li><strong>Private key ($PR$):</strong> Kept secret. Only the owner knows it. Think of it as the key that opens the padlock.</li>
+  </ul>
+  <p>The public key is used for <em>locking</em> (encryption or signature verification). The private key is used for <em>unlocking</em> (decryption or signing). Knowing the public key does not let you compute the private key — this is the computationally one-way property.</p>
+
+  <h2>The Three Services of Public-Key Cryptography</h2>
+  <p>Public-key cryptography provides three fundamental services that symmetric cryptography cannot easily replicate:</p>
+
+  <h3>1. Confidentiality (A sending to B)</h3>
+  <p>B publishes $PU_B$. A encrypts with B's public key. Only B — who holds $PR_B$ — can decrypt.</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$C = E(PU_B,\ M) \qquad M = D(PR_B,\ C)$$
+  </div>
+
+  <h3>2. Digital Signature / Authentication / Non-Repudiation</h3>
+  <p>A signs with its own <em>private</em> key. Anyone with A's public key can verify. Only A could have created the signature — proving the message came from A (authentication) and that A cannot later deny it (non-repudiation).</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$C = E(PR_A,\ M) \qquad M = D(PU_A,\ C)$$
+  </div>
+
+  <h3>3. Confidentiality + Digital Signature</h3>
+  <p>A signs first (with $PR_A$), then encrypts (with $PU_B$). B decrypts first, then verifies the signature.</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$C = E\!\left(PU_B,\ E(PR_A,\ M)\right) \qquad M = D\!\left(PU_A,\ D(PR_B,\ C)\right)$$
+  </div>
+
+  <h2>Does This Replace Symmetric Cryptography?</h2>
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ Common Misconception</div>
+    <p>Public-key cryptography does <strong>not</strong> replace symmetric ciphers. RSA encrypting a large file is orders of magnitude slower than AES. In practice, public-key cryptography handles only two narrow tasks: <strong>authentication</strong> (signing) and <strong>key exchange</strong> (establishing a shared session key that AES then uses). The actual data is always encrypted with a fast symmetric cipher.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What fundamental problem does public-key cryptography solve?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">The key distribution problem — how two parties who have never communicated can establish a shared secret key over an insecure channel without transmitting the key itself.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">If A encrypts a message with $PR_A$ (its private key), what service does this provide?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Digital signature / authentication / non-repudiation. Only A has $PR_A$, so only A could have produced the ciphertext. Anyone with $PU_A$ can decrypt it and verify it came from A.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why is RSA not used to encrypt large files directly?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">RSA is computationally expensive — many orders of magnitude slower than AES. RSA is used only for authentication and key exchange. The actual data is encrypted with a fast symmetric cipher using a session key established via RSA.</div>
+    </div>
+  </div>
+</div>
+
+<!-- RSA MATH FOUNDATION -->
+<div id="sec-rsa-math" class="section">
+  <h1>RSA — Mathematical Foundation <span class="tag">Part 2</span></h1>
+
+  <h2>Euler's Theorem</h2>
+  <p>RSA is built on a result from number theory. <strong>Euler's theorem</strong> states: for every positive integer $n$ and every integer $a$ that is <strong>coprime</strong> to $n$ (meaning $\gcd(a, n) = 1$):</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$a^{\phi(n)} \equiv 1 \pmod{n}$$
+  </div>
+  <p>where $\phi(n)$ is <strong>Euler's totient function</strong> — the count of integers from 1 to $n$ that are coprime to $n$.</p>
+  <p>A useful consequence: any exponent that is a multiple of $\phi(n)$ contributes nothing — it cancels out. If $k = k_1 \cdot \phi(n) + k_2$:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$a^k = a^{k_1 \cdot \phi(n) + k_2} = \left(a^{\phi(n)}\right)^{k_1} \cdot a^{k_2} \equiv 1^{k_1} \cdot a^{k_2} \equiv a^{k_2} \pmod{n}$$
+  </div>
+
+  <h2>The RSA Insight: Multiplicative Inverses Mod $\phi(n)$</h2>
+  <p>Suppose we find two integers $e$ and $d$ that are <strong>multiplicative inverses modulo $\phi(n)$</strong>:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$e \cdot d \equiv 1 \pmod{\phi(n)}$$
+  </div>
+  <p>This means $e \cdot d = 1 + k \cdot \phi(n)$ for some integer $k$. Now apply Euler's theorem to a message $M$ (coprime to $n$):</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$M^{e \cdot d} = M^{1 + k \cdot \phi(n)} = M \cdot \left(M^{\phi(n)}\right)^k \equiv M \cdot 1^k \equiv M \pmod{n}$$
+  </div>
+  <p>So encrypting with $e$ (raise to power $e$ mod $n$) and then decrypting with $d$ (raise to power $d$ mod $n$) recovers the original message exactly. <strong>This is the mathematical core of RSA.</strong></p>
+
+  <h2>Why $n = p \cdot q$ (Product of Two Primes)?</h2>
+  <p>When $n$ is the product of two distinct primes $p$ and $q$, the totient simplifies beautifully:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$n = p \times q \qquad \phi(n) = (p-1)(q-1)$$
+  </div>
+  <p>Rivest, Shamir, and Adleman proved that the property $M^{e \cdot d} \equiv M \pmod{n}$ holds for <strong>all</strong> $M$ in $[0, n)$ when $n = pq$ — not just when $M$ is coprime to $n$. This guarantees RSA works for any plaintext.</p>
+  <div class="callout callout-info">
+    <div class="callout-title">🔐 The Security Principle</div>
+    <p>Multiplying $p \times q$ to get $n$ is easy. <strong>Factoring $n$ back into $p$ and $q$ is computationally infeasible for large primes.</strong> This asymmetry is the source of RSA's security. Anyone can compute $M^e \bmod n$ (encrypt), but only the person who knows $p$ and $q$ (and thus $\phi(n)$ and $d$) can decrypt.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">What does Euler's theorem tell us about $a^{\phi(n)} \bmod n$?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">It equals 1 (as long as $\gcd(a, n) = 1$). Any multiple of $\phi(n)$ in the exponent cancels out to 1. This is why $M^{ed} \equiv M \pmod{n}$ when $ed \equiv 1 \pmod{\phi(n)}$.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">If $p = 11$ and $q = 7$, what is $\phi(n)$?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">$\phi(n) = (p-1)(q-1) = 10 \times 6 = 60$. ($n = 77$.)</div>
+    </div>
+  </div>
+</div>
+
+<!-- RSA KEY GENERATION -->
+<div id="sec-keygen" class="section">
+  <h1>RSA Key Generation <span class="tag">Part 3</span></h1>
+
+  <h2>The Complete Procedure</h2>
+  <ul class="step-list">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-content"><strong>Choose two large distinct primes $p$ and $q$.</strong> These are generated using a random number generator and the Miller-Rabin primality test. They must be kept secret forever. If $n$ must be $B$ bits, each prime is roughly $B/2$ bits.</div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-content"><strong>Compute the modulus:</strong> $$n = p \times q$$</div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-content"><strong>Compute the totient:</strong> $$\phi(n) = (p-1)(q-1)$$</div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-content"><strong>Choose the public exponent $e$</strong> such that: $$1 < e < \phi(n) \quad \text{and} \quad \gcd(e, \phi(n)) = 1$$ Typical values: <strong>65537</strong> ($= 2^{16}+1$, strongly preferred), 17, 3 (insecure). 65537 is prime, binary $10000000000000001_2$ (only 2 set bits — very fast exponentiation).</div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-content"><strong>Compute the private exponent $d$:</strong> $$d = e^{-1} \bmod \phi(n)$$ $d$ is the modular multiplicative inverse of $e$ modulo $\phi(n)$, computed using the <strong>Extended Euclidean Algorithm</strong>. It satisfies $e \cdot d \equiv 1 \pmod{\phi(n)}$.</div>
+    </li>
+    <li>
+      <div class="step-num">6</div>
+      <div class="step-content"><strong>Public Key = $[e,\ n]$</strong> — publish this to the world.</div>
+    </li>
+    <li>
+      <div class="step-num">7</div>
+      <div class="step-content"><strong>Private Key = $[d,\ n]$</strong> — guard this with your life.</div>
+    </li>
+  </ul>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ What Must Be Kept Secret</div>
+    <p>$d$, $p$, $q$, and $\phi(n)$ must ALL remain secret. Knowing $\phi(n)$ is essentially equivalent to knowing $p$ and $q$ — from $n$ and $\phi(n)$, one can solve for $p$ and $q$. Anyone who knows any of these can compute $d$ and break the cipher.</p>
+  </div>
+
+  <h2>Why $e = 3$ Is Dangerous</h2>
+  <p>If $e = 3$ and a message $M$ is short, the ciphertext $C = M^3 \bmod n$ may equal $M^3$ exactly (if $M^3 &lt; n$, the modular reduction never triggers). An attacker simply takes the cube root of $C$ to recover $M$ — no factoring needed. This attack vanishes with $e = 65537$ and proper padding, since $M^{65537}$ always exceeds $n$ for any realistic message.</p>
+
+  <h2>Choosing $e$ — The Coprimality Condition</h2>
+  <p>$\gcd(e, \phi(n)) = 1$ is equivalent to requiring:</p>
+  <ul>
+    <li>$\gcd(e, p-1) = 1$ — equivalently $p \bmod e \neq 1$</li>
+    <li>$\gcd(e, q-1) = 1$ — equivalently $q \bmod e \neq 1$</li>
+  </ul>
+  <p>If you want a specific $e$ (like 65537), just generate $p$ and $q$ until both conditions hold — which happens quickly in practice.</p>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> RSA Key Generation — Lecture Toy Example</div>
+    <div class="example-body">
+      <p><strong>Given:</strong> $p = 197$, $q = 211$ (design a 16-bit RSA cipher)</p>
+      <p><strong>Step 1–2:</strong> $n = 197 \times 211 = 41{,}567$</p>
+      <p><strong>Step 3:</strong> $\phi(n) = (197-1)(211-1) = 196 \times 210 = 41{,}160$</p>
+      <p><strong>Step 4 — Choose $e$:</strong></p>
+      <ul>
+        <li>$e = 3$: $\gcd(3, 210) = 3 \neq 1$ ✗</li>
+        <li>$e = 5$: $\gcd(5, 210) = 5 \neq 1$ ✗</li>
+        <li>$e = 17$: $\gcd(17, 196) = 1$ ✓ and $\gcd(17, 210) = 1$ ✓ → <strong>Use $e = 17$</strong></li>
+      </ul>
+      <p><strong>Step 5 — Compute $d$:</strong> $d = 17^{-1} \bmod 41160$</p>
+      <p>Extended Euclidean gives $d = 26{,}633$. Verify: $17 \times 26633 = 452761 = 11 \times 41160 + 1$ ✓</p>
+      <p><strong>Public key:</strong> $[e = 17,\ n = 41567]$ &nbsp;&nbsp;&nbsp; <strong>Private key:</strong> $[d = 26633,\ n = 41567]$</p>
+    </div>
+  </div>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> RSA Encryption and Decryption — Small Numbers</div>
+    <div class="example-body">
+      <p><strong>Given:</strong> $p = 3$, $q = 11$</p>
+      <p>$n = 33$, $\phi(n) = 2 \times 10 = 20$</p>
+      <p>Choose $e = 7$: $\gcd(7, 20) = 1$ ✓</p>
+      <p>Compute $d$: $7d \equiv 1 \pmod{20}$ → $d = 3$ (since $7 \times 3 = 21 = 1 \times 20 + 1$) ✓</p>
+      <p><strong>Encrypt $M = 2$:</strong></p>
+      $$C = 2^7 \bmod 33 = 128 \bmod 33 = 128 - 3 \times 33 = 128 - 99 = 29$$
+      <p><strong>Decrypt $C = 29$:</strong></p>
+      $$M = 29^3 \bmod 33 = 24389 \bmod 33 = 2 \checkmark$$
+      <p>(Since $24389 \div 33 = 739.06...$, $739 \times 33 = 24387$, $24389 - 24387 = 2$.)</p>
+    </div>
+  </div>
+
+  <h2>Practice Problems</h2>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Given $p=5$, $q=11$: find $n$, $\phi(n)$, a valid $e$, and $d$.</span></div>
+    <div class="quiz-question">Given $p = 5$, $q = 11$. Compute $n$, $\phi(n)$, choose a valid $e$, and compute $d$.</div>
+    <div class="explanation" style="display:block;">
+      <p>$n = 55$, $\phi(n) = 4 \times 10 = 40$</p>
+      <p>Try $e = 3$: $\gcd(3, 40) = 1$ ✓</p>
+      <p>$d$: $3d \equiv 1 \pmod{40}$ → $d = 27$ (since $3 \times 27 = 81 = 2 \times 40 + 1$) ✓</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Given $p=7$, $q=13$: full key generation + encrypt $M=3$.</span></div>
+    <div class="quiz-question">Given $p = 7$, $q = 13$. Compute $n$, $\phi(n)$, verify $e = 5$ works, compute $d$. Then encrypt $M = 3$.</div>
+    <div class="explanation" style="display:block;">
+      <p>$n = 91$, $\phi(n) = 6 \times 12 = 72$</p>
+      <p>$e = 5$: $\gcd(5, 72) = 1$ ✓</p>
+      <p>$d = 29$: $5 \times 29 = 145 = 2 \times 72 + 1$ ✓</p>
+      <p>Encrypt: $C = 3^5 \bmod 91 = 243 \bmod 91 = 243 - 2 \times 91 = 61$</p>
+    </div>
+  </div>
+</div>
+
+<!-- ENCRYPTION AND DECRYPTION -->
+<div id="sec-rsa-ops" class="section">
+  <h1>RSA Encryption &amp; Decryption <span class="tag">Part 4</span></h1>
+
+  <h2>The Formulas</h2>
+  <p>With the key pair established, RSA encryption and decryption are simply:</p>
+  <div style="background:#111520;border-radius:10px;padding:24px;margin:16px 0;text-align:center;">
+    <p style="margin-bottom:12px;">$$C = M^e \bmod n \quad \text{(Encrypt with public key } [e, n]\text{)}$$</p>
+    <p style="margin-bottom:0;">$$M = C^d \bmod n \quad \text{(Decrypt with private key } [d, n]\text{)}$$</p>
+  </div>
+
+  <p>Both operations are <strong>modular exponentiation</strong>. The mathematical correctness follows from Euler's theorem: $C^d = (M^e)^d = M^{ed} \equiv M \pmod{n}$ because $ed \equiv 1 \pmod{\phi(n)}$.</p>
+
+  <h2>Why Decryption Is Slower Than Encryption</h2>
+  <p>The public exponent $e$ is chosen to be small with few set bits — for example, $e = 65537 = (10000000000000001)_2$ has only <strong>2 bits set</strong>. Computing $M^e \bmod n$ requires at most about $2 \times 17 = 34$ multiplications using square-and-multiply.</p>
+  <p>The private exponent $d$, however, is computed as the modular inverse of $e$ and is roughly the same size as $n$ — often 2048 bits with approximately 1024 set bits. Computing $C^d \bmod n$ requires about $3 \times 2048 = 6144$ multiplications. This is why decryption is the computationally expensive operation in RSA, and why CRT is used to speed it up.</p>
+
+  <h2>Block Size</h2>
+  <p>When RSA is used as a block cipher, the block size is chosen to be <em>smaller than $n$</em> — typically about half the number of bits needed to represent $n$. For example, a 1024-bit modulus allows roughly 512-bit message blocks (with padding filling the rest). The message integer $M$ must always satisfy $0 \leq M &lt; n$.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">📌 Message Padding is Essential</div>
+    <p>Before encrypting, the message is padded with random bytes to fill the entire block (using schemes like OAEP — Optimal Asymmetric Encryption Padding). This prevents attacks based on short messages, ensures the modular reduction always happens, and provides semantic security (same plaintext encrypts to different ciphertexts each time).</p>
+  </div>
+</div>
+
+<!-- FAST MODULAR EXPONENTIATION -->
+<div id="sec-modexp" class="section">
+  <h1>Fast Modular Exponentiation <span class="tag">Part 5</span></h1>
+
+  <h2>Why Naive Computation Is Impossible</h2>
+  <p>RSA requires computing $M^e \bmod n$. Even with a small $e = 65537$, the value $M^{65537}$ — before reduction — would have an astronomical number of digits. Computing it directly is impossible. The key insight: <strong>reduce modulo $n$ at every step</strong>, keeping numbers manageable throughout.</p>
+
+  <h2>The Square-and-Multiply Algorithm</h2>
+  <p>Express the exponent $B$ in binary: $B = (b_k b_{k-1} \ldots b_1 b_0)_2 = \sum_{b_i \neq 0} 2^i$</p>
+  <p>Then: $A^B = A^{\sum_{b_i \neq 0} 2^i} = \prod_{b_i \neq 0} A^{2^i}$</p>
+  <p>And since modular multiplication distributes:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$A^B \bmod n = \prod_{b_i \neq 0} \left[A^{2^i} \bmod n\right] \bmod n$$
+  </div>
+  <pre>result = 1
+base = A mod n
+for each bit b of B (from LSB to MSB):
+    if b == 1:
+        result = (result × base) mod n
+    base = (base × base) mod n
+return result</pre>
+  <p>This requires at most $2 \log_2 B$ multiplications — one squaring per bit, one extra multiplication per set bit. Numbers never grow larger than $n^2$.</p>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> Compute $7^{11} \bmod 13$</div>
+    <div class="example-body">
+      <p>$11 = (1011)_2 = 2^3 + 2^1 + 2^0$</p>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Step</th><th>Bit</th><th>Base $= 7^{2^i} \bmod 13$</th><th>Result</th></tr>
+          <tr><td>$i=0$</td><td>1</td><td>$7^1 = 7$</td><td>$1 \times 7 = 7$</td></tr>
+          <tr><td>$i=1$</td><td>1</td><td>$7^2 = 49 \bmod 13 = 10$</td><td>$7 \times 10 = 70 \bmod 13 = 5$</td></tr>
+          <tr><td>$i=2$</td><td>0</td><td>$10^2 = 100 \bmod 13 = 9$</td><td>skip</td></tr>
+          <tr><td>$i=3$</td><td>1</td><td>$9^2 = 81 \bmod 13 = 3$</td><td>$5 \times 3 = 15 \bmod 13 = 2$</td></tr>
+        </table>
+      </div>
+      <p>$7^{11} \bmod 13 = \mathbf{2}$ ✓ (Verify: $7^{11} = 1{,}977{,}326{,}743$; $1977326743 \bmod 13 = 2$)</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Compute $3^{13} \bmod 7$</span></div>
+    <div class="quiz-question">Using square-and-multiply, compute $3^{13} \bmod 7$. Show each step.</div>
+    <div class="explanation" style="display:block;">
+      <p>$13 = (1101)_2 = 2^3 + 2^2 + 2^0$</p>
+      <table>
+        <tr><th>Step</th><th>Bit</th><th>Base $= 3^{2^i} \bmod 7$</th><th>Result</th></tr>
+        <tr><td>$i=0$</td><td>1</td><td>$3$</td><td>$1 \times 3 = 3$</td></tr>
+        <tr><td>$i=1$</td><td>0</td><td>$3^2 = 9 \bmod 7 = 2$</td><td>skip</td></tr>
+        <tr><td>$i=2$</td><td>1</td><td>$2^2 = 4$</td><td>$3 \times 4 = 12 \bmod 7 = 5$</td></tr>
+        <tr><td>$i=3$</td><td>1</td><td>$4^2 = 16 \bmod 7 = 2$</td><td>$5 \times 2 = 10 \bmod 7 = 3$</td></tr>
+      </table>
+      <p>$3^{13} \bmod 7 = \mathbf{3}$ ✓</p>
+    </div>
+  </div>
+</div>
+
+<!-- RSA-CRT SPEEDUP -->
+<div id="sec-crt" class="section">
+  <h1>RSA-CRT Decryption Speedup <span class="tag">Part 6</span></h1>
+
+  <h2>The Problem</h2>
+  <p>RSA decryption requires $M = C^d \bmod n$ where $d$ is roughly the same size as $n$ (often 2048+ bits). This is slow. The <strong>Chinese Remainder Theorem (CRT)</strong> provides approximately a <strong>4× speedup</strong> by splitting the computation into two smaller modular exponentiations using $p$ and $q$ separately.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">💡 Key Point: p and q Are Already Known</div>
+    <p>During decryption, the private key holder already knows $p$ and $q$ — they are the secret prime factors used to create the key. The CRT method uses these known factors to dramatically speed up computation. An attacker who doesn't know $p$ and $q$ cannot use CRT to break the cipher.</p>
+  </div>
+
+  <h2>The CRT Decryption Formulas</h2>
+  <p>Compute:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$V_p = C^d \bmod p \qquad V_q = C^d \bmod q$$
+    $$X_p = q \cdot (q^{-1} \bmod p) \qquad X_q = p \cdot (p^{-1} \bmod q)$$
+    $$M = C^d \bmod n = (V_p \cdot X_p + V_q \cdot X_q) \bmod n$$
+  </div>
+
+  <h2>Further Speedup: Fermat's Little Theorem</h2>
+  <p>For prime $p$, Fermat's Little Theorem states $a^{p-1} \equiv 1 \pmod{p}$. So when computing $C^d \bmod p$, write $d = u(p-1) + v$ and reduce: $C^d \equiv C^v \pmod{p}$. This makes the exponents even smaller.</p>
+  <p>Combined CRT + FLT reduces the cost to roughly <strong>one-quarter</strong> of naive $C^d \bmod n$.</p>
+
+  <h2>What Is NOT Part of CRT Decryption</h2>
+  <div class="callout callout-danger">
+    <div class="callout-title">❌ Common Exam Trap</div>
+    <p>"Factor $n$ dynamically during decryption" is <strong>NOT</strong> part of RSA-CRT. The legitimate key holder already knows $p$ and $q$ — they were used to generate the key. Factoring $n$ is what an attacker would need to do. The whole point of RSA security is that factoring $n$ is infeasible for outsiders.</p>
+  </div>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why does CRT provide a ~4x speedup for RSA decryption?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">CRT replaces one large exponentiation ($C^d \bmod n$ with 2048-bit numbers) with two smaller ones ($C^d \bmod p$ and $C^d \bmod q$, each with ~1024-bit numbers). Since the cost of modular multiplication scales with the square of the number size, halving the size cuts each multiplication to 1/4 the cost. Two such multiplications instead of one large one gives approximately a 4x speedup overall.</div>
+    </div>
+  </div>
+</div>
+
+<!-- RSA SECURITY -->
+<div id="sec-security" class="section">
+  <h1>RSA Security — Threats &amp; Vulnerabilities <span class="tag">Part 7</span></h1>
+
+  <h2>1. The Mathematical Foundation — Factoring</h2>
+  <p>RSA's security depends entirely on the practical infeasibility of factoring the modulus $n = pq$. Various algorithms exist (trial division, Fermat's method, quadratic sieve, number field sieve, Pollard's rho), but none can practically factor numbers of modern RSA sizes.</p>
+  <div class="table-wrap">
+    <table>
+      <tr><th>Challenge</th><th>Bits</th><th>Status</th></tr>
+      <tr><td>RSA-576</td><td>576</td><td>Factored 2003</td></tr>
+      <tr><td>RSA-640</td><td>640</td><td>Factored 2005</td></tr>
+      <tr><td>RSA-768</td><td>768</td><td>Factored 2009</td></tr>
+      <tr><td>RSA-1024</td><td>1024</td><td>Not yet publicly factored</td></tr>
+      <tr><td>RSA-2048</td><td>2048</td><td>$200K prize — unclaimed</td></tr>
+    </table>
+  </div>
+  <p>Current recommendation: <strong>2048-bit minimum</strong>; 3072–4096 bits for long-term security.</p>
+
+  <h2>2. Chosen Ciphertext / Small Exponent Attack</h2>
+  <p>If $e = 3$ and a message $M$ is short enough that $M^3 &lt; n$, then $C = M^3$ (no modular reduction). An attacker simply computes $\sqrt[3]{C}$ to recover $M$ — no factoring required.</p>
+  <p><strong>Defense:</strong> Message padding (OAEP) ensures the padded message is always large, so $M^3 \bmod n$ always reduces. Also, prefer $e = 65537$ over $e = 3$.</p>
+
+  <h2>3. Low Entropy — Shared Prime Factor Attack</h2>
+  <p>If two different RSA moduli $n_1$ and $n_2$ share a common prime factor $p$, then $\gcd(n_1, n_2) = p$ — computable in milliseconds. Both private keys are immediately broken.</p>
+  <div class="callout callout-danger">
+    <div class="callout-title">⚠️ Real-World Impact</div>
+    <p>A 2012 study ("Mining your Ps and Qs") harvested 5+ million TLS certificates and 4 million SSH keys. Using only GCD computations, they recovered the private keys for <strong>0.50% of all TLS servers</strong> and 0.03% of SSH servers. Root cause: devices generating keys at boot time had low entropy (little randomness), causing some pairs of devices to generate primes with a shared factor.</p>
+  </div>
+
+  <div class="example-card">
+    <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> Shared Factor Attack</div>
+    <div class="example-body">
+      <p><strong>Given:</strong> $n_1 = 221$ and $n_2 = 247$</p>
+      <p>Compute $\gcd(221, 247)$:</p>
+      <ul>
+        <li>$247 = 1 \times 221 + 26$</li>
+        <li>$221 = 8 \times 26 + 13$</li>
+        <li>$26 = 2 \times 13 + 0$ → $\gcd = 13$</li>
+      </ul>
+      <p>Shared factor: $p = 13$. Factor both: $n_1 = 13 \times 17$, $n_2 = 13 \times 19$.</p>
+      <p>Both private keys are broken with a single GCD computation.</p>
+    </div>
+  </div>
+
+  <h2>4. Perfect Forward Secrecy — RSA's Limitation</h2>
+  <p>When RSA is used for key exchange (A encrypts session key $K_S$ with B's public key), a recording eavesdropper who later obtains B's private key can decrypt all recorded session keys and therefore all past conversations. RSA-based key exchange has <strong>no forward secrecy</strong>.</p>
+  <p>The Diffie-Hellman key exchange (covered in Lecture 04) solves this with <em>ephemeral</em> keys that are discarded after each session.</p>
+
+  <div class="kc-card">
+    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-item">
+      <div class="kc-q">Why does increasing the key size provide stronger RSA security?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Larger $n = pq$ means larger primes $p$ and $q$, making factoring computationally harder. The best known factoring algorithms have sub-exponential but super-polynomial complexity — each additional bit of key size disproportionately increases the difficulty of factoring.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Explain the low entropy vulnerability in one sentence.</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">If two devices generate RSA keys using near-identical random seeds (due to low entropy at boot time), their key moduli may share a common prime factor, which an attacker can find instantly using the GCD algorithm — breaking both private keys.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM PREP -->
+<div id="sec-exam-prep" class="section">
+  <h1>Exam Preparation <span class="tag">Q30–Q38</span></h1>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">📋 2025 Midterm Coverage</div>
+    <p>Questions Q30–Q38 from the 2025 midterm cover Lecture 03 topics. All questions are included below with full explanations.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Q#</th><th>Topic</th><th>Key Concept</th></tr>
+      <tr><td>Q30</td><td>RSA Security</td><td>Integer factorization is the hard problem</td></tr>
+      <tr><td>Q31</td><td>Key Generation Order</td><td>$p,q \to n \to e \to d$</td></tr>
+      <tr><td>Q32</td><td>Public Exponent $e$</td><td>$1 < e < \phi(n)$ and $\gcd(e, \phi(n)) = 1$</td></tr>
+      <tr><td>Q33</td><td>Private Exponent $d$</td><td>$d = e^{-1} \bmod \phi(n)$</td></tr>
+      <tr><td>Q34</td><td>Expensive Operation</td><td>Decryption (large $d$)</td></tr>
+      <tr><td>Q35</td><td>Why Not Bulk Encryption</td><td>Slow performance</td></tr>
+      <tr><td>Q36</td><td>Common Modulus Attack</td><td>Reusing same $n$ with different $e$</td></tr>
+      <tr><td>Q37</td><td>CRT Purpose</td><td>Speed up decryption ~4x</td></tr>
+      <tr><td>Q38</td><td>NOT Part of CRT</td><td>Factoring $n$ dynamically</td></tr>
+    </table>
+  </div>
+
+  <!-- Q30 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q30</span><span style="font-size:14px;color:var(--text-muted);">RSA Security Foundation</span></div>
+    <div class="quiz-question">What is the foundation of RSA's security?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>The difficulty of factoring large integers</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>The hardness of solving discrete logarithms</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>The complexity of hash collisions</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>The secrecy of its S-boxes</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> RSA security relies on the difficulty of factoring the modulus $n = pq$ into its prime factors. Given $n$, computing $\phi(n) = (p-1)(q-1)$ and thus $d$ requires knowing $p$ and $q$. (b) is the basis of Diffie-Hellman/ElGamal. (d) is a symmetric cipher concept — RSA has no S-boxes.</div>
+  </div>
+
+  <!-- Q31 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q31</span><span style="font-size:14px;color:var(--text-muted);">Key Generation Order</span></div>
+    <div class="quiz-question">What is the correct order for RSA key generation?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Select $e$ → Choose $n$ → Factor $n$ → Compute $d$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Generate $d$ → Find $e$ → Randomize $n$ → Pick $p, q$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Compute $n$ → Solve for $p, q$ → Derive $e$ → Choose $d$</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>Choose primes $p, q$ → Compute $n = pq$ → Select $e$ → Calculate $d$</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> The mandatory order: choose $p$ and $q$ first → compute $n = pq$ and $\phi(n) = (p-1)(q-1)$ → select $e$ coprime to $\phi(n)$ → compute $d = e^{-1} \bmod \phi(n)$. Each step depends on the previous one. You cannot choose $e$ before knowing $\phi(n)$, and you cannot compute $d$ before choosing $e$.</div>
+  </div>
+
+  <!-- Q32 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q32</span><span style="font-size:14px;color:var(--text-muted);">Condition on $e$</span></div>
+    <div class="quiz-question">In RSA, what condition must the public exponent $e$ satisfy?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>$e > n$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>$e$ must be prime</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>$1 < e < \phi(n)$ and $\gcd(e, \phi(n)) = 1$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>$e \equiv 1 \bmod p$</div>
+    </div>
+    <div class="explanation"><strong>Answer: (c).</strong> $e$ must be in the range $(1, \phi(n))$ and coprime to $\phi(n)$. The coprimality condition guarantees $d = e^{-1} \bmod \phi(n)$ exists (a modular inverse exists if and only if $\gcd(e, \phi(n)) = 1$). $e$ need not be prime — though common choices (3, 17, 65537) happen to be prime, this is for efficiency reasons, not a mathematical requirement.</div>
+  </div>
+
+  <!-- Q33 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q33</span><span style="font-size:14px;color:var(--text-muted);">Computing $d$</span></div>
+    <div class="quiz-question">How is the private exponent $d$ computed in RSA?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>$d \equiv e^{-1} \bmod \phi(n)$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>$d = n$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>$d = e \bmod p$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>$d$ is randomly selected</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> $d$ is the modular multiplicative inverse of $e$ modulo $\phi(n)$, satisfying $e \cdot d \equiv 1 \pmod{\phi(n)}$. It is computed deterministically using the Extended Euclidean Algorithm — not randomly selected. $d$ cannot be derived without knowing $\phi(n)$, which requires knowing $p$ and $q$.</div>
+  </div>
+
+  <!-- Q34 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q34</span><span style="font-size:14px;color:var(--text-muted);">Expensive Operation</span></div>
+    <div class="quiz-question">Which RSA operation is computationally expensive?</div>
+    <div class="options">
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">a</span>Decryption (using $d$)</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Encryption (using $e$)</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Generating $p$ and $q$</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Calculating $\gcd$</div>
+    </div>
+    <div class="explanation"><strong>Answer: (a).</strong> Decryption requires $C^d \bmod n$. The private exponent $d$ is as large as $n$ (typically 2048+ bits), requiring thousands of modular multiplications. Encryption with a small $e$ (like 65537 with only 2 set bits) requires only about 34 multiplications. CRT can speed up decryption by ~4x but it is still much slower than encryption.</div>
+  </div>
+
+  <!-- Q35 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q35</span><span style="font-size:14px;color:var(--text-muted);">Why RSA Not for Bulk Encryption</span></div>
+    <div class="quiz-question">Why is RSA rarely used for bulk (message content) encryption?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Lack of authentication</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>Slow performance</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Fixed block size</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Inability to encrypt large files</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> RSA's modular exponentiation is orders of magnitude slower than symmetric encryption (AES). In practice, RSA is used only for authentication and for encrypting a small session key. The actual data is encrypted with AES using that session key. Note: (d) is technically true but it's a consequence of the performance problem, not the root reason.</div>
+  </div>
+
+  <!-- Q36 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q36</span><span style="font-size:14px;color:var(--text-muted);">Common Modulus Attack</span></div>
+    <div class="quiz-question">Which vulnerability arises from reusing the same modulus $n$ with different public exponents $e$?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Nonce reuse</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>Timing attack</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Padding oracle attack</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>Common modulus attack</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> If two parties use the same $n$ with different exponents $e_1$, $e_2$ where $\gcd(e_1, e_2) = 1$, and the same message $M$ is encrypted to both: find $a, b$ such that $e_1 a + e_2 b = 1$ (Extended Euclid). Then $C_1^a \cdot C_2^b = (M^{e_1})^a (M^{e_2})^b = M^{e_1 a + e_2 b} = M^1 = M \pmod{n}$. The message is recovered without factoring $n$.</div>
+  </div>
+
+  <!-- Q37 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q37</span><span style="font-size:14px;color:var(--text-muted);">CRT Purpose</span></div>
+    <div class="quiz-question">What is the primary purpose of using the Chinese Remainder Theorem (CRT) with RSA?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>To increase the key size</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">b</span>To enable quantum resistance</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>To replace modular exponentiation</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>To speed up decryption/signature generation by approximately 4x</div>
+    </div>
+    <div class="explanation"><strong>Answer: (d).</strong> CRT splits $C^d \bmod n$ into two smaller exponentiations: $C^d \bmod p$ and $C^d \bmod q$. Since $p$ and $q$ are half the size of $n$, each multiplication is 4x cheaper (quadratic scaling). Combined with Fermat's Little Theorem (which further reduces the exponents), the overall speedup is approximately 4x. Modular exponentiation is still used — CRT makes it faster, not obsolete.</div>
+  </div>
+
+  <!-- Q38 -->
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-exam">EXAM Q38</span><span style="font-size:14px;color:var(--text-muted);">NOT Part of CRT Decryption</span></div>
+    <div class="quiz-question">Which step is NOT part of RSA-CRT decryption?</div>
+    <div class="options">
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">a</span>Compute $m_p = C^{d_p} \bmod p$ and $m_q = C^{d_q} \bmod q$</div>
+      <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">b</span>Factor $n$ into $p$ and $q$ dynamically during decryption</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Recombine results via CRT</div>
+      <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Verify the result modulo $n$</div>
+    </div>
+    <div class="explanation"><strong>Answer: (b).</strong> The private key holder already knows $p$ and $q$ — they were used when the key was generated and are stored as part of the private key. "Factor $n$ dynamically" is exactly what an attacker would need to do to break RSA. The legitimate decryptor never factors $n$ during normal operation; they simply use the pre-known $p$ and $q$.</div>
+  </div>
+
+</div>
+
+</main>
+</div>
+
+<script>
+const sectionMap = {
+  'sec-overview': '🏠 Overview',
+  'sec-pubkey': '🔑 Public-Key Cryptography',
+  'sec-rsa-math': '📐 RSA Math Foundation',
+  'sec-keygen': '⚙️ RSA Key Generation',
+  'sec-rsa-ops': '🔒 Encryption & Decryption',
+  'sec-modexp': '⚡ Fast Modular Exponentiation',
+  'sec-crt': '🚀 RSA-CRT Speedup',
+  'sec-security': '🛡️ RSA Security',
+  'sec-exam-prep': '📋 Exam Prep (Q30–Q38)'
+};
+
+const sections = Object.keys(sectionMap);
+let current = 0;
+
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
+  });
+  current = sections.indexOf(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+  if (window.renderMathInElement) renderMathInElement(sec, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+}
+
+function updateProgress() {
+  const pct = sections.length > 1 ? (current / (sections.length - 1)) * 100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function toggleKc(el) {
+  const ans = el.parentElement.querySelector('.kc-a');
+  if (ans.style.display === 'block') { ans.style.display = 'none'; el.textContent = 'Show Answer ▾'; }
+  else { ans.style.display = 'block'; el.textContent = 'Hide Answer ▴'; }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && current < sections.length - 1) show(sections[current + 1]);
+  if (e.key === 'ArrowLeft' && current > 0) show(sections[current - 1]);
+});
+
+function checkAnswer(el) {
+  const opts = el.closest('.options').querySelectorAll('.option');
+  if ([...opts].some(o => o.classList.contains('correct') || o.classList.contains('wrong'))) return;
+  if (el.dataset.correct === 'true') {
+    el.classList.add('correct');
+  } else {
+    el.classList.add('wrong');
+    opts.forEach(o => { if (o.dataset.correct === 'true') o.classList.add('correct'); });
+  }
+  opts.forEach(o => o.classList.add('disabled'));
+  const exp = el.closest('.quiz-card').querySelector('.explanation');
+  if (exp) exp.classList.add('show');
+}
+updateProgress();
+</script>
+</body>
+</html>
