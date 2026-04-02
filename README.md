@@ -5,7 +5,7 @@
 
 **Live site:** [https://ahmedayman4a.github.io/Security-Study-Hub/](https://ahmedayman4a.github.io/Security-Study-Hub/)
 
-[![Version](https://img.shields.io/badge/version-v0.1.1-a78bfa?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.1.2-a78bfa?style=flat-square)](CHANGELOG.md)
 [![Lectures](https://img.shields.io/badge/lectures-6-6c8aff?style=flat-square)](#lectures)
 [![Exam Questions](https://img.shields.io/badge/exam%20questions-60-34d399?style=flat-square)](#exam-files)
 

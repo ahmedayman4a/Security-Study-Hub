@@ -52,7 +52,7 @@ Initial release. Complete study hub for CSE 464 Computer System Security.
 
 #### Site Infrastructure
 - `index.html` — Landing page with lecture cards, exam section, scroll progress bar
-- Version badge (`v0.1.1`) in nav bar and footer
+- Version badge (`v0.1.2`) in nav bar and footer
 - `README.md` — Repository documentation
 - `CHANGELOG.md` — This file
 - `.gitignore`

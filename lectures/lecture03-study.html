@@ -195,9 +195,12 @@
 <div id="sec-pubkey" class="section">
   <h1>Public-Key Cryptography <span class="tag">Part 1</span></h1>
 
-  <h2>The Key Distribution Problem</h2>
-  <p>Every symmetric cipher — DES, 3DES, AES — shares a fundamental assumption: both parties already have the same secret key. But how do two parties who have never communicated before establish that shared key? If they want to use AES to communicate securely, they first need the same 128-bit key — but sharing it over an insecure channel is precisely the problem they are trying to solve.</p>
-  <p>This is the <strong>key distribution problem</strong>, and it plagued cryptography for centuries. <strong>Public-key cryptography</strong> (also called <strong>asymmetric cryptography</strong>) solves this by using a mathematically related <em>pair</em> of keys: one public, one private. What one key encrypts, only the other can decrypt — and the two keys cannot practically be derived from each other.</p>
+  <h2>The Key Distribution Problem — The Circular Dependency</h2>
+  <p>Every symmetric cipher — DES, 3DES, AES — shares a fundamental assumption that is easy to miss: both parties already share the secret key <em>before</em> any secure communication begins. Think carefully about what this means. Symmetric encryption solves the problem of secrecy <em>after</em> trust is established. It does not solve the problem of establishing that trust in the first place.</p>
+
+  <p>Imagine Alice wants to send Bob a confidential message. She decides to use AES. She encrypts her message — but Bob cannot decrypt without the key. She would need to tell Bob the key, but she cannot do that securely without already having a secure channel. That is a circular dependency. <strong>The key distribution problem</strong> plagued cryptography for centuries.</p>
+
+  <p><strong>Public-key cryptography</strong> dissolves the problem by changing the setup entirely. Instead of requiring both parties to own the same secret before communicating, it makes one direction of the key operation safe to publish. Bob publishes a <em>lock</em> that anyone can snap shut — but only Bob can open. Structurally: symmetric cryptography requires a shared secret <em>before</em> communication; public-key crypto removes that requirement by exposing one operation safely.</p>
 
   <h2>Key Pairs</h2>
   <p>In public-key cryptography, every party has a <strong>key pair</strong>:</p>
@@ -205,51 +208,52 @@
     <li><strong>Public key ($PU$):</strong> Published openly. Anyone can have it. Think of it as a padlock anyone can snap shut.</li>
     <li><strong>Private key ($PR$):</strong> Kept secret. Only the owner knows it. Think of it as the key that opens the padlock.</li>
   </ul>
-  <p>The public key is used for <em>locking</em> (encryption or signature verification). The private key is used for <em>unlocking</em> (decryption or signing). Knowing the public key does not let you compute the private key — this is the computationally one-way property.</p>
+  <p>The public key is used for <em>locking</em> (encryption or signature verification). The private key is used for <em>unlocking</em> (decryption or signing). The link between them is mathematically one-way: knowing the public key does not let you compute the private key (assuming the underlying hard problem is hard).</p>
 
-  <h2>The Three Services of Public-Key Cryptography</h2>
-  <p>Public-key cryptography provides three fundamental services that symmetric cryptography cannot easily replicate:</p>
+  <h2>The Three Services — Designed Around Who Should See What</h2>
+  <p>Understanding these services is easier if you treat them as design problems: who must be able to perform each operation, and who must be excluded? The protocol structure follows directly from those answers.</p>
 
   <h3>1. Confidentiality (A sending to B)</h3>
-  <p>B publishes $PU_B$. A encrypts with B's public key. Only B — who holds $PR_B$ — can decrypt.</p>
+  <p>Goal: only Bob can read Alice's message. Who must encrypt? Anyone. Who must be excluded from decrypting? Everyone except Bob. The only operation unique to Bob is his private key. Therefore: encrypt with Bob's public key, decrypt with Bob's private key.</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$C = E(PU_B,\ M) \qquad M = D(PR_B,\ C)$$
   </div>
 
   <h3>2. Digital Signature / Authentication / Non-Repudiation</h3>
-  <p>A signs with its own <em>private</em> key. Anyone with A's public key can verify. Only A could have created the signature — proving the message came from A (authentication) and that A cannot later deny it (non-repudiation).</p>
+  <p>Goal: anyone can verify the message came from Alice, but only Alice could have created the signature. Who must sign? Only Alice. Who must verify? Anyone. The only operation exclusive to Alice is her private key. Therefore: sign with Alice's private key, verify with Alice's public key. It is tempting to think of this as "encrypting with the private key" — resist that framing. The goal is not encryption; it is creating a value only Alice can produce and anyone can check.</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$C = E(PR_A,\ M) \qquad M = D(PU_A,\ C)$$
   </div>
 
   <h3>3. Confidentiality + Digital Signature</h3>
-  <p>A signs first (with $PR_A$), then encrypts (with $PU_B$). B decrypts first, then verifies the signature.</p>
+  <p>Goal: secrecy and authenticity. The order matters. Alice signs first (with $PR_A$), then encrypts the signed message (with $PU_B$). Bob decrypts first (with $PR_B$), then verifies the signature (with $PU_A$).</p>
+  <p>You might ask: why not encrypt first and then sign? If Alice signed the ciphertext, Bob could verify someone signed an encrypted blob — but not that Alice committed to the underlying message. Anyone with access to the ciphertext could reattach a signature. Signing the <em>plaintext first</em> means Alice is committing to the actual message content.</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$C = E\!\left(PU_B,\ E(PR_A,\ M)\right) \qquad M = D\!\left(PU_A,\ D(PR_B,\ C)\right)$$
   </div>
 
   <h2>Does This Replace Symmetric Cryptography?</h2>
   <div class="callout callout-warning">
-    <div class="callout-title">⚠️ Common Misconception</div>
-    <p>Public-key cryptography does <strong>not</strong> replace symmetric ciphers. RSA encrypting a large file is orders of magnitude slower than AES. In practice, public-key cryptography handles only two narrow tasks: <strong>authentication</strong> (signing) and <strong>key exchange</strong> (establishing a shared session key that AES then uses). The actual data is always encrypted with a fast symmetric cipher.</p>
+    <div class="callout-title">⚠️ Common Misconception — Hybrid is Inevitable</div>
+    <p>Public-key cryptography does <strong>not</strong> replace symmetric ciphers. The mathematical hardness that makes RSA secure is also what makes it slow — you cannot separate the two. In practice: RSA handles the narrow tasks of <strong>authentication</strong> and <strong>key exchange</strong>; AES encrypts the actual data using a session key established via RSA. Real protocols (TLS/HTTPS) always use this hybrid design. It is not a workaround — it is the intended architecture.</p>
   </div>
 
   <div class="kc-card">
     <div class="kc-title">🧠 Knowledge Check</div>
     <div class="kc-item">
-      <div class="kc-q">What fundamental problem does public-key cryptography solve?</div>
+      <div class="kc-q">What is the structural difference between symmetric and public-key cryptography's approach to secure communication?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">The key distribution problem — how two parties who have never communicated can establish a shared secret key over an insecure channel without transmitting the key itself.</div>
+      <div class="kc-a">Symmetric cryptography requires both parties to share a secret <em>before</em> communication — it solves secrecy after trust is established. Public-key cryptography removes that requirement by making one direction of the key operation safe to publish: anyone can encrypt for Bob, only Bob can decrypt. This dissolves the circular dependency of the key distribution problem.</div>
     </div>
     <div class="kc-item">
-      <div class="kc-q">If A encrypts a message with $PR_A$ (its private key), what service does this provide?</div>
+      <div class="kc-q">Why does confidentiality use the recipient's public key, while signatures use the sender's private key?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">Digital signature / authentication / non-repudiation. Only A has $PR_A$, so only A could have produced the ciphertext. Anyone with $PU_A$ can decrypt it and verify it came from A.</div>
+      <div class="kc-a">The design follows from who must perform each operation. For confidentiality: only the recipient should decrypt, so the unique operation must be the recipient's private key; anyone can encrypt using the recipient's public key. For signatures: only the sender should sign (everyone else must be excluded), so the unique operation is the sender's private key; anyone can verify using the sender's public key.</div>
     </div>
     <div class="kc-item">
-      <div class="kc-q">Why is RSA not used to encrypt large files directly?</div>
+      <div class="kc-q">Why is hybrid encryption the inevitably correct design, not just a convenient optimization?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">RSA is computationally expensive — many orders of magnitude slower than AES. RSA is used only for authentication and key exchange. The actual data is encrypted with a fast symmetric cipher using a session key established via RSA.</div>
+      <div class="kc-a">The mathematical hardness that makes RSA secure is the same property that makes it slow — you cannot separate the two. RSA and AES occupy different points on the security-speed tradeoff. Hybrid design uses each where it fits: RSA for key exchange and authentication (narrow, infrequent), AES for bulk data (fast, scalable). This is not a workaround; it is the intended architecture of every serious protocol.</div>
     </div>
   </div>
 </div>
@@ -258,45 +262,54 @@
 <div id="sec-rsa-math" class="section">
   <h1>RSA — Mathematical Foundation <span class="tag">Part 2</span></h1>
 
-  <h2>Euler's Theorem</h2>
-  <p>RSA is built on a result from number theory. <strong>Euler's theorem</strong> states: for every positive integer $n$ and every integer $a$ that is <strong>coprime</strong> to $n$ (meaning $\gcd(a, n) = 1$):</p>
+  <h2>Designing the Right Kind of Arithmetic</h2>
+  <p>RSA needs two operations that undo each other — but with a catch: one must be easy for the owner to compute while the inverse must be hard for everyone else to find without a secret. Ordinary arithmetic does not give you this. If you multiply by 3, dividing by 3 undoes it — but anyone who knows the multiplier also knows the divisor. There is no asymmetry.</p>
+  <p>Modular exponentiation has the right properties — but only if the exponents are chosen carefully. Euler's theorem tells us how.</p>
+
+  <h2>Euler's Theorem — The Exponent Cycle</h2>
+  <p><strong>Euler's theorem</strong> states: for every positive integer $n$ and every integer $a$ coprime to $n$:</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$a^{\phi(n)} \equiv 1 \pmod{n}$$
   </div>
-  <p>where $\phi(n)$ is <strong>Euler's totient function</strong> — the count of integers from 1 to $n$ that are coprime to $n$.</p>
-  <p>A useful consequence: any exponent that is a multiple of $\phi(n)$ contributes nothing — it cancels out. If $k = k_1 \cdot \phi(n) + k_2$:</p>
+  <p>where $\phi(n)$ is <strong>Euler's totient function</strong> — the count of integers from 1 to $n$ coprime to $n$.</p>
+  <p>This means exponents <em>wrap around</em> in cycles of length $\phi(n)$ in the modular world defined by $n$. Raising $a$ to any multiple of $\phi(n)$ always gives 1 — the exponent cycle resets. A useful consequence: if $k = k_1 \cdot \phi(n) + k_2$, then:</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$a^k = a^{k_1 \cdot \phi(n) + k_2} = \left(a^{\phi(n)}\right)^{k_1} \cdot a^{k_2} \equiv 1^{k_1} \cdot a^{k_2} \equiv a^{k_2} \pmod{n}$$
   </div>
+  <p>Any multiple of $\phi(n)$ in the exponent cancels out. Only the remainder modulo $\phi(n)$ matters.</p>
 
-  <h2>The RSA Insight: Multiplicative Inverses Mod $\phi(n)$</h2>
-  <p>Suppose we find two integers $e$ and $d$ that are <strong>multiplicative inverses modulo $\phi(n)$</strong>:</p>
-  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
-    $$e \cdot d \equiv 1 \pmod{\phi(n)}$$
-  </div>
-  <p>This means $e \cdot d = 1 + k \cdot \phi(n)$ for some integer $k$. Now apply Euler's theorem to a message $M$ (coprime to $n$):</p>
+  <h2>The RSA Insight: Inverses in the Exponent Cycle</h2>
+  <p>Here is the central design idea. We want two operations — encrypt with exponent $e$, decrypt with exponent $d$ — such that applying both returns the original message. That requires $M^{ed} \equiv M$, which (by the cycle idea) happens when $ed \equiv 1 \pmod{\phi(n)}$, because then $ed = 1 + k\phi(n)$:</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$M^{e \cdot d} = M^{1 + k \cdot \phi(n)} = M \cdot \left(M^{\phi(n)}\right)^k \equiv M \cdot 1^k \equiv M \pmod{n}$$
   </div>
-  <p>So encrypting with $e$ (raise to power $e$ mod $n$) and then decrypting with $d$ (raise to power $d$ mod $n$) recovers the original message exactly. <strong>This is the mathematical core of RSA.</strong></p>
+  <p>So the requirement is: choose $e$ and $d$ to be <strong>multiplicative inverses modulo $\phi(n)$</strong>. Encrypting (raise to $e$) is undone by decrypting (raise to $d$) — in the exponent cycle, they compose to "do nothing." <strong>This is the complete mathematical core of RSA.</strong> Every design decision in key generation exists to make this construction possible while keeping $d$ computationally hidden from an attacker who sees only $n$ and $e$.</p>
 
-  <h2>Why $n = p \cdot q$ (Product of Two Primes)?</h2>
-  <p>When $n$ is the product of two distinct primes $p$ and $q$, the totient simplifies beautifully:</p>
+  <div class="callout callout-info">
+    <div class="callout-title">RSA Correctness vs. RSA Security — Two Separate Questions</div>
+    <p><strong>Correctness</strong> (why RSA works for the owner): Euler's theorem guarantees $M^{ed} \equiv M \pmod{n}$ when $ed \equiv 1 \pmod{\phi(n)}$. The owner knows $d$ and can do this.</p>
+    <p><strong>Security</strong> (why attackers cannot break it): to compute $d$, an attacker needs $e^{-1} \bmod \phi(n)$. To compute $\phi(n) = (p-1)(q-1)$, they need $p$ and $q$. To find $p$ and $q$ from $n$, they must factor $n$ — computationally infeasible for large primes.</p>
+    <p>These are different arguments. Euler's theorem is about correctness; factoring hardness is about security. Both must hold.</p>
+  </div>
+
+  <h2>Why $n = p \cdot q$?</h2>
+  <p>When $n$ is the product of two distinct primes:</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$n = p \times q \qquad \phi(n) = (p-1)(q-1)$$
   </div>
-  <p>Rivest, Shamir, and Adleman proved that the property $M^{e \cdot d} \equiv M \pmod{n}$ holds for <strong>all</strong> $M$ in $[0, n)$ when $n = pq$ — not just when $M$ is coprime to $n$. This guarantees RSA works for any plaintext.</p>
-  <div class="callout callout-info">
-    <div class="callout-title">🔐 The Security Principle</div>
-    <p>Multiplying $p \times q$ to get $n$ is easy. <strong>Factoring $n$ back into $p$ and $q$ is computationally infeasible for large primes.</strong> This asymmetry is the source of RSA's security. Anyone can compute $M^e \bmod n$ (encrypt), but only the person who knows $p$ and $q$ (and thus $\phi(n)$ and $d$) can decrypt.</p>
-  </div>
+  <p>This choice is the practical bridge between correctness and security — it simultaneously serves two opposite needs. For the key <em>owner</em> who knows $p$ and $q$: computing $\phi(n)$ is instant, finding $d$ takes milliseconds. For the <em>attacker</em> who sees only $n$: computing $\phi(n)$ requires knowing $p$ and $q$, which requires factoring $n$ — infeasible for large primes. The two-prime structure makes key generation easy and $d$-recovery hard. That is why no simpler choice of $n$ works.</p>
 
   <div class="kc-card">
     <div class="kc-title">🧠 Knowledge Check</div>
     <div class="kc-item">
-      <div class="kc-q">What does Euler's theorem tell us about $a^{\phi(n)} \bmod n$?</div>
+      <div class="kc-q">Why does choosing $e$ and $d$ as inverses mod $\phi(n)$ guarantee decryption works?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">It equals 1 (as long as $\gcd(a, n) = 1$). Any multiple of $\phi(n)$ in the exponent cancels out to 1. This is why $M^{ed} \equiv M \pmod{n}$ when $ed \equiv 1 \pmod{\phi(n)}$.</div>
+      <div class="kc-a">Because $ed \equiv 1 \pmod{\phi(n)}$ means $ed = 1 + k\phi(n)$, so $M^{ed} = M^{1+k\phi(n)} = M \cdot (M^{\phi(n)})^k \equiv M \cdot 1 = M \pmod{n}$ by Euler's theorem. The exponent cycle "wraps around" and the full composition returns the original message.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Why does an attacker who knows $n$ and $e$ still cannot compute $d$?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Computing $d = e^{-1} \bmod \phi(n)$ requires knowing $\phi(n)$. Computing $\phi(n) = (p-1)(q-1)$ requires knowing $p$ and $q$. Finding $p$ and $q$ from $n$ requires factoring $n$ — computationally infeasible for large enough primes. $\phi(n)$ is the hidden lever: the owner knows it; the attacker cannot compute it.</div>
     </div>
     <div class="kc-item">
       <div class="kc-q">If $p = 11$ and $q = 7$, what is $\phi(n)$?</div>
@@ -310,11 +323,13 @@
 <div id="sec-keygen" class="section">
   <h1>RSA Key Generation <span class="tag">Part 3</span></h1>
 
-  <h2>The Complete Procedure</h2>
+  <h2>Key Generation as a Chain of Necessities</h2>
+  <p>The key generation steps look like a checklist, but each step exists because the next step requires it. Missing or weakening any step does not just reduce security — it makes the whole scheme fail. We need primes to compute $\phi(n)$; we need $\phi(n)$ to find $d$; we need $d$ to decrypt. The chain cannot be reordered.</p>
+
   <ul class="step-list">
     <li>
       <div class="step-num">1</div>
-      <div class="step-content"><strong>Choose two large distinct primes $p$ and $q$.</strong> These are generated using a random number generator and the Miller-Rabin primality test. They must be kept secret forever. If $n$ must be $B$ bits, each prime is roughly $B/2$ bits.</div>
+      <div class="step-content"><strong>Choose two large distinct primes $p$ and $q$.</strong> We need two secret primes because they let us compute $\phi(n) = (p-1)(q-1)$, which lets us find $d$. <em>Why distinct?</em> If $p = q$, then $n = p^2$ and an attacker computes $\sqrt{n} = p$ immediately — the "hard factoring" problem becomes a single square root. <em>Why random?</em> Randomness is not hygiene — it is the precondition for the hardness assumption. If two devices generate the same prime due to low entropy, a GCD scan across their public keys breaks both private keys instantly.</div>
     </li>
     <li>
       <div class="step-num">2</div>
@@ -326,7 +341,7 @@
     </li>
     <li>
       <div class="step-num">4</div>
-      <div class="step-content"><strong>Choose the public exponent $e$</strong> such that: $$1 < e < \phi(n) \quad \text{and} \quad \gcd(e, \phi(n)) = 1$$ Typical values: <strong>65537</strong> ($= 2^{16}+1$, strongly preferred), 17, 3 (insecure). 65537 is prime, binary $10000000000000001_2$ (only 2 set bits — very fast exponentiation).</div>
+      <div class="step-content"><strong>Choose the public exponent $e$</strong> such that: $$1 < e < \phi(n) \quad \text{and} \quad \gcd(e, \phi(n)) = 1$$ The coprimality condition is not a preference — it is a mathematical requirement. A multiplicative inverse $d$ satisfying $ed \equiv 1 \pmod{\phi(n)}$ exists <em>if and only if</em> $\gcd(e, \phi(n)) = 1$. Choosing an $e$ that shares a factor with $\phi(n)$ means no valid $d$ exists — decryption is literally impossible. Typical values: <strong>65537</strong> ($= 2^{16}+1$, strongly preferred), 17, 3 (insecure). 65537 has only 2 bits set in binary ($10000000000000001_2$) — very fast exponentiation.</div>
     </li>
     <li>
       <div class="step-num">5</div>
@@ -343,12 +358,15 @@
   </ul>
 
   <div class="callout callout-danger">
-    <div class="callout-title">⚠️ What Must Be Kept Secret</div>
-    <p>$d$, $p$, $q$, and $\phi(n)$ must ALL remain secret. Knowing $\phi(n)$ is essentially equivalent to knowing $p$ and $q$ — from $n$ and $\phi(n)$, one can solve for $p$ and $q$. Anyone who knows any of these can compute $d$ and break the cipher.</p>
+    <div class="callout-title">⚠️ What Must Be Kept Secret — And Why Each Leak Is Fatal</div>
+    <p>$p$ and $q$ — leaking either gives the attacker $\phi(n)$ and thus $d$ immediately.<br>
+    $\phi(n)$ — leaking it directly gives $d = e^{-1} \bmod \phi(n)$.<br>
+    $d$ — the private decryption exponent; knowing it means the key is fully compromised.<br>
+    $n$ and $e$ are public by design.</p>
   </div>
 
   <h2>Why $e = 3$ Is Dangerous</h2>
-  <p>If $e = 3$ and a message $M$ is short, the ciphertext $C = M^3 \bmod n$ may equal $M^3$ exactly (if $M^3 &lt; n$, the modular reduction never triggers). An attacker simply takes the cube root of $C$ to recover $M$ — no factoring needed. This attack vanishes with $e = 65537$ and proper padding, since $M^{65537}$ always exceeds $n$ for any realistic message.</p>
+  <p>If $e = 3$ and a message $M$ is short enough that $M^3 &lt; n$ (the modular reduction never triggers), then $C = M^3$ exactly. An attacker takes the cube root to recover $M$ — no factoring needed. The deeper issue: raw RSA is algebraically transparent when the input has structure. Padding (OAEP) destroys predictable structure before encryption, addressing the root cause.</p>
 
   <h2>Choosing $e$ — The Coprimality Condition</h2>
   <p>$\gcd(e, \phi(n)) = 1$ is equivalent to requiring:</p>
@@ -364,14 +382,14 @@
       <p><strong>Given:</strong> $p = 197$, $q = 211$ (design a 16-bit RSA cipher)</p>
       <p><strong>Step 1–2:</strong> $n = 197 \times 211 = 41{,}567$</p>
       <p><strong>Step 3:</strong> $\phi(n) = (197-1)(211-1) = 196 \times 210 = 41{,}160$</p>
-      <p><strong>Step 4 — Choose $e$:</strong></p>
+      <p><strong>Step 4 — Choose $e$</strong> (we need $\gcd(e, \phi(n)) = 1$ so that a valid inverse $d$ exists):</p>
       <ul>
-        <li>$e = 3$: $\gcd(3, 210) = 3 \neq 1$ ✗</li>
-        <li>$e = 5$: $\gcd(5, 210) = 5 \neq 1$ ✗</li>
-        <li>$e = 17$: $\gcd(17, 196) = 1$ ✓ and $\gcd(17, 210) = 1$ ✓ → <strong>Use $e = 17$</strong></li>
+        <li>$e = 3$: $\gcd(3, 210) = 3 \neq 1$ ✗ — 3 divides $q-1 = 210$, so no inverse $d$ exists. Decryption would be impossible.</li>
+        <li>$e = 5$: $\gcd(5, 210) = 5 \neq 1$ ✗ — 5 also divides $q-1$, same problem.</li>
+        <li>$e = 17$: $\gcd(17, 196) = 1$ ✓ and $\gcd(17, 210) = 1$ ✓ — 17 shares no factor with $p-1$ or $q-1$. A valid $d$ exists. <strong>Use $e = 17$.</strong></li>
       </ul>
-      <p><strong>Step 5 — Compute $d$:</strong> $d = 17^{-1} \bmod 41160$</p>
-      <p>Extended Euclidean gives $d = 26{,}633$. Verify: $17 \times 26633 = 452761 = 11 \times 41160 + 1$ ✓</p>
+      <p><strong>Step 5 — Compute $d$:</strong> We need $17 \cdot d \equiv 1 \pmod{41160}$ — the inverse of 17 in the exponent cycle of length 41160. The Extended Euclidean Algorithm constructs this inverse (it does not merely name it).</p>
+      <p>Result: $d = 26{,}633$. Verify: $17 \times 26633 = 452761 = 11 \times 41160 + 1$ ✓ (that $+1$ is exactly $17d \equiv 1 \pmod{\phi(n)}$)</p>
       <p><strong>Public key:</strong> $[e = 17,\ n = 41567]$ &nbsp;&nbsp;&nbsp; <strong>Private key:</strong> $[d = 26633,\ n = 41567]$</p>
     </div>
   </div>
@@ -394,23 +412,23 @@
   <h2>Practice Problems</h2>
 
   <div class="quiz-card">
-    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Given $p=5$, $q=11$: find $n$, $\phi(n)$, a valid $e$, and $d$.</span></div>
-    <div class="quiz-question">Given $p = 5$, $q = 11$. Compute $n$, $\phi(n)$, choose a valid $e$, and compute $d$.</div>
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">$p=5$, $q=11$: which of $e=3$, $e=5$, $e=10$ are valid and why?</span></div>
+    <div class="quiz-question">Given $p = 5$, $q = 11$. Compare $e = 3$, $e = 5$, and $e = 10$. Which choices fail, and exactly why does the failure happen at the level of modular inverses?</div>
     <div class="explanation" style="display:block;">
       <p>$n = 55$, $\phi(n) = 4 \times 10 = 40$</p>
-      <p>Try $e = 3$: $\gcd(3, 40) = 1$ ✓</p>
-      <p>$d$: $3d \equiv 1 \pmod{40}$ → $d = 27$ (since $3 \times 27 = 81 = 2 \times 40 + 1$) ✓</p>
+      <p>$e = 3$: $\gcd(3, 40) = 1$ ✓ — valid. $d = 27$ (since $3 \times 27 = 81 = 2 \times 40 + 1$). Decryption works.</p>
+      <p>$e = 5$: $\gcd(5, 40) = 5 \neq 1$ — <strong>invalid.</strong> 5 divides $\phi(n)$, so no integer $d$ satisfies $5d \equiv 1 \pmod{40}$. Decryption is mathematically impossible.</p>
+      <p>$e = 10$: $\gcd(10, 40) = 10 \neq 1$ — <strong>invalid.</strong> Same reason: 10 divides $\phi(n)$. No inverse exists.</p>
     </div>
   </div>
 
   <div class="quiz-card">
-    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Given $p=7$, $q=13$: full key generation + encrypt $M=3$.</span></div>
-    <div class="quiz-question">Given $p = 7$, $q = 13$. Compute $n$, $\phi(n)$, verify $e = 5$ works, compute $d$. Then encrypt $M = 3$.</div>
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">$p=7$, $q=13$: why is $e=5$ valid and $e=6$ not?</span></div>
+    <div class="quiz-question">For $p = 7$, $q = 13$: explain why $e = 5$ is a legal choice and $e = 6$ is not. Then predict what property decryption would lose if you used the bad exponent.</div>
     <div class="explanation" style="display:block;">
       <p>$n = 91$, $\phi(n) = 6 \times 12 = 72$</p>
-      <p>$e = 5$: $\gcd(5, 72) = 1$ ✓</p>
-      <p>$d = 29$: $5 \times 29 = 145 = 2 \times 72 + 1$ ✓</p>
-      <p>Encrypt: $C = 3^5 \bmod 91 = 243 \bmod 91 = 243 - 2 \times 91 = 61$</p>
+      <p>$e = 5$: $\gcd(5, 72) = 1$ ✓ — valid. $d = 29$ ($5 \times 29 = 145 = 2 \times 72 + 1$ ✓). Encrypt $M=3$: $C = 3^5 \bmod 91 = 243 \bmod 91 = 61$.</p>
+      <p>$e = 6$: $\gcd(6, 72) = 6 \neq 1$ — <strong>invalid.</strong> 6 and 72 share factors 2 and 3. No $d$ satisfies $6d \equiv 1 \pmod{72}$. If you encrypted with $e=6$, decryption would be permanently impossible — there is no valid private key to compute.</p>
     </div>
   </div>
 </div>
@@ -419,14 +437,17 @@
 <div id="sec-rsa-ops" class="section">
   <h1>RSA Encryption &amp; Decryption <span class="tag">Part 4</span></h1>
 
-  <h2>The Formulas</h2>
-  <p>With the key pair established, RSA encryption and decryption are simply:</p>
+  <h2>Messages as Numbers in a Modular World</h2>
+  <p>RSA treats the message as an integer in the range $0$ to $n-1$ — a number living in the modular universe defined by $n$. Encryption is not "hiding" in the everyday sense; it is raising that number to a public exponent inside a number system where only the key owner can reliably reverse it. The entire setup of key generation — choosing $e$, computing $d$ so that $ed \equiv 1 \pmod{\phi(n)}$ — was specifically to manufacture exponents that compose back to "do nothing."</p>
+
+  <p>You might ask: why use exponentiation rather than some simpler invertible arithmetic — say, multiplication by $e$ modulo $n$? Because linear operations can be inverted by anyone. If $C = M \cdot e \bmod n$, then $M = C \cdot e^{-1} \bmod n$, and anyone can compute $e^{-1}$ from $e$ and $n$. Exponentiation in a modular world makes the inverse exponent $d$ computationally hidden behind the factoring problem. The choice of exponentiation is the source of the asymmetry.</p>
+
   <div style="background:#111520;border-radius:10px;padding:24px;margin:16px 0;text-align:center;">
     <p style="margin-bottom:12px;">$$C = M^e \bmod n \quad \text{(Encrypt with public key } [e, n]\text{)}$$</p>
     <p style="margin-bottom:0;">$$M = C^d \bmod n \quad \text{(Decrypt with private key } [d, n]\text{)}$$</p>
   </div>
 
-  <p>Both operations are <strong>modular exponentiation</strong>. The mathematical correctness follows from Euler's theorem: $C^d = (M^e)^d = M^{ed} \equiv M \pmod{n}$ because $ed \equiv 1 \pmod{\phi(n)}$.</p>
+  <p>Both operations are <strong>modular exponentiation</strong>. Correctness: $C^d = (M^e)^d = M^{ed} \equiv M \pmod{n}$ because $ed = 1 + k\phi(n)$ and $M^{\phi(n)} \equiv 1$, so the extra full cycles cancel.</p>
 
   <h2>Why Decryption Is Slower Than Encryption</h2>
   <p>The public exponent $e$ is chosen to be small with few set bits — for example, $e = 65537 = (10000000000000001)_2$ has only <strong>2 bits set</strong>. Computing $M^e \bmod n$ requires at most about $2 \times 17 = 34$ multiplications using square-and-multiply.</p>
@@ -446,38 +467,36 @@
   <h1>Fast Modular Exponentiation <span class="tag">Part 5</span></h1>
 
   <h2>Why Naive Computation Is Impossible</h2>
-  <p>RSA requires computing $M^e \bmod n$. Even with a small $e = 65537$, the value $M^{65537}$ — before reduction — would have an astronomical number of digits. Computing it directly is impossible. The key insight: <strong>reduce modulo $n$ at every step</strong>, keeping numbers manageable throughout.</p>
+  <p>RSA requires computing $M^e \bmod n$. Even with $e = 65537$, the value $M^{65537}$ before reduction would have an astronomical number of digits — billions of digits for typical RSA keys. Storing or multiplying such numbers is computationally infeasible. Two ideas together solve this: reduce modulo $n$ at every step (numbers never exceed $n^2$), and decompose the exponent in binary so only $\log_2 e$ squarings are needed.</p>
 
-  <h2>The Square-and-Multiply Algorithm</h2>
-  <p>Express the exponent $B$ in binary: $B = (b_k b_{k-1} \ldots b_1 b_0)_2 = \sum_{b_i \neq 0} 2^i$</p>
-  <p>Then: $A^B = A^{\sum_{b_i \neq 0} 2^i} = \prod_{b_i \neq 0} A^{2^i}$</p>
-  <p>And since modular multiplication distributes:</p>
-  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
-    $$A^B \bmod n = \prod_{b_i \neq 0} \left[A^{2^i} \bmod n\right] \bmod n$$
-  </div>
+  <h2>The Square-and-Multiply Algorithm — The Invariant</h2>
+  <p>The invariant that makes this algorithm obvious rather than magical: at every stage, <code>base</code> means "the current power of $A$ I might need next" — it starts at $A^1$ and doubles (squares) at every bit. And <code>result</code> means "the product of all the powers I have selected so far." We accumulate into <code>result</code> only when the current bit is 1, because that bit says this power contributes to the binary decomposition.</p>
+  <p>Express the exponent $B$ in binary: $B = (b_k \ldots b_1 b_0)_2 = \sum_{b_i \neq 0} 2^i$, so $A^B = \prod_{b_i = 1} A^{2^i}$.</p>
   <pre>result = 1
 base = A mod n
 for each bit b of B (from LSB to MSB):
     if b == 1:
-        result = (result × base) mod n
-    base = (base × base) mod n
+        result = (result × base) mod n    ← this power is in the decomposition
+    base = (base × base) mod n            ← advance to next power regardless
 return result</pre>
+  <p>We square <code>base</code> because moving one bit left in binary doubles the exponent — $A^{2^{i+1}} = (A^{2^i})^2$. We reduce at every step because without it, intermediate values grow without bound — after $k$ squarings, <code>base</code> could have $2^k$ times as many digits as $n$. The reduction is not an optimization; it is what makes the computation feasible.</p>
   <p>This requires at most $2 \log_2 B$ multiplications — one squaring per bit, one extra multiplication per set bit. Numbers never grow larger than $n^2$.</p>
 
   <div class="example-card">
     <div class="example-header"><span class="example-badge">WORKED EXAMPLE</span> Compute $7^{11} \bmod 13$</div>
     <div class="example-body">
-      <p>$11 = (1011)_2 = 2^3 + 2^1 + 2^0$</p>
+      <p>$11 = (1011)_2 = 2^0 + 2^1 + 2^3$ — bits 0, 1, and 3 are set.</p>
+      <p>At each row: <code>base</code> holds the next power we might need; <code>result</code> accumulates only at set bits.</p>
       <div class="table-wrap">
         <table>
           <tr><th>Step</th><th>Bit</th><th>Base $= 7^{2^i} \bmod 13$</th><th>Result</th></tr>
           <tr><td>$i=0$</td><td>1</td><td>$7^1 = 7$</td><td>$1 \times 7 = 7$</td></tr>
           <tr><td>$i=1$</td><td>1</td><td>$7^2 = 49 \bmod 13 = 10$</td><td>$7 \times 10 = 70 \bmod 13 = 5$</td></tr>
-          <tr><td>$i=2$</td><td>0</td><td>$10^2 = 100 \bmod 13 = 9$</td><td>skip</td></tr>
+          <tr><td>$i=2$</td><td>0</td><td>$10^2 = 100 \bmod 13 = 9$</td><td>skip — but we still square base for the next step</td></tr>
           <tr><td>$i=3$</td><td>1</td><td>$9^2 = 81 \bmod 13 = 3$</td><td>$5 \times 3 = 15 \bmod 13 = 2$</td></tr>
         </table>
       </div>
-      <p>$7^{11} \bmod 13 = \mathbf{2}$ ✓ (Verify: $7^{11} = 1{,}977{,}326{,}743$; $1977326743 \bmod 13 = 2$)</p>
+      <p>$7^{11} \bmod 13 = \mathbf{2}$ ✓. The skipped row ($i=2$, bit 0) still squares <code>base</code> — we did not need $7^4$ directly, but we needed $7^8 = (7^4)^2$ at the next step.</p>
     </div>
   </div>
 
@@ -502,38 +521,48 @@ return result</pre>
 <div id="sec-crt" class="section">
   <h1>RSA-CRT Decryption Speedup <span class="tag">Part 6</span></h1>
 
-  <h2>The Problem</h2>
-  <p>RSA decryption requires $M = C^d \bmod n$ where $d$ is roughly the same size as $n$ (often 2048+ bits). This is slow. The <strong>Chinese Remainder Theorem (CRT)</strong> provides approximately a <strong>4× speedup</strong> by splitting the computation into two smaller modular exponentiations using $p$ and $q$ separately.</p>
+  <h2>The Costly Computation and Its Split</h2>
+  <p>RSA decryption requires $M = C^d \bmod n$ where $d$ is roughly the same size as $n$ — for 2048-bit RSA, $d$ is a 2048-bit number. Modular exponentiation with $k$-bit operands costs roughly $O(k^3)$ bit operations. At 2048 bits, this is measurable.</p>
 
-  <div class="callout callout-info">
-    <div class="callout-title">💡 Key Point: p and q Are Already Known</div>
-    <p>During decryption, the private key holder already knows $p$ and $q$ — they are the secret prime factors used to create the key. The CRT method uses these known factors to dramatically speed up computation. An attacker who doesn't know $p$ and $q$ cannot use CRT to break the cipher.</p>
-  </div>
+  <p>The <strong>Chinese Remainder Theorem (CRT)</strong> provides a ~4× speedup by splitting the decryption into two smaller exponentiations, each in a world half the size. The key owner knows $p$ and $q$, so they can work modulo $p$ and modulo $q$ separately. An attacker who does not know $p$ and $q$ cannot use this shortcut — CRT decryption is only available to the key owner.</p>
 
-  <h2>The CRT Decryption Formulas</h2>
-  <p>Compute:</p>
+  <h2>Why CRT Works — Satisfying Two Constraints at Once</h2>
+  <p>Compute two partial results in the smaller modular worlds:</p>
   <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
     $$V_p = C^d \bmod p \qquad V_q = C^d \bmod q$$
-    $$X_p = q \cdot (q^{-1} \bmod p) \qquad X_q = p \cdot (p^{-1} \bmod q)$$
-    $$M = C^d \bmod n = (V_p \cdot X_p + V_q \cdot X_q) \bmod n$$
   </div>
+  <p>These are much cheaper because $p$ and $q$ are each half the size of $n$ (so each multiplication costs $1/4$ as much, and the exponent is also shorter via Fermat). Now we need a single number $M$ in $[0, n)$ that satisfies both $M \equiv V_p \pmod{p}$ and $M \equiv V_q \pmod{q}$ simultaneously.</p>
+  <p>The CRT combination coefficients are engineered for this. Define:</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$X_p = q \cdot (q^{-1} \bmod p) \qquad X_q = p \cdot (p^{-1} \bmod q)$$
+  </div>
+  <p>$X_p$ has a remarkable property: $X_p \equiv 1 \pmod{p}$ and $X_p \equiv 0 \pmod{q}$. It contributes exactly 1 in the $p$-world and vanishes in the $q$-world. $X_q$ is the mirror: 0 mod $p$, 1 mod $q$. They act as "selectors" — each partial result survives only where it belongs.</p>
+  <div style="background:#111520;border-radius:10px;padding:20px;margin:14px 0;">
+    $$M = (V_p \cdot X_p + V_q \cdot X_q) \bmod n$$
+  </div>
+  <p>Check: modulo $p$, the $V_q \cdot X_q$ term vanishes (since $X_q \equiv 0 \pmod{p}$), leaving $V_p \cdot 1 = V_p$. Modulo $q$, the $V_p \cdot X_p$ term vanishes, leaving $V_q$. The formula "glues" two local answers into one global answer. Once you see CRT as satisfying two modular constraints simultaneously, the formula stops looking arbitrary.</p>
 
-  <h2>Further Speedup: Fermat's Little Theorem</h2>
-  <p>For prime $p$, Fermat's Little Theorem states $a^{p-1} \equiv 1 \pmod{p}$. So when computing $C^d \bmod p$, write $d = u(p-1) + v$ and reduce: $C^d \equiv C^v \pmod{p}$. This makes the exponents even smaller.</p>
-  <p>Combined CRT + FLT reduces the cost to roughly <strong>one-quarter</strong> of naive $C^d \bmod n$.</p>
+  <h2>Further Speedup: Fermat's Little Theorem (Same Principle as RSA!)</h2>
+  <p>For prime $p$, $a^{p-1} \equiv 1 \pmod{p}$ — the same exponent-cycling idea from the RSA mathematical foundation, now applied in the smaller world mod $p$. Write $d = u(p-1) + v$; then $C^d \equiv C^v \pmod{p}$. The exponent shrinks from $\sim \log_2 n$ bits to $\sim \log_2 p$ bits.</p>
+  <p>Combined CRT + Fermat: roughly <strong>one-quarter</strong> the cost of naive $C^d \bmod n$.</p>
 
   <h2>What Is NOT Part of CRT Decryption</h2>
   <div class="callout callout-danger">
     <div class="callout-title">❌ Common Exam Trap</div>
-    <p>"Factor $n$ dynamically during decryption" is <strong>NOT</strong> part of RSA-CRT. The legitimate key holder already knows $p$ and $q$ — they were used to generate the key. Factoring $n$ is what an attacker would need to do. The whole point of RSA security is that factoring $n$ is infeasible for outsiders.</p>
+    <p>"Factor $n$ dynamically during decryption" is <strong>NOT</strong> part of RSA-CRT. The legitimate key holder already knows $p$ and $q$ — they used them to generate the key. Dynamically factoring $n$ is what an <em>attacker</em> would need to do. CRT is a speed optimization for someone who already has the secret factors, not a shortcut for someone who does not.</p>
   </div>
 
   <div class="kc-card">
     <div class="kc-title">🧠 Knowledge Check</div>
     <div class="kc-item">
-      <div class="kc-q">Why does CRT provide a ~4x speedup for RSA decryption?</div>
+      <div class="kc-q">Why does splitting one decryption into two smaller modular worlds make the work much cheaper?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">CRT replaces one large exponentiation ($C^d \bmod n$ with 2048-bit numbers) with two smaller ones ($C^d \bmod p$ and $C^d \bmod q$, each with ~1024-bit numbers). Since the cost of modular multiplication scales with the square of the number size, halving the size cuts each multiplication to 1/4 the cost. Two such multiplications instead of one large one gives approximately a 4x speedup overall.</div>
+      <div class="kc-a">Each modular multiplication with a $k$-bit modulus costs $O(k^2)$ bit operations. Using modulus $p \approx n^{1/2}$ costs $O((k/2)^2) = O(k^2/4)$ — 4× cheaper per multiplication. With Fermat's reduction, the exponents are also halved. Two partial exponentiations at 4× lower cost each give roughly 4× total speedup. CRT recombination is cheap compared to the exponentiations it replaces.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">What do the CRT coefficients $X_p$ and $X_q$ actually do, and why are they constructed the way they are?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">$X_p = q \cdot (q^{-1} \bmod p)$ satisfies $X_p \equiv 1 \pmod{p}$ and $X_p \equiv 0 \pmod{q}$. It lets $V_p$ "survive" in the $p$-world while vanishing in the $q$-world. $X_q$ is the mirror. Together, $V_p \cdot X_p + V_q \cdot X_q$ is simultaneously $V_p \pmod{p}$ and $V_q \pmod{q}$ — the two local answers are glued into one global answer.</div>
     </div>
   </div>
 </div>
@@ -542,8 +571,17 @@ return result</pre>
 <div id="sec-security" class="section">
   <h1>RSA Security — Threats &amp; Vulnerabilities <span class="tag">Part 7</span></h1>
 
-  <h2>1. The Mathematical Foundation — Factoring</h2>
-  <p>RSA's security depends entirely on the practical infeasibility of factoring the modulus $n = pq$. Various algorithms exist (trial division, Fermat's method, quadratic sieve, number field sieve, Pollard's rho), but none can practically factor numbers of modern RSA sizes.</p>
+  <h2>A Map of RSA Failure Modes</h2>
+  <p>RSA fails for different reasons depending on what assumption is violated. Grouping the attacks by failure type makes them easier to understand and remember than treating them as an unrelated list.</p>
+  <ul>
+    <li><strong>Mathematical hardness fails:</strong> Factoring becomes tractable — directly yields $p$, $q$, $\phi(n)$, $d$.</li>
+    <li><strong>Algebraic misuse:</strong> Raw, structured inputs expose mathematical relationships that leak the message without factoring.</li>
+    <li><strong>Randomness failure:</strong> The "hard" factoring problem collapses to a trivial GCD when primes share a factor due to poor entropy.</li>
+    <li><strong>Protocol design limitation:</strong> RSA is used correctly as a cipher, but its role in the protocol creates a long-term confidentiality problem.</li>
+  </ul>
+
+  <h2>1. Mathematical Hardness — Factoring</h2>
+  <p>RSA's security depends on the practical infeasibility of factoring $n = pq$. Various algorithms exist (trial division, Fermat's method, quadratic sieve, number field sieve, Pollard's rho), but none can practically factor numbers of modern RSA sizes. Importantly: "factoring is hard" is an assumption, not a theorem. It holds only when primes were generated sanely with real randomness.</p>
   <div class="table-wrap">
     <table>
       <tr><th>Challenge</th><th>Bits</th><th>Status</th></tr>
@@ -556,12 +594,16 @@ return result</pre>
   </div>
   <p>Current recommendation: <strong>2048-bit minimum</strong>; 3072–4096 bits for long-term security.</p>
 
-  <h2>2. Chosen Ciphertext / Small Exponent Attack</h2>
-  <p>If $e = 3$ and a message $M$ is short enough that $M^3 &lt; n$, then $C = M^3$ (no modular reduction). An attacker simply computes $\sqrt[3]{C}$ to recover $M$ — no factoring required.</p>
-  <p><strong>Defense:</strong> Message padding (OAEP) ensures the padded message is always large, so $M^3 \bmod n$ always reduces. Also, prefer $e = 65537$ over $e = 3$.</p>
+  <h2>2. Small Exponent / Raw RSA Attack (Algebraic Misuse)</h2>
+  <p>If $e = 3$ and a message $M$ is short enough that $M^3 &lt; n$, then $C = M^3$ exactly — no modular reduction. An attacker computes $\sqrt[3]{C}$ to recover $M$ with no cryptanalysis.</p>
+  <p>The deeper issue is not $e$'s size — it is that textbook RSA is algebraically transparent when the input has predictable structure. If the message is guessable, the attacker can encrypt all candidates and compare to $C$. Raw RSA leaks algebraic structure unless the message representation is carefully randomized.</p>
+  <p><strong>Defense:</strong> OAEP padding randomizes the message before encryption, destroying algebraic predictability and ensuring $M^e$ always exceeds $n$. Padding addresses the root cause (algebraic structure); increasing $e$ addresses only one symptom.</p>
 
-  <h2>3. Low Entropy — Shared Prime Factor Attack</h2>
-  <p>If two different RSA moduli $n_1$ and $n_2$ share a common prime factor $p$, then $\gcd(n_1, n_2) = p$ — computable in milliseconds. Both private keys are immediately broken.</p>
+  <h2>3. Common Modulus Attack (Algebraic Misuse)</h2>
+  <p>If two parties share the same modulus $n$ but use different coprime exponents $e_1$ and $e_2$, and the same message is encrypted under both: find $a, b$ with $e_1 a + e_2 b = 1$ (Extended Euclidean), then $C_1^a \cdot C_2^b \equiv M^{e_1 a + e_2 b} = M \pmod{n}$. The message is recovered without factoring. RSA's multiplicative algebra becomes a weapon when structural shortcuts (shared moduli) are reused. Every key pair must have its own independent modulus.</p>
+
+  <h2>4. Low Entropy — Shared Prime Factor Attack (Randomness Failure)</h2>
+  <p>If two different RSA moduli $n_1$ and $n_2$ share a common prime factor $p$, then $\gcd(n_1, n_2) = p$ — computable in milliseconds. Both private keys are immediately broken. The entire "hard factoring" claim rests on the assumption that primes were generated unpredictably. If that assumption fails, there is no mathematical barrier at all.</p>
   <div class="callout callout-danger">
     <div class="callout-title">⚠️ Real-World Impact</div>
     <p>A 2012 study ("Mining your Ps and Qs") harvested 5+ million TLS certificates and 4 million SSH keys. Using only GCD computations, they recovered the private keys for <strong>0.50% of all TLS servers</strong> and 0.03% of SSH servers. Root cause: devices generating keys at boot time had low entropy (little randomness), causing some pairs of devices to generate primes with a shared factor.</p>
@@ -582,21 +624,36 @@ return result</pre>
     </div>
   </div>
 
-  <h2>4. Perfect Forward Secrecy — RSA's Limitation</h2>
-  <p>When RSA is used for key exchange (A encrypts session key $K_S$ with B's public key), a recording eavesdropper who later obtains B's private key can decrypt all recorded session keys and therefore all past conversations. RSA-based key exchange has <strong>no forward secrecy</strong>.</p>
-  <p>The Diffie-Hellman key exchange (covered in Lecture 04) solves this with <em>ephemeral</em> keys that are discarded after each session.</p>
+  <h2>5. Perfect Forward Secrecy — A Protocol Design Limitation</h2>
+  <p>When RSA is used for key exchange (Alice encrypts session key $K_S$ with Bob's public key), an eavesdropper who records all traffic can decrypt it retroactively if they ever obtain Bob's private key — through breach, legal order, or eventual advances in factoring. The long-term private key is a single point of failure for all historical traffic.</p>
+  <p>This connects to a principle from Lecture 02's key distribution protocols: long-term keys are trust roots; session secrets should be ephemeral. Diffie-Hellman (Lecture 04) generates per-session ephemeral values that are discarded after each handshake — even if the long-term authentication keys are later compromised, past sessions cannot be recovered.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Connection: Key Extraction and Shared-Factor Attacks</div>
+    <p>The shared-prime-factor attack requires extracting the modulus $n$ from each public key and computing pairwise GCDs across a large collection. This is exactly what RSA parameter extraction tools (Python <code>cryptography</code> library) enable. Keys are not opaque objects — they are structured data. Being able to read $n$ from a key file is the first step of a large-scale security analysis.</p>
+  </div>
 
   <div class="kc-card">
-    <div class="kc-title">🧠 Knowledge Check</div>
+    <div class="kc-title">🧠 Knowledge Check — What Breaks If...</div>
     <div class="kc-item">
-      <div class="kc-q">Why does increasing the key size provide stronger RSA security?</div>
+      <div class="kc-q">What breaks if $p = q$ instead of using two distinct primes?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">Larger $n = pq$ means larger primes $p$ and $q$, making factoring computationally harder. The best known factoring algorithms have sub-exponential but super-polynomial complexity — each additional bit of key size disproportionately increases the difficulty of factoring.</div>
+      <div class="kc-a">$n = p^2$ and an attacker computes $\sqrt{n} = p$ immediately. The "hard factoring" problem collapses to a single square root. The distinctness requirement eliminates this trivial shortcut.</div>
     </div>
     <div class="kc-item">
-      <div class="kc-q">Explain the low entropy vulnerability in one sentence.</div>
+      <div class="kc-q">What breaks if RSA encrypts a raw short message without padding?</div>
       <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
-      <div class="kc-a">If two devices generate RSA keys using near-identical random seeds (due to low entropy at boot time), their key moduli may share a common prime factor, which an attacker can find instantly using the GCD algorithm — breaking both private keys.</div>
+      <div class="kc-a">If $M^e &lt; n$, the ciphertext is literally $M^e$ with no reduction — the attacker takes the $e$-th root. For any guessable message, the attacker encrypts all candidates and compares. OAEP padding randomizes the message before encryption, destroying the algebraic relationship between plaintext and ciphertext.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">What breaks if RSA is used for key transport with a long-term key that is later compromised?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">Every past session whose key was RSA-encrypted under that long-term key can be decrypted retroactively. An eavesdropper who recorded encrypted traffic years ago now decrypts all the session key wrappings. Ephemeral Diffie-Hellman prevents this: the per-session DH values are discarded immediately and cannot be recovered even if long-term keys are later compromised.</div>
+    </div>
+    <div class="kc-item">
+      <div class="kc-q">Explain the low entropy vulnerability: what assumption is violated and what attack it enables?</div>
+      <span class="kc-toggle" onclick="toggleKc(this)">Show Answer ▾</span>
+      <div class="kc-a">RSA's security claim assumes primes were chosen randomly and independently. If poor entropy at boot time causes two devices to generate overlapping primes, $\gcd(n_1, n_2)$ factors both moduli in milliseconds. The hard factoring assumption was never met — there is no mathematical barrier to break, only the precondition that was never satisfied.</div>
     </div>
   </div>
 </div>
@@ -635,7 +692,7 @@ return result</pre>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>The complexity of hash collisions</div>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>The secrecy of its S-boxes</div>
     </div>
-    <div class="explanation"><strong>Answer: (a).</strong> RSA security relies on the difficulty of factoring the modulus $n = pq$ into its prime factors. Given $n$, computing $\phi(n) = (p-1)(q-1)$ and thus $d$ requires knowing $p$ and $q$. (b) is the basis of Diffie-Hellman/ElGamal. (d) is a symmetric cipher concept — RSA has no S-boxes.</div>
+    <div class="explanation"><strong>Answer: (a).</strong> RSA security rests on integer factoring hardness. An attacker who could factor $n = pq$ would recover $p$ and $q$, compute $\phi(n) = (p-1)(q-1)$, and immediately derive $d = e^{-1} \bmod \phi(n)$. This is the security argument — distinct from the correctness argument (Euler's theorem). (b) is the basis of Diffie-Hellman/ElGamal. (d) is a symmetric cipher concept.</div>
   </div>
 
   <!-- Q31 -->
@@ -648,7 +705,7 @@ return result</pre>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Compute $n$ → Solve for $p, q$ → Derive $e$ → Choose $d$</div>
       <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>Choose primes $p, q$ → Compute $n = pq$ → Select $e$ → Calculate $d$</div>
     </div>
-    <div class="explanation"><strong>Answer: (d).</strong> The mandatory order: choose $p$ and $q$ first → compute $n = pq$ and $\phi(n) = (p-1)(q-1)$ → select $e$ coprime to $\phi(n)$ → compute $d = e^{-1} \bmod \phi(n)$. Each step depends on the previous one. You cannot choose $e$ before knowing $\phi(n)$, and you cannot compute $d$ before choosing $e$.</div>
+    <div class="explanation"><strong>Answer: (d).</strong> The order is a chain of necessities: $p, q$ are needed to compute $n$ and $\phi(n)$; $\phi(n)$ is needed to check $e$'s validity and compute $d$; $e$ must be chosen before $d$ because $d$ is defined as $e$'s inverse. You cannot go backward through this chain.</div>
   </div>
 
   <!-- Q32 -->
@@ -661,7 +718,7 @@ return result</pre>
       <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">c</span>$1 < e < \phi(n)$ and $\gcd(e, \phi(n)) = 1$</div>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>$e \equiv 1 \bmod p$</div>
     </div>
-    <div class="explanation"><strong>Answer: (c).</strong> $e$ must be in the range $(1, \phi(n))$ and coprime to $\phi(n)$. The coprimality condition guarantees $d = e^{-1} \bmod \phi(n)$ exists (a modular inverse exists if and only if $\gcd(e, \phi(n)) = 1$). $e$ need not be prime — though common choices (3, 17, 65537) happen to be prime, this is for efficiency reasons, not a mathematical requirement.</div>
+    <div class="explanation"><strong>Answer: (c).</strong> The coprimality condition $\gcd(e, \phi(n)) = 1$ is not a preference — it is a mathematical requirement. A modular inverse $d$ exists if and only if $\gcd(e, \phi(n)) = 1$. Without it, no valid $d$ exists and decryption is literally impossible. $e$ need not be prime — common choices (3, 17, 65537) happen to be prime for efficiency, not mathematical necessity.</div>
   </div>
 
   <!-- Q33 -->
@@ -700,7 +757,7 @@ return result</pre>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>Fixed block size</div>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Inability to encrypt large files</div>
     </div>
-    <div class="explanation"><strong>Answer: (b).</strong> RSA's modular exponentiation is orders of magnitude slower than symmetric encryption (AES). In practice, RSA is used only for authentication and for encrypting a small session key. The actual data is encrypted with AES using that session key. Note: (d) is technically true but it's a consequence of the performance problem, not the root reason.</div>
+    <div class="explanation"><strong>Answer: (b).</strong> The mathematical hardness that makes RSA secure is the same property that makes it slow — you cannot separate the two. RSA is used only for authentication and key exchange; AES encrypts the actual traffic using a session key established via RSA. Hybrid design is the intended architecture, not a workaround.</div>
   </div>
 
   <!-- Q36 -->
@@ -726,7 +783,7 @@ return result</pre>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">c</span>To replace modular exponentiation</div>
       <div class="option" data-correct="true" onclick="checkAnswer(this)"><span class="option-letter">d</span>To speed up decryption/signature generation by approximately 4x</div>
     </div>
-    <div class="explanation"><strong>Answer: (d).</strong> CRT splits $C^d \bmod n$ into two smaller exponentiations: $C^d \bmod p$ and $C^d \bmod q$. Since $p$ and $q$ are half the size of $n$, each multiplication is 4x cheaper (quadratic scaling). Combined with Fermat's Little Theorem (which further reduces the exponents), the overall speedup is approximately 4x. Modular exponentiation is still used — CRT makes it faster, not obsolete.</div>
+    <div class="explanation"><strong>Answer: (d).</strong> CRT splits $C^d \bmod n$ into two smaller exponentiations mod $p$ and mod $q$. Halving the modulus reduces each multiplication to $1/4$ the cost (quadratic scaling). Combined with Fermat's Little Theorem (same exponent-cycling idea from the RSA foundation, now applied in the smaller world mod $p$), the exponents are also halved. Total speedup: approximately 4×.</div>
   </div>
 
   <!-- Q38 -->
@@ -740,6 +797,49 @@ return result</pre>
       <div class="option" onclick="checkAnswer(this)"><span class="option-letter">d</span>Verify the result modulo $n$</div>
     </div>
     <div class="explanation"><strong>Answer: (b).</strong> The private key holder already knows $p$ and $q$ — they were used when the key was generated and are stored as part of the private key. "Factor $n$ dynamically" is exactly what an attacker would need to do to break RSA. The legitimate decryptor never factors $n$ during normal operation; they simply use the pre-known $p$ and $q$.</div>
+  </div>
+
+  <h2>Practice Questions — RSA Security</h2>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">GCD scan and violated assumption</span></div>
+    <div class="quiz-question">Why is a GCD scan across many public moduli such a devastating attack surface? Explain what hidden assumption in RSA key generation is violated when two moduli share a prime.</div>
+    <div class="explanation" style="display:block;">
+      <p>$\gcd(n_1, n_2)$ runs in time proportional to the key size — milliseconds per pair, seconds for millions of pairs. RSA's security claim says "factoring $n$ is hard." That claim assumes $p$ and $q$ were chosen randomly and independently. If poor entropy causes two devices to generate the same prime, GCD immediately produces the factorization.</p>
+      <p>The assumption was never met, so the security guarantee never applied. RSA's hardness is conditional on proper randomness — it is not a property of the mathematics itself.</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Why increasing e is only a partial fix</span></div>
+    <div class="quiz-question">Why is "choose a larger $e$" only a partial fix for small-exponent attacks? What does OAEP padding address more fundamentally?</div>
+    <div class="explanation" style="display:block;">
+      <p>Larger $e$ means $M^e$ outgrows $n$ for most message sizes, ensuring modular reduction activates. But the underlying problem is not $e$'s size — it is that raw RSA is algebraically transparent when the input has predictable structure.</p>
+      <p>If the message is guessable (one of a small set of values), an attacker can encrypt all candidates and compare to $C$. Increasing $e$ addresses one symptom. OAEP padding randomizes the message before encryption, destroying the algebraic relationship between plaintext and ciphertext. Padding addresses the root cause; increasing $e$ does not.</p>
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-header"><span class="quiz-badge badge-practice">PRACTICE</span><span style="font-size:14px;color:var(--text-muted);">Why CRT makes decryption cheaper — explain from first principles</span></div>
+    <div class="quiz-question">Why does splitting one decryption into two smaller modular worlds make the work much cheaper? Explain in terms of operand size, exponentiation cost, and how CRT reconstructs one answer from two local answers.</div>
+    <div class="explanation" style="display:block;">
+      <p>Each modular multiplication with a $k$-bit modulus costs $O(k^2)$ bit operations. Using modulus $p \approx n^{1/2}$ costs $O((k/2)^2) = O(k^2/4)$ — 4× cheaper. The exponents also reduce (via Fermat's Little Theorem) from $d$ to $d \bmod (p-1)$, roughly halving their length.</p>
+      <p>Two partial exponentiations mod $p$ and mod $q$, each at 4× lower cost, give the same total answer for roughly $1/4$ the work. CRT recombination finds a number $M$ that is simultaneously $V_p \pmod{p}$ and $V_q \pmod{q}$, using coefficients $X_p$ and $X_q$ that act as "selectors" — each partial result survives only in its own modular world.</p>
+    </div>
+  </div>
+
+  <h2>"What Breaks If..." — Master Understanding List</h2>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">🧠 Conceptual Depth — What Breaks If...</div>
+    <p><strong>1. $\gcd(e, \phi(n)) \neq 1$?</strong><br>No inverse $d$ exists. Decryption is mathematically impossible — not just hard. The entire scheme fails to be a cipher.</p>
+    <p><strong>2. $p = q$ instead of distinct primes?</strong><br>$n = p^2$ and $\sqrt{n} = p$ immediately. Hard factoring collapses to a single square root.</p>
+    <p><strong>3. Modular reduction is postponed until after computing the full power?</strong><br>Intermediate values grow without bound — after $k$ squarings, numbers have $2^k$ times as many digits as $n$. The computation becomes infeasible to store or multiply.</p>
+    <p><strong>4. Two users share the same modulus $n$ with different exponents?</strong><br>Common modulus attack: if the same message is encrypted under both, it is recoverable using only the Bézout identity for the two exponents. No factoring needed.</p>
+    <p><strong>5. RSA encrypts raw short messages without padding?</strong><br>If $M^e &lt; n$, $C = M^e$ exactly and the attacker takes the $e$-th root. For guessable messages, the attacker encrypts candidates and compares.</p>
+    <p><strong>6. RSA is used for key transport and the long-term key is later compromised?</strong><br>All past sessions encrypted under that key can be decrypted retroactively. Ephemeral Diffie-Hellman prevents this.</p>
+    <p><strong>7. Prime generation uses poor entropy and two devices share a prime factor?</strong><br>$\gcd(n_1, n_2) = p$ in milliseconds. The hardness assumption was never satisfied — there is no mathematical barrier to break.</p>
+    <p><strong>8. You know $n$ and $e$ but not $\phi(n)$?</strong><br>You cannot compute $d = e^{-1} \bmod \phi(n)$. Computing $\phi(n)$ requires $p$ and $q$. $\phi(n)$ is the real hidden lever: the owner knows it; the attacker cannot compute it without factoring.</p>
   </div>
 
 </div>
